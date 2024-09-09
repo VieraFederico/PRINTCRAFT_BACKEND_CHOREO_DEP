@@ -10,3 +10,6 @@ class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     perimission_classes = [AllowAny]
+
+class GetStatus(generics.CreateAPIView):
+    print("TEST")
