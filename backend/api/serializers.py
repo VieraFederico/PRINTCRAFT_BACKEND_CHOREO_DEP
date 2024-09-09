@@ -24,7 +24,7 @@ class ProducSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['code', 'name', 'description', 'image_url', 'seller', 'price']
         #todo add kwargs
-class OrderSerializer(serializers.ModelSerilizer):
+class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['orderID', 'userID', 'orderDate', 'quantity', 'productCode', 'status']
