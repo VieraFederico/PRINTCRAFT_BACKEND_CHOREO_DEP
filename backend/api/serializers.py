@@ -14,11 +14,18 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+# serializers.py
 class SellerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Seller
-        fields = ["userId","address","store_name","description"]
-        #todo add kwargs
+        fields = ['userId', 'address', 'store_name', 'description']
+        read_only_fields = ['userId']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if Seller.objects.filter(userId=user).exists():
+            raise serializers.ValidationError("El usuario ya es un vendedor.")
+        return Seller.objects.create(userId=user, **validated_data)
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +37,4 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['orderID', 'userID', 'orderDate', 'quantity', 'productCode', 'status']
         #todo add kwargs
+
