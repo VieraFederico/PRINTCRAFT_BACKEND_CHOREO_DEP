@@ -30,3 +30,11 @@ class SellerDetailView(generics.RetrieveAPIView):
 
     def get_object(self):
         return Seller.objects.get(userId=self.request.user)
+
+class ReturnUserDataView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
