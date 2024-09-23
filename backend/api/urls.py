@@ -11,4 +11,6 @@ urlpatterns = [
     path('products/seller/<int:userId>/', views.SellerProductListView.as_view(), name='seller-product-list'),
     path('orders/create/', views.OrderCreateView.as_view(), name='order-create'),  # Crear una orden
     path('orders/mine/', views.UserOrderListView.as_view(), name='user-order-list'),  # Ver mis órdenes
+    path('products/recommended/', views.RecommendedProductListView.as_view(), name='recommended-product-list'),
+
 ]

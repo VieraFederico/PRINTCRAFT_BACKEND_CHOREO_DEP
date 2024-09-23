@@ -69,6 +69,12 @@ class SellerProductListView(generics.ListAPIView):
         # Filtrar productos por el vendedor
         return Product.objects.filter(seller=seller)
 
+class RecommendedProductListView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        # Obtener los productos más vendidos
+        return Product.objects.order_by('-stock')[:3]
 
 ################
 #### ORDERS ####
