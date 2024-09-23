@@ -76,6 +76,11 @@ class RecommendedProductListView(generics.ListAPIView):
         # Obtener los productos más vendidos
         return Product.objects.order_by('-stock')[:3]
 
+class ProductDetailView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    lookup_field = 'code'  # Usamos el campo code para la búsqueda
+
 ################
 #### ORDERS ####
 ################
