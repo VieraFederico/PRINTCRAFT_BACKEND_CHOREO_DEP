@@ -34,9 +34,6 @@ class SellerCreateView(generics.CreateAPIView):
     serializer_class = SellerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(userId=self.request.user)
-
 class SellerDetailView(generics.RetrieveAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
