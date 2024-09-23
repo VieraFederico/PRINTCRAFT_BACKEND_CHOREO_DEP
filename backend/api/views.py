@@ -42,6 +42,7 @@ class SellerDetailView(generics.RetrieveAPIView):
 class SellerListView(generics.ListAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
+    permission_classes = [AllowAny]
 
 
 ##################
@@ -55,9 +56,11 @@ class ProductCreateView(generics.CreateAPIView):
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
 
 class SellerProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         userId = self.kwargs['userId']
@@ -74,6 +77,23 @@ class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden crear órdenes
+
+
+    def perform_create(self, serializer):
+        # Obtenemos los datos del serializer
+        quantity = serializer.validated_data['quantity']
+        product = serializer.validated_data['productCode']
+
+        # Verificamos si la cantidad solicitada es menor o igual al stock disponible
+        if product.stock < quantity:
+            raise serializers.ValidationError('La cantidad solicitada excede el stock disponible.')
+
+        # Actualizamos el stock del producto
+        product.stock -= quantity
+        product.save()
+
+        # Guardamos la orden
+        serializer.save()
 
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
