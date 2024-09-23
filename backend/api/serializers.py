@@ -6,15 +6,20 @@ from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_seller = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "password"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ["id", "username", "first_name", "last_name", "email", "password", "is_seller"]
+        extra_kwargs = {"password": {"write_only": True}, "id": {"read_only": True}, "is_seller": {"read_only": True}}
 
     def create(self, validated_data):
         print(validated_data)
         user = User.objects.create_user(**validated_data)
         return user
+
+    def get_is_seller(self, obj):
+        return Seller.objects.filter(userId=obj).exists()
 
 # serializers.py
 class SellerSerializer(serializers.ModelSerializer):
