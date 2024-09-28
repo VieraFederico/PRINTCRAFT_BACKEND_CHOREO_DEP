@@ -150,3 +150,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+
+# SUPABASE_URL = "https://vvvlpyyvmavjdmfrkqvw.supabase.co"
+# SUPABASE_SERVICE_KEY = "your-service-key"  # Podés cargarla de una variable de entorno para mayor seguridad

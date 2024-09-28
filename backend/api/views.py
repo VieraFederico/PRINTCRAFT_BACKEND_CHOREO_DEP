@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from rest_framework import generics, permissions
-
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
-
+from api.services.supabase_client import upload_file_to_supabase
 
 
 ###############
@@ -114,3 +115,20 @@ class UserOrderListView(generics.ListAPIView):
         # Filtrar las órdenes por el usuario autenticado
         user = self.request.user
         return Order.objects.filter(userID=user)
+
+
+
+###############
+#### FILES ####
+###############
+class FileUploadView(APIView):
+    def post(self, request):
+        file = request.FILES['file']
+        file_name = file.name
+        bucket_name = 'your-bucket-name'
+
+        try:
+            file_url = upload_file_to_supabase(file, bucket_name, file_name)
+            return Response({"url": file_url}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
