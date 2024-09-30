@@ -1,3 +1,4 @@
+import mercadopago
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status
@@ -8,7 +9,8 @@ from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
 from api.services.supabase_client import upload_file_to_supabase
-
+from django.conf import settings
+from django.http import JsonResponse
 
 ###############
 #### USERS ####
@@ -125,10 +127,48 @@ class FileUploadView(APIView):
     def post(self, request):
         file = request.FILES['file']
         file_name = file.name
-        bucket_name = 'your-bucket-name'
+        bucket_name = 'images'
 
         try:
             file_url = upload_file_to_supabase(file, bucket_name, file_name)
             return Response({"url": file_url}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreateCheckoutPreferenceView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+
+        # Aquí puedes obtener los productos o servicios seleccionados por el usuario
+        items = request.data.get('items', [])
+        if not items:
+            return Response({'error': 'No items provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Configuramos los ítems para la preferencia
+        preference_data = {
+            "items": items,  # items es una lista de diccionarios con la información de los productos
+            "payer": {
+                "email": request.user.email
+            },
+            "back_urls": {
+                "success": "https://3dcapybara.vercel.app//success",
+                "failure": "https://3dcapybara.vercel.app//failure",
+                "pending": "https://3dcapybara.vercel.app//pending"
+            },
+            "auto_return": "approved",  # Auto retornar si el pago es aprobado
+        }
+
+        try:
+            # Crear la preferencia con el SDK de Mercado Pago
+            preference_response = sdk.preference().create(preference_data)
+            preference = preference_response["response"]
+
+            return JsonResponse({
+                'id': preference['id'],  # ID de la preferencia
+                'init_point': preference['init_point'],  # URL del checkout
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

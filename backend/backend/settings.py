@@ -154,3 +154,5 @@ CORS_ALLOW_CREDENTIALS = True
 
 # SUPABASE_URL = "https://vvvlpyyvmavjdmfrkqvw.supabase.co"
 # SUPABASE_SERVICE_KEY = "your-service-key"  # Podés cargarla de una variable de entorno para mayor seguridad
+
+MERCADOPAGO_ACCESS_TOKEN = os.getenv("MP_KEY")

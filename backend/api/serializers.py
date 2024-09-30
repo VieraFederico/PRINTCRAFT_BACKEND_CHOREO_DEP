@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from rest_framework import serializers
 
+from .services.supabase_client import upload_file_to_supabase
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -48,20 +49,99 @@ class OrderSerializer(serializers.ModelSerializer):
 
 ## -------------------------------------------------------------------------------------  ##
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['product', 'image_url']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+
+    images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
+    class Meta:
+        model = Product
+        fields = [
+            'code', 'name', 'material', 'stock', 'description',
+            'stl_file_url', 'seller', 'price', 'image_files', 'images'
+        ]
+        extra_kwargs = {
+            'code': {'read_only': True},  # Solo lectura
+            'seller': {'read_only': True},  # Solo lectura
+            'image_files': {'write_only': True, 'required': False, 'child': serializers.FileField()},
+        }
+
+    def create(self, validated_data):
+        # Extraer archivos de imagen del campo de solo escritura
+        image_files = validated_data.pop('image_files', [])
+
+        # Asignar el vendedor desde el contexto del request
+        seller = self.context['request'].user.seller
+
+        # Crear el producto con los datos restantes
+        product = Product.objects.create(seller=seller, **validated_data)
+
+        # Subir archivos de imagen y guardar las URLs en la base de datos
+        for image_file in image_files:
+            file_name = image_file.name
+            bucket_name = 'images' # todo ¡¡CAMBIAR!!
+
+            try:
+                # Subir el archivo a Supabase y obtener la URL
+                image_url = upload_file_to_supabase(image_file, bucket_name, file_name)
+
+                # Guardar la URL en el modelo ProductImage asociado al producto
+                ProductImage.objects.create(product=product, image_url=image_url)
+            except Exception as e:
+                # Manejar cualquier error durante la subida
+                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+
+        return product
+
+# Example Payload:
+# {
+#     "name": "Product Name",
+#     "material": "Material",
+#     "stock": 10,
+#     "description": "Product Description",
+#     "stl_file_url": "http://example.com/file.stl",
+#     "price": "19.99",
+#     "image_files": [file1, file2]  # List of image files
+# }
+
+"""
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['code', 'name', 'material', 'stock', 'description', 'image_url', 'seller', 'price']
+        fields = ['code', 'name', 'material', 'stock', 'description', 'stl_file_url', 'seller', 'price', 'images']
         extra_kwargs = {'code': {'read_only': True}, 'seller': {'read_only': True}} # TODO chequear
         # read_only_fields = ['code', 'seller']  # Hacemos el código y el vendedor de solo lectura
 
     def create(self, validated_data):
-        seller = self.context['request'].user.seller  # Obtenemos el vendedor del usuario autenticado
-        # TODO manejar error
+        images_data = validated_data.pop('images', []) # todo -> check
+        seller = self.context['request'].user.seller
+        product = Product.objects.create(seller=seller, **validated_data)
 
-        return Product.objects.create(seller=seller, **validated_data)
+        for image_data in images_data:
+            # subir imagen al bucket
+            # guardar URL
+            # crear la instancia en la tabla con la URL obtenida
+            ProductImage.objects.create(product=product, **image_data)
 
-
+        return product
+# Example:
+# {
+#     "name": "Product Name",
+#     "material": "Material",
+#     "stock": 10,
+#     "description": "Product Description",
+#     "stl_file_url": "http://example.com/file.stl",
+#     "price": "19.99",
+#     "images": [
+#         {"image_url": "http://example.com/image1.jpg"},
+#         {"image_url": "http://example.com/image2.jpg"}
+#     ]
+# }
+"""
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,5 +153,6 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Al crear una orden, el estado siempre será "pendiente"
         return Order.objects.create(**validated_data)
+
 
 

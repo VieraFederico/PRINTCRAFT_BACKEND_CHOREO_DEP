@@ -13,19 +13,20 @@ class Seller(models.Model):
     def __str__(self):
         return self.userId.username
 
-
 class Product(models.Model):
     code = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, null = False)
     material = models.CharField(max_length=255, null = False)
     stock = models.IntegerField(null=False)
     description = models.TextField()
-    image_url = models.URLField(max_length=200)
+    stl_file_url = models.URLField(max_length=200, null=True, blank=True)  # URL del archivo STL
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=False) # Placeholder for price
 
     def __str__(self):
         return self.name
+
+
 
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
@@ -42,3 +43,12 @@ class Order(models.Model):
     # AGREGAR INFORMACIÓN DE PAGO!!!
 
     # ELIMINAR EN EL FUTURO
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey('Product', related_name='images', on_delete=models.CASCADE)
+    image_url = models.URLField(max_length=200)
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
+
