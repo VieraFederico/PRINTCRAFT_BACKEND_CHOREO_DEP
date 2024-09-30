@@ -134,8 +134,6 @@ class FileUploadView(APIView):
             return Response({"url": file_url}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class CreateCheckoutPreferenceView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
