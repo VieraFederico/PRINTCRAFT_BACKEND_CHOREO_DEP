@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from .services.supabase_client import upload_file_to_supabase
 
-
 class UserSerializer(serializers.ModelSerializer):
     is_seller = serializers.SerializerMethodField()
 
@@ -80,10 +79,11 @@ class ProductSerializer(serializers.ModelSerializer):
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, **validated_data)
 
-        # Subir archivos de imagen y guardar las URLs en la base de datos
+        index = 0
         for image_file in image_files:
-            file_name = image_file.name
-            bucket_name = 'images' # todo ¡¡CAMBIAR!!
+            index += 1
+            file_name = f"{product.name}_{index}"
+            bucket_name = 'images'
 
             try:
                 # Subir el archivo a Supabase y obtener la URL
@@ -97,6 +97,38 @@ class ProductSerializer(serializers.ModelSerializer):
 
         return product
 
+"""
+for index, image_file in enumerate(image_files, start=1):
+    file_name = f"{product.name}_{index}"
+    bucket_name = 'images'
+
+    try:
+        # Subir el archivo a Supabase y obtener la URL
+        image_url = upload_file_to_supabase(image_file, bucket_name, file_name)
+
+        # Guardar la URL en el modelo ProductImage asociado al producto
+        ProductImage.objects.create(product=product, image_url=image_url)
+    except Exception as e:
+        # Manejar cualquier error durante la subida
+        raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+"""
+"""
+index = 0
+for image_file in image_files:
+    index += 1
+    file_name = f"{product.name}_{index}"
+    bucket_name = 'images'
+
+    try:
+        # Subir el archivo a Supabase y obtener la URL
+        image_url = upload_file_to_supabase(image_file, bucket_name, file_name)
+
+        # Guardar la URL en el modelo ProductImage asociado al producto
+        ProductImage.objects.create(product=product, image_url=image_url)
+    except Exception as e:
+        # Manejar cualquier error durante la subida
+        raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+"""
 # Example Payload:
 # {
 #     "name": "Product Name",
