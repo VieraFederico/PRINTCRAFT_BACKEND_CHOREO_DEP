@@ -13,10 +13,6 @@ from django.http import JsonResponse
 from api.services.supabase_client import *
 
 
-from supabase import create_client, Client
-import os
-
-
 ###############
 #### USERS ####
 ###############
