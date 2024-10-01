@@ -8,9 +8,24 @@ from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
-from api.services.supabase_client import upload_file_to_supabase
+# from api.services.supabase_client import upload_file_to_supabase
 from django.conf import settings
 from django.http import JsonResponse
+
+from supabase import create_client, Client
+import os
+
+url: str = "https://vvvlpyyvmavjdmfrkqvw.supabase.co"
+key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2dmxweXl2bWF2amRtZnJrcXZ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNTg0NzYyNywiZXhwIjoyMDQxNDIzNjI3fQ.IOADPN4PKY0kRN3tPhnihJx-XrhpvhuRTeNjaqaDOeQ"
+supabase: Client = create_client(url, key)
+
+def upload_file_to_supabase(file, bucket_name, file_name):
+    # response = supabase.storage.from_("images").upload(file_name, file)
+    response = supabase.storage.from_(bucket_name).upload(file=file, path=file_name, file_options={"content-type": "image/jpeg"})
+
+    if response.is_error:
+        raise Exception(response.error)
+    return file_name
 
 ###############
 #### USERS ####
