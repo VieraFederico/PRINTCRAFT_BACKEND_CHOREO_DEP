@@ -125,11 +125,12 @@ class UserOrderListView(generics.ListAPIView):
 ###############
 class FileUploadView(APIView):
     def post(self, request):
-        file = request.FILES['file']
+        # file = request.FILES['file']
+        file = request.FILES.get('file')
         if not file:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_name = "gracielaesposito"
+        file_name = "matiasferreroelcolorado"
         bucket_name = 'images'
 
         try:
