@@ -161,6 +161,7 @@ class ProductSerializer(serializers.ModelSerializer):
             ProductImage.objects.create(product=product, **image_data)
 
         return product
+
 # Example:
 # {
 #     "name": "Product Name",
