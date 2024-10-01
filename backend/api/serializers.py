@@ -2,9 +2,8 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import *
 from rest_framework import serializers
+from api.services.supabase_client import *
 
-# from .services.supabase_client import upload_file_to_supabase
-from views import upload_file_to_supabase
 
 class UserSerializer(serializers.ModelSerializer):
     is_seller = serializers.SerializerMethodField()
