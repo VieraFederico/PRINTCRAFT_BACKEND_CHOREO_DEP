@@ -148,8 +148,8 @@ class FileUploadView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # file = request.FILES.get('file')
-        file = request.FILES['file']
+        file = request.FILES.get('file')
+        # file = request.FILES['file']
         if not file:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
