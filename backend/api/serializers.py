@@ -57,6 +57,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
 
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
+    image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
     class Meta:
         model = Product
         fields = [
@@ -66,7 +67,6 @@ class ProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
             'seller': {'read_only': True},  # Solo lectura
-            'image_files': {'write_only': True, 'required': False, 'child': serializers.FileField()},
         }
 
     def create(self, validated_data):
