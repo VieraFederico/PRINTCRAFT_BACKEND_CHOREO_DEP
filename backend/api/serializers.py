@@ -3,7 +3,8 @@ from rest_framework import serializers
 from .models import *
 from rest_framework import serializers
 
-from .services.supabase_client import upload_file_to_supabase
+# from .services.supabase_client import upload_file_to_supabase
+from views import upload_file_to_supabase
 
 class UserSerializer(serializers.ModelSerializer):
     is_seller = serializers.SerializerMethodField()
