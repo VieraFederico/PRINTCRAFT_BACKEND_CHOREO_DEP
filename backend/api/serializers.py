@@ -89,6 +89,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
         # Subir el archivo STL a Supabase y obtener la URL
         stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
+        # todo falta concatenar la URL base: https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/
+
+        stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
 
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
@@ -108,6 +111,8 @@ class ProductSerializer(serializers.ModelSerializer):
                 # Subir el archivo a Supabase y obtener la URL
                 image_url = upload_file_to_supabase(file_content, bucket_name, file_name)
                 # todo agregar la URL base a image_url
+                # https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/images/
+                image_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/images/{image_url}"
 
                 # Guardar la URL en el modelo ProductImage asociado al producto
                 ProductImage.objects.create(product=product, image_url=image_url)

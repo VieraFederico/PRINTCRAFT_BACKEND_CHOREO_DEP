@@ -83,7 +83,7 @@ class RecommendedProductListView(generics.ListAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permissions_classes = [AllowAny]
+    permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
 ################
