@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_seller(self, obj):
         return Seller.objects.filter(userId=obj).exists()
 
-# serializers.py
+
 class SellerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Seller
@@ -60,6 +60,11 @@ class ProductSerializer(serializers.ModelSerializer):
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
     class Meta:
         model = Product
+        # agregar field stl_file
+        # eliminar stl_file_url, sino debería ser read_only
+        # por ahora igual:
+            # agregar field stl_file write_only
+            # cambiar stl_file_url a read_only
         fields = [
             'code', 'name', 'material', 'stock', 'description',
             'stl_file_url', 'seller', 'price', 'image_files', 'images'
@@ -83,11 +88,19 @@ class ProductSerializer(serializers.ModelSerializer):
         for image_file in image_files:
             index += 1
             file_name = f"{product.name}_{index}"
+            # file_name = f"{product.name}_{index}".replace(" ", "_")
+
             bucket_name = 'images'
 
             try:
+                # todo IMPORTANTE
+                # # Leer el contenido del archivo antes de subirlo
+                # file_content = image_file.read()
+
                 # Subir el archivo a Supabase y obtener la URL
                 image_url = upload_file_to_supabase(image_file, bucket_name, file_name)
+                # todo IMPORTANTE
+                # image_url = upload_file_to_supabase(file_content, bucket_name, file_name)
 
                 # Guardar la URL en el modelo ProductImage asociado al producto
                 ProductImage.objects.create(product=product, image_url=image_url)
