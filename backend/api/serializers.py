@@ -1,3 +1,5 @@
+from itertools import product
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import *
@@ -56,27 +58,79 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
+    stl_file = serializers.FileField(write_only=True, required=False)
 
     class Meta:
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
             'seller': {'read_only': True},  # Solo lectura
+            'stl_file_url': {'read_only': True},  # Solo escritura
+            # 'stl_file': {'write_only': True},  # Solo escritura
         }
 
     def create(self, validated_data):
         # Extraer archivos de imagen del campo de solo escritura
         image_files = validated_data.pop('image_files', [])
+        stl_file = validated_data.pop('stl_file', None)
+
 
         # Asignar el vendedor desde el contexto del request
         seller = self.context['request'].user.seller
 
+        # Leer el contenido del archivo STL antes de subirlo
+        stl_file_content = stl_file.read()
+
+        product_name = validated_data['name']
+
+        # Subir el archivo STL a Supabase y obtener la URL
+        stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
+
         # Crear el producto con los datos restantes
-        product = Product.objects.create(seller=seller, **validated_data)
+        product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
+
+
+        for index, image_file in enumerate(image_files, start=1):
+            file_name = f"{product.name}_{index}"
+            # todo IMPORTANTE
+            # file_name = f"{product.code}_{index}"
+            bucket_name = 'images'
+
+            try:
+                # Leer el contenido del archivo antes de subirlo
+                file_content = image_file.read()
+
+
+                # Subir el archivo a Supabase y obtener la URL
+                image_url = upload_file_to_supabase(file_content, bucket_name, file_name)
+                # todo agregar la URL base a image_url
+
+                # Guardar la URL en el modelo ProductImage asociado al producto
+                ProductImage.objects.create(product=product, image_url=image_url)
+            except Exception as e:
+                # Manejar cualquier error durante la subida
+                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+
+        return product
+"""
+
+        if stl_file:
+            try:
+                # Leer el contenido del archivo STL antes de subirlo
+                stl_file_content = stl_file.read()
+
+                # Subir el archivo STL a Supabase y obtener la URL
+                stl_file_url = upload_file_to_supabase(stl_file_content, 'stl_files', f"{product.name}_stl")
+                
+                # Guardar la URL en el modelo Product
+                product.stl_file_url = stl_file_url
+                product.save()
+            except Exception as e:
+                raise serializers.ValidationError(f"Error al subir el archivo STL: {str(e)}")
 
         for index, image_file in enumerate(image_files, start=1):
             file_name = f"{product.name}_{index}"
@@ -92,10 +146,11 @@ class ProductSerializer(serializers.ModelSerializer):
                 # Guardar la URL en el modelo ProductImage asociado al producto
                 ProductImage.objects.create(product=product, image_url=image_url)
             except Exception as e:
-                # Manejar cualquier error durante la subida
                 raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
 
         return product
+"""
+
 
 """
 for index, image_file in enumerate(image_files, start=1):
