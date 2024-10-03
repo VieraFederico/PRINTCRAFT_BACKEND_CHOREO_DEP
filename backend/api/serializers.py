@@ -23,17 +23,48 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_seller(self, obj):
         return Seller.objects.filter(userId=obj).exists()
 
-
+"""
 class SellerSerializer(serializers.ModelSerializer):
+    profile_picture_file = serializers.FileField(write_only=True, required=False)
+
     class Meta:
         model = Seller
-        fields = ['userId', 'address', 'store_name', 'description']
-        extra_kwargs = {'userId': {'read_only': True}}  # El userId no se puede modificar
+        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file']
+        extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
     def create(self, validated_data):
         user = self.context['request'].user # Agregar el userId a los datos validados
         if Seller.objects.filter(userId=user).exists():
             raise serializers.ValidationError("El usuario ya es un vendedor.")
         return Seller.objects.create(userId=user, **validated_data)
+"""
+
+class SellerSerializer(serializers.ModelSerializer):
+    profile_picture_file = serializers.FileField(write_only=True, required=False)
+
+    class Meta:
+        model = Seller
+        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file']
+        extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
+
+    def create(self, validated_data):
+
+        profile_picture_file = validated_data.pop('profile_picture_file', None)
+        user = self.context['request'].user
+
+        if profile_picture_file:
+            try:
+                file_content = profile_picture_file.read()
+                # file_name = f"{validated_data.get('store_name', 'default_store_name')}_profile_picture"
+                file_name = f"{user.id}_profile_picture"
+                bucket_name = 'seller-pictures'
+                profile_picture_url = upload_file_to_supabase(file_content, bucket_name, file_name)
+                validated_data['profile_picture'] = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/{bucket_name}/{profile_picture_url}"
+            except Exception as e:
+                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+        else:
+            validated_data['profile_picture'] = None
+        return Seller.objects.create(userId=user, **validated_data)
+        # return Seller.objects.create(userId=4, **validated_data)
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:

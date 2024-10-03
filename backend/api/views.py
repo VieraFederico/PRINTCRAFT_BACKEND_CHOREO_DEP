@@ -35,7 +35,7 @@ class ReturnUserDataView(generics.RetrieveAPIView):
 class SellerCreateView(generics.CreateAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
 class SellerDetailView(generics.RetrieveAPIView):
     queryset = Seller.objects.all()
