@@ -99,6 +99,7 @@ class ProductSellerDetailView(APIView):
                 "address": seller.address,
                 "store_name": seller.store_name,
                 "description": seller.description,
+                "profile_picture": seller.profile_picture,
             }
             return Response(seller_data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
