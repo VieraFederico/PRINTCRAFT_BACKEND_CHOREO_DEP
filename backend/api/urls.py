@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import ProductDetailView, CreateCheckoutPreferenceView
+from .views import *
 
 urlpatterns = [
     path("seller/", views.SellerCreateView.as_view(), name="seller_create"),
@@ -15,6 +15,7 @@ urlpatterns = [
     path('products/recommended/', views.RecommendedProductListView.as_view(), name='recommended-product-list'),
     path('products/<int:code>/', ProductDetailView.as_view(), name='product-detail'),
     path('create_checkout_preference/', CreateCheckoutPreferenceView.as_view(), name='create_checkout_preference'),
+    path('products/<int:product_id>/seller/', ProductSellerDetailView.as_view(), name='product-seller-detail'),
 
     # todo agregar
     #     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),

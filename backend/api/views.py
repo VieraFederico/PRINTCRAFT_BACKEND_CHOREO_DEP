@@ -86,6 +86,24 @@ class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
+class ProductSellerDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(code=product_id)
+            seller = product.seller
+            seller_data = {
+                "userId": seller.userId.id,
+                # "username": seller.userId.username,
+                "address": seller.address,
+                "store_name": seller.store_name,
+                "description": seller.description,
+            }
+            return Response(seller_data, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
     # todo agregar
 
 """
