@@ -86,6 +86,45 @@ class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
+    # todo agregar
+
+"""
+class IsProductOwnerView(APIView):
+    permission_classes = [IsSeller]
+
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+            if product.seller.userId == request.user:
+                return Response({"is_owner": True}, status=status.HTTP_200_OK)
+            else:
+                return Response({"is_owner": False}, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+"""
+
+# todo agregar
+"""
+class UpdateProductStockView(APIView):
+    permission_classes = [IsSeller]
+
+    def post(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+            if product.seller.userId == request.user:
+                new_stock = request.data.get('stock')
+                if new_stock is not None and isinstance(new_stock, int) and new_stock >= 0:
+                    product.stock = new_stock
+                    product.save()
+                    return Response({"message": "Stock updated successfully"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Invalid stock value"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"error": "You do not own this product"}, status=status.HTTP_403_FORBIDDEN)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+"""
+
 ################
 #### ORDERS ####
 ################
