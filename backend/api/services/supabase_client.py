@@ -13,6 +13,15 @@ def upload_file_to_supabase(file, bucket_name, file_name):
         raise Exception(response.error)
     return file_name
 
+def remove_file_from_supabase(bucket_name, file_name):
+    response = supabase.storage.from_(bucket_name).remove(file_name)
+
+    for message in response:
+        if 'error' in message:
+            raise Exception(message['error'])
+
+    return True
+
 def test_upload_file():
     # Crear un archivo de prueba
     test_file_name = "../images.jpg"
@@ -28,5 +37,15 @@ def test_upload_file():
     finally:
         pass
 
+def test_remove_file():
+    try:
+        remove_file_from_supabase("images", "darthmaul")
+        print("File removed successfully")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        pass
+
 if __name__ == "__main__":
-    test_upload_file()
+    test_remove_file()
+

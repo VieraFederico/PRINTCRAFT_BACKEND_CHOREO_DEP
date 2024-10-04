@@ -16,6 +16,7 @@ urlpatterns = [
     path('products/<int:code>/', ProductDetailView.as_view(), name='product-detail'),
     path('create_checkout_preference/', CreateCheckoutPreferenceView.as_view(), name='create_checkout_preference'),
     path('products/<int:product_id>/seller/', ProductSellerDetailView.as_view(), name='product-seller-detail'),
+    path('seller/update-profile-picture/', UpdateProfilePictureView.as_view(), name='update-profile-picture'),
 
     # todo agregar
     #     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
