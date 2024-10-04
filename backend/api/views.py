@@ -257,39 +257,43 @@ class FileUploadView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class CreateCheckoutPreferenceView(APIView):
-    permission_classes = [IsAuthenticated]
-    def post(self, request, *args, **kwargs):
+import mercadopago
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import uuid  # Para generar el idempotency key
+
+class CreatePaymentView(APIView):
+    def post(self, request):
+        # Inicializamos el SDK de Mercado Pago con el access token
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
-        # Aquí puedes obtener los productos o servicios seleccionados por el usuario
-        items = request.data.get('items', [])
-        if not items:
-            return Response({'error': 'No items provided'}, status=status.HTTP_400_BAD_REQUEST)
+        # Generamos un idempotency key único para este pago
+        request_options = mercadopago.config.RequestOptions()
+        request_options.custom_headers = {
+            'x-idempotency-key': str(uuid.uuid4())  # Valor único para evitar pagos duplicados
+        }
 
-        # Configuramos los ítems para la preferencia
-        preference_data = {
-            "items": items,  # items es una lista de diccionarios con la información de los productos
+        # Datos del pago que recibimos desde el cliente
+        payment_data = {
+            "transaction_amount": request.data.get("transaction_amount"),  # Monto del pago
+            "token": request.data.get("token"),  # Token de la tarjeta
+            "description": request.data.get("description"),  # Descripción del pago
+            "payment_method_id": request.data.get("payment_method_id"),  # Metodo de pago (visa, mastercard, etc.)
+            "installments": request.data.get("installments", 1),  # Cuotas, default es 1
             "payer": {
-                "email": request.user.email
-            },
-            "back_urls": {
-                "success": "https://3dcapybara.vercel.app//success",
-                "failure": "https://3dcapybara.vercel.app//failure",
-                "pending": "https://3dcapybara.vercel.app//pending"
-            },
-            "auto_return": "approved",  # Auto retornar si el pago es aprobado
+                "email": request.data.get("email")  # Correo del pagador
+            }
         }
 
         try:
-            # Crear la preferencia con el SDK de Mercado Pago
-            preference_response = sdk.preference().create(preference_data)
-            preference = preference_response["response"]
+            # Intentamos crear el pago con Mercado Pago
+            result = sdk.payment().create(payment_data, request_options)
+            payment = result["response"]
 
-            return JsonResponse({
-                'id': preference['id'],  # ID de la preferencia
-                'init_point': preference['init_point'],  # URL del checkout
-            }, status=status.HTTP_201_CREATED)
+            # Devolvemos el resultado del pago
+            return Response(payment, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Si ocurre un error, lo manejamos y devolvemos una respuesta con el error
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
