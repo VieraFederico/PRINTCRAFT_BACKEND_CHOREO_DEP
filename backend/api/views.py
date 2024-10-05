@@ -141,6 +141,7 @@ class SellerProductListView(generics.ListAPIView):
 
 class RecommendedProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Obtener los productos más vendidos
