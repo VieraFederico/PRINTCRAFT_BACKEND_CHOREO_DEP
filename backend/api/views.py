@@ -12,6 +12,30 @@ from django.conf import settings
 from django.http import JsonResponse
 from api.services.supabase_client import *
 
+####################
+#### AUXILIARES ####
+####################
+def delete_product_and_stl(product_code, seller_id):
+    try:
+        product = Product.objects.get(code=product_code)
+        if product.seller.userId != seller_id:
+            return Response({"error": "You do not own this product"}, status=status.HTTP_403_FORBIDDEN)
+        if product.stl_file_url:
+            stl_file_name = product.stl_file_url.split('/')[-1]
+            try:
+                remove_file_from_supabase('3d-archives', stl_file_name)
+            except Exception as e:
+                raise Exception(f"Error removing STL file: {str(e)}")
+
+        # todo -> eliminar todas las imagenes asociadas al producto de la tabla ProductImage
+
+        product.delete()
+        return Response({"message": "Product and associated STL file deleted successfully"}, status=status.HTTP_200_OK)
+
+    except Product.DoesNotExist:
+        return {"error": "Product not found"}
+    except Exception as e:
+        return {"error": str(e)}
 
 ###############
 #### USERS ####
@@ -136,6 +160,34 @@ class ProductSellerDetailView(APIView):
                 "profile_picture": seller.profile_picture,
             }
             return Response(seller_data, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+"""
+class DeleteProductView(APIView):
+    # permission_classes = [IsSeller]
+    permission_classes = [IsSeller] # todo CAMBIAR
+
+    def delete(self, request, product_id):
+        try:
+            product = Product.objects.get(code=product_id)
+            if product.seller.userId == request.user:
+            # if True:
+                product.delete()
+                # todo -> agregar que elimine las imagenes asociadas del bucket
+                return Response({"message": "Product deleted successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "You do not own this product"}, status=status.HTTP_403_FORBIDDEN)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+"""
+
+
+class DeleteProductView(APIView):
+    permission_classes = [IsSeller]
+
+    def delete(self, request, product_id):
+        try:
+            return delete_product_and_stl(product_id, request.user)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
