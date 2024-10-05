@@ -7,6 +7,8 @@ class Seller(models.Model):
     store_name = models.CharField(max_length=255, unique=True, null=False)
     description = models.TextField()
     profile_picture = models.URLField(max_length=200, null=True, blank=True)
+    # TODO AGREGAR!!!
+    # mp_mail = models.EmailField(max_length=255, null=False)
 
     # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     # total_sales = models.IntegerField(default=0)
