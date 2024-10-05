@@ -325,36 +325,37 @@ from rest_framework import status
 import uuid  # Para generar el idempotency key
 
 class CreatePaymentView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
-        # Inicializamos el SDK de Mercado Pago con el access token
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
-        # Generamos un idempotency key único para este pago
-        request_options = mercadopago.config.RequestOptions()
-        request_options.custom_headers = {
-            'x-idempotency-key': str(uuid.uuid4())  # Valor único para evitar pagos duplicados
-        }
-
-        # Datos del pago que recibimos desde el cliente
-        payment_data = {
-            "transaction_amount": request.data.get("transaction_amount"),  # Monto del pago
-            "token": request.data.get("token"),  # Token de la tarjeta
-            "description": request.data.get("description"),  # Descripción del pago
-            "payment_method_id": request.data.get("payment_method_id"),  # Metodo de pago (visa, mastercard, etc.)
-            "installments": request.data.get("installments", 1),  # Cuotas, default es 1
+        # Datos de la preferencia
+        preference_data = {
+            "items": [
+                {
+                    "title": request.data.get("description"),
+                    "quantity": request.data.get("quantity"),
+                    "unit_price": float(request.data.get("transaction_amount"))
+                }
+            ],
             "payer": {
-                "email": request.data.get("email")  # Correo del pagador
-            }
+                "email": request.data.get("email")
+            },
+            "back_urls": {
+                "success": "https://www.tusitio.com/success",
+                "failure": "https://www.tusitio.com/failure",
+                "pending": "https://www.tusitio.com/pending"
+            },
+            "auto_return": "approved",
         }
 
         try:
-            # Intentamos crear el pago con Mercado Pago
-            result = sdk.payment().create(payment_data, request_options)
-            payment = result["response"]
+            # Crear la preferencia en Mercado Pago
+            preference_response = sdk.preference().create(preference_data)
+            preference = preference_response["response"]
 
-            # Devolvemos el resultado del pago
-            return Response(payment, status=status.HTTP_201_CREATED)
+            # Devolver la preferencia con el ID para que se use en el frontend
+            return Response(preference, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            # Si ocurre un error, lo manejamos y devolvemos una respuesta con el error
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
