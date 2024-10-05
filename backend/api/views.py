@@ -15,6 +15,13 @@ from api.services.supabase_client import *
 ####################
 #### AUXILIARES ####
 ####################
+def delete_product_image(product_image):
+    try:
+        remove_file_from_supabase('images', product_image.image_url.split('/')[-1])
+        product_image.delete()
+    except Exception as e:
+        raise Exception(f"Error removing image: {str(e)}")
+
 def delete_product_and_stl(product_code, seller_id):
     try:
         product = Product.objects.get(code=product_code)
@@ -27,7 +34,8 @@ def delete_product_and_stl(product_code, seller_id):
             except Exception as e:
                 raise Exception(f"Error removing STL file: {str(e)}")
 
-        # todo -> eliminar todas las imagenes asociadas al producto de la tabla ProductImage
+        for product_image in product.images.all():
+            delete_product_image(product_image)
 
         product.delete()
         return Response({"message": "Product and associated STL file deleted successfully"}, status=status.HTTP_200_OK)
