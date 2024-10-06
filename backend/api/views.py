@@ -246,7 +246,7 @@ class CreatePrintRequestView(generics.CreateAPIView):
     queryset = PrintRequest.objects.all()
     serializer_class = PrintRequestSerializer
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]
+    # permission_classes = [AllowAny] # TODO CAMBIAR !!
 
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer

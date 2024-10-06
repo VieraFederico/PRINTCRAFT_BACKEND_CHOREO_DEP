@@ -98,12 +98,13 @@ class PrintRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrintRequest
-        fields = ['requestID', 'userID', 'sellerID', 'stl_url', 'description', 'material', 'status', 'stl_file']
-        extra_kwargs = {'requestID':{'read_only':True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'stl_url': {'read_only': True}}
+        fields = ['requestID', 'userID', 'quantity', 'sellerID', 'stl_url', 'description', 'material', 'status', 'stl_file', 'price']
+        extra_kwargs = {'requestID':{'read_only':True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'stl_url': {'read_only': True}, 'price':{'read_only':True}}
 
     def create(self, validated_data):
         stl_file = validated_data.pop('stl_file', None)
         user = self.context['request'].user
+        # user = User.objects.get(id=7)  # TODO CAMBIARRRR
 
         """
         try:

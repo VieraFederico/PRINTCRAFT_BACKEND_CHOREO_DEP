@@ -37,9 +37,14 @@ class PrintRequest(models.Model):
     description = models.TextField()
     quantity = models.IntegerField(null=False)
     material = models.CharField(max_length=255, null=False)
-    status = models.CharField(max_length=255, null=False, default="Pendiente", choices=[("En proceso", "En proceso"),
-                                                                ("Pendiente", "Pendiente"), ("Realizada", "Realizada"),
-                                                                ("Rechazada", "Rechazada"), ("Cancelada", "Cancelada")])
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    status = models.CharField(max_length=255, null=False, default="Pendiente",
+                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
+                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
+                                       ("En proceso", "En proceso"), ("Realizada", "Realizada")]
+                              )
+
+
 
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
