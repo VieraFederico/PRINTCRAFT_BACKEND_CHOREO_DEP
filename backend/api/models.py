@@ -36,7 +36,7 @@ class PrintRequest(models.Model):
     stl_url = models.URLField(max_length=200, null=False)
     description = models.TextField()
     quantity = models.IntegerField(null=False)
-    material = models.CharField(max_length=255, null=False)
+    material = models.CharField(max_length=255, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     status = models.CharField(max_length=255, null=False, default="Pendiente",
                               choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
@@ -44,6 +44,21 @@ class PrintRequest(models.Model):
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada")]
                               )
 
+"""
+class DesignRequest(models.Model):
+    requestID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
+    description = models.TextField()
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    status = models.CharField(max_length=255, null=False, default="Pendiente",
+                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
+                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
+                                       ("En proceso", "En proceso"), ("Realizada", "Realizada")]
+                              )
+"""
 
 
 class Order(models.Model):
