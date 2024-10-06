@@ -98,7 +98,7 @@ class PrintRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrintRequest
-        fields = ['requestID', 'userID', 'sellerID', 'stl_url', 'description', 'quantity', 'material', 'status', 'stl_file']
+        fields = ['requestID', 'userID', 'sellerID', 'stl_url', 'description', 'material', 'status', 'stl_file']
         extra_kwargs = {'requestID':{'read_only':True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'stl_url': {'read_only': True}}
 
     def create(self, validated_data):
