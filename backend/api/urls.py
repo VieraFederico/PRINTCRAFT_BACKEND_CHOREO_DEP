@@ -24,6 +24,6 @@ urlpatterns = [
     path('print-requests/<int:request_id>/user-respond/', UserRespondToPrintRequestView.as_view(), name='user-respond-print-request'),
 
     # todo agregar
-    #     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
+    path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
     #     path('products/<int:product_id>/update_stock/', UpdateProductStockView.as_view(), name='update_product_stock'),
 ]

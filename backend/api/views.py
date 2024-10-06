@@ -202,20 +202,21 @@ class DeleteProductView(APIView):
 
     # todo agregar
 
-"""
+
 class IsProductOwnerView(APIView):
     permission_classes = [IsSeller]
 
     def get(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
-            if product.seller.userId == request.user:
+            product = Product.objects.get(code=product_id)
+            user = request.user
+            if product.seller.userId == user:
                 return Response({"is_owner": True}, status=status.HTTP_200_OK)
             else:
                 return Response({"is_owner": False}, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-"""
+
 
 # todo agregar
 """
