@@ -218,15 +218,14 @@ class IsProductOwnerView(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# todo agregar
-"""
+
 class UpdateProductStockView(APIView):
     permission_classes = [IsSeller]
-
     def post(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
-            if product.seller.userId == request.user:
+            product = Product.objects.get(code=product_id)
+            user = request.user
+            if product.seller.userId == user:
                 new_stock = request.data.get('stock')
                 if new_stock is not None and isinstance(new_stock, int) and new_stock >= 0:
                     product.stock = new_stock
@@ -238,7 +237,7 @@ class UpdateProductStockView(APIView):
                 return Response({"error": "You do not own this product"}, status=status.HTTP_403_FORBIDDEN)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-"""
+
 
 ##################
 #### REQUESTS ####
