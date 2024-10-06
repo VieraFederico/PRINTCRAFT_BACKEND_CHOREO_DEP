@@ -239,6 +239,16 @@ class UpdateProductStockView(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 """
 
+##################
+#### REQUESTS ####
+##################
+class CreatePrintRequestView(generics.CreateAPIView):
+    queryset = PrintRequest.objects.all()
+    serializer_class = PrintRequestSerializer
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
+
+
 ################
 #### ORDERS ####
 ################

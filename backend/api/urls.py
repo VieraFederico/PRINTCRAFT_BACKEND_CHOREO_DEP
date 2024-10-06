@@ -17,6 +17,7 @@ urlpatterns = [
     path('products/<int:product_id>/seller/', ProductSellerDetailView.as_view(), name='product-seller-detail'),
     path('seller/update-profile-picture/', UpdateProfilePictureView.as_view(), name='update-profile-picture'),
     path('products/<int:product_id>/delete/', DeleteProductView.as_view(), name='delete-product'),
+    path('print-requests/create/', CreatePrintRequestView.as_view(), name='create-print-request'),
 
     # todo agregar
     #     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),

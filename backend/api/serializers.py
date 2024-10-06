@@ -1,3 +1,4 @@
+import uuid
 from itertools import product
 
 from django.contrib.auth.models import User
@@ -79,6 +80,54 @@ class OrderSerializer(serializers.ModelSerializer):
         validated_data['userID'] = user
         return Order.objects.create(**validated_data)
 
+"""
+class PrintRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrintRequest
+        fields = ['requestID', 'userID', 'sellerID', 'stl_url', 'description', 'quantity', 'material', 'status']
+        extra_kwargs = {'userID': {'read_only': True}, 'status': {'read_only': True}}
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['userID'] = user
+        return PrintRequest.objects.create(**validated_data)
+"""
+
+class PrintRequestSerializer(serializers.ModelSerializer):
+    stl_file = serializers.FileField(write_only=True, required=True)
+
+    class Meta:
+        model = PrintRequest
+        fields = ['requestID', 'userID', 'sellerID', 'stl_url', 'description', 'quantity', 'material', 'status', 'stl_file']
+        extra_kwargs = {'requestID':{'read_only':True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'stl_url': {'read_only': True}}
+
+    def create(self, validated_data):
+        stl_file = validated_data.pop('stl_file', None)
+        user = self.context['request'].user
+
+        """
+        try:
+            user = User.objects.get(id=4)  # TODO CAMBIARRRR
+        except User.DoesNotExist:
+            raise serializers.ValidationError("El usuario no existe.")
+        """
+        img_id = uuid.uuid4()  # Generar un requestID único
+
+        if stl_file:
+            try:
+                stl_file_content = stl_file.read()
+                stl_file_url = upload_file_to_supabase(stl_file_content, 'request-stl', f"{img_id}_stl")
+                stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/request-stl/{stl_file_url}"
+                # validated_data['stl_url'] = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/stl_files/{stl_file_url}"
+            except Exception as e:
+                raise serializers.ValidationError(f"Error al subir el archivo STL: {str(e)}")
+        else:
+            return serializers.ValidationError("No se ha proporcionado un archivo STL.")
+
+        # validated_data['userID'] = user
+        # return PrintRequest.objects.create(**validated_data)
+        return PrintRequest.objects.create(userID=user, stl_url=stl_file_url, **validated_data)
+
 ## -------------------------------------------------------------------------------------  ##
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -104,7 +153,9 @@ class ProductSerializer(serializers.ModelSerializer):
             # 'stl_file': {'write_only': True},  # Solo escritura
         }
 
+    # TODO ARREGLAR PARA QUE SE PUEDA NO SUBIR UN ARCHIVO STL !!!
     def create(self, validated_data):
+        product_name = validated_data['name']
         # Extraer archivos de imagen del campo de solo escritura
         image_files = validated_data.pop('image_files', [])
         stl_file = validated_data.pop('stl_file', None)
@@ -116,11 +167,8 @@ class ProductSerializer(serializers.ModelSerializer):
         # Leer el contenido del archivo STL antes de subirlo
         stl_file_content = stl_file.read()
 
-        product_name = validated_data['name']
-
         # Subir el archivo STL a Supabase y obtener la URL
         stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
-        # todo falta concatenar la URL base: https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/
 
         stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
 
@@ -152,6 +200,16 @@ class ProductSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
 
         return product
+
+"""
+if stl_file:
+    stl_file_content = stl_file.read()
+    product_name = validated_data['name']
+    # Subir el archivo STL a Supabase y obtener la URL
+    stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
+    stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
+    validated_data['stl_file_url'] = stl_file_url
+"""
 """
 
         if stl_file:
