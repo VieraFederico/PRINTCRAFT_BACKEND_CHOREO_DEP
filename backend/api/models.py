@@ -29,7 +29,17 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-
+class PrintRequest(models.Model):
+    requestID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
+    stl_url = models.URLField(max_length=200, null=False)
+    description = models.TextField()
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=False)
+    status = models.CharField(max_length=255, null=False, default="Pendiente", choices=[("En proceso", "En proceso"),
+                                                                ("Pendiente", "Pendiente"), ("Realizada", "Realizada"),
+                                                                ("Rechazada", "Rechazada"), ("Cancelada", "Cancelada")])
 
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
@@ -38,6 +48,7 @@ class Order(models.Model):
     quantity = models.IntegerField(null=False)
     productCode = models.ForeignKey(Product, on_delete=models.CASCADE, null=False)
     status = models.CharField(max_length=255, null=False, default="En proceso")
+    # status = models.CharField(max_length=10, choices=[("En proceso", "En proceso"), ("Pendiente", "Pendiente"), ("Realizada", "Realizada"), ("Rechazada", "Rechazada"), ("Cancelada", "Cancelada")], default="En proceso")
 
     def __str__(self):
         return self.orderID
