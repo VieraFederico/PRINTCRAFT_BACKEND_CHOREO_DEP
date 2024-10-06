@@ -264,6 +264,40 @@ class SellerPrintRequestListView(generics.ListAPIView):
         seller = self.request.user.seller
         return PrintRequest.objects.filter(sellerID=seller)
 
+# backend/api/views.py
+
+class AcceptOrRejectPrintRequestView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def post(self, request, request_id):
+        sellerID = request.user.seller
+        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
+
+        try:
+            print_request = PrintRequest.objects.get(requestID=request_id, sellerID=sellerID)
+            if print_request.status != "Pendiente":
+                return Response({"error": "Request has already been responded"}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = request.data.get('response')
+            price = request.data.get('price')
+
+            if response not in ["Accept", "Reject"]:
+                return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if response == "Accept":
+                if not price:
+                    return Response({"error": "Price is required when accepting a request"}, status=status.HTTP_400_BAD_REQUEST)
+                print_request.status = "Cotizada"
+                print_request.price = price
+            else:
+                print_request.status = "Rechazada"
+
+            print_request.save()
+            return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
+        except PrintRequest.DoesNotExist:
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
+
 ################
 #### ORDERS ####
 ################
