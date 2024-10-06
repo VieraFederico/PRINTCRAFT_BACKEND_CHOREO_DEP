@@ -248,6 +248,13 @@ class CreatePrintRequestView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
 
+class UserPrintRequestListView(generics.ListAPIView):
+    serializer_class = PrintRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return PrintRequest.objects.filter(userID=user)
 
 ################
 #### ORDERS ####
