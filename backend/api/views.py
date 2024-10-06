@@ -256,6 +256,14 @@ class UserPrintRequestListView(generics.ListAPIView):
         user = self.request.user
         return PrintRequest.objects.filter(userID=user)
 
+class SellerPrintRequestListView(generics.ListAPIView):
+    serializer_class = PrintRequestSerializer
+    permission_classes = [IsSeller]
+
+    def get_queryset(self):
+        seller = self.request.user.seller
+        return PrintRequest.objects.filter(sellerID=seller)
+
 ################
 #### ORDERS ####
 ################
