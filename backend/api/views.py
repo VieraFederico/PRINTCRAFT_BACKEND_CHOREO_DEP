@@ -264,7 +264,6 @@ class SellerPrintRequestListView(generics.ListAPIView):
         seller = self.request.user.seller
         return PrintRequest.objects.filter(sellerID=seller)
 
-# backend/api/views.py
 
 class AcceptOrRejectPrintRequestView(APIView):
     permission_classes = [IsSeller]
