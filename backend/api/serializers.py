@@ -145,12 +145,17 @@ class ProductSerializer(serializers.ModelSerializer):
         slug_field='name',
         queryset=Material.objects.all()
     )
+    categories = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Category.objects.all()
+    )
 
     class Meta:
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'materials'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'materials', 'categories'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
@@ -166,6 +171,8 @@ class ProductSerializer(serializers.ModelSerializer):
         image_files = validated_data.pop('image_files', [])
         stl_file = validated_data.pop('stl_file', None)
         materials = validated_data.pop('materials', [])
+        categories = validated_data.pop('categories', [])
+
 
 
         # Asignar el vendedor desde el contexto del request
@@ -183,6 +190,7 @@ class ProductSerializer(serializers.ModelSerializer):
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
         product.materials.set(materials)
+        product.categories.set(categories)
 
 
         for index, image_file in enumerate(image_files, start=1):
