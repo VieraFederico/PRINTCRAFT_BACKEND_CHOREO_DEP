@@ -170,6 +170,12 @@ class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
+class ProductDetailWithSellerView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductDetailSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'code'  # Usamos el campo code para la búsqueda
+
 class ProductSellerDetailView(APIView):
     permission_classes = [AllowAny]
 

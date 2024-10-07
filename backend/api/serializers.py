@@ -286,6 +286,29 @@ class ProductSerializer(serializers.ModelSerializer):
 
         return product
 
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    seller_name = serializers.CharField(source='seller.store_name', read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
+    materials = ProductMaterialSerializer(many=True, source='productmaterial_set')
+    categories = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            'code', 'name', 'material', 'stock', 'description',
+            'stl_file_url', 'seller', 'price', 'images', 'categories', 'materials', 'seller_name'
+        ]
+        extra_kwargs = {
+            'code': {'read_only': True},  # Solo lectura
+            'seller': {'read_only': True},  # Solo lectura
+            'stl_file_url': {'read_only': True},  # Solo escritura
+        }
+
 """
 if stl_file:
     stl_file_content = stl_file.read()
