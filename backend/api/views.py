@@ -121,8 +121,8 @@ class UpdateProfilePictureView(APIView):
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    # permission_classes = [IsSeller]
-    permission_classes = [AllowAny]
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
 
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
