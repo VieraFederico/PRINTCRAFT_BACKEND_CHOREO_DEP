@@ -443,8 +443,8 @@ class CreatePaymentView(APIView):
                 "email": email
             },
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/",
-                "failure": "https://3dcapybara.vercel.app/",
+                "success": "https://3dcapybara.vercel.app/success",
+                "failure": "https://3dcapybara.vercel.app/failure",
                 "pending": "https://www.tusitio.com/pending"
             },
             "auto_return": "approved",
