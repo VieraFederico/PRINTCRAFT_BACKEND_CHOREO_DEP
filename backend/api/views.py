@@ -440,13 +440,12 @@ class CreatePaymentView(APIView):
     def post(self, request):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity")
-        email = request.data.get("email")
 
         product_selected = Product.objects.get(code=product_id)
         transaction_amount = Decimal(product_selected.price) * int(quantity)
         if int(quantity) > product_selected.stock:
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
-        if not all([product_id, quantity, transaction_amount, email]):
+        if not all([product_id, quantity, transaction_amount]):
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         if not access_token:
@@ -462,9 +461,6 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
-            "payer": {
-                "email": email
-            },
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/success",
                 "failure": "https://3dcapybara.vercel.app/failure",
