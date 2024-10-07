@@ -1,3 +1,5 @@
+from logging import Logger
+
 import mercadopago
 from django.shortcuts import render
 from django.contrib.auth.models import User
@@ -460,5 +462,5 @@ class CreatePaymentView(APIView):
 
 
         except Exception as e:
-            logger.error(f"Error creating preference: {str(e)}")
+            Logger.error(f"Error creating preference: {str(e)}")
             return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
