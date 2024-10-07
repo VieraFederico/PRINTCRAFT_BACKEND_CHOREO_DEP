@@ -413,9 +413,8 @@ import uuid  # Para generar el idempotency key
 
 class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
+    def post(self, request):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity")
         transaction_amount = request.data.get("transaction_amount")
@@ -423,8 +422,13 @@ class CreatePaymentView(APIView):
 
         if not all([product_id, quantity, transaction_amount, email]):
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Datos de la preferencia
+
+        access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+        if not access_token:
+            return Response({"error": "Access token must be a valid string."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        sdk = mercadopago.SDK(access_token)
+
         preference_data = {
             "items": [
                 {
@@ -434,7 +438,7 @@ class CreatePaymentView(APIView):
                 }
             ],
             "payer": {
-                "email": request.data.get("email")
+                "email": email
             },
             "back_urls": {
                 "success": "https://www.tusitio.com/success",
@@ -445,12 +449,10 @@ class CreatePaymentView(APIView):
         }
 
         try:
-            # Crear la preferencia en Mercado Pago
             preference_response = sdk.preference().create(preference_data)
             preference = preference_response["response"]
-
-            # Devolver la preferencia con el ID para que se use en el frontend
             return Response(preference, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Error creating preference: {str(e)}")
+            return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
