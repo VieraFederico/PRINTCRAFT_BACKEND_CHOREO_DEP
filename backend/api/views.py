@@ -420,7 +420,7 @@ class CreatePaymentView(APIView):
         preference_data = {
             "items": [
                 {
-                    "title": request.data.get("description"),
+                    "product_id": request.data.get("product_id"),
                     "quantity": request.data.get("quantity"),
                     "unit_price": float(request.data.get("transaction_amount"))
                 }
