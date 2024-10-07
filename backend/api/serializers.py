@@ -136,15 +136,20 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ['product', 'image_url']
 
+class ProductMaterialSerializer(serializers.ModelSerializer):
+    material = serializers.SlugRelatedField(slug_field='name', queryset=Material.objects.all())
+
+    class Meta:
+        model = ProductMaterial
+        fields = ['material', 'price']
+
+
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
-    stl_file = serializers.FileField(write_only=True, required=False)
-    materials = serializers.SlugRelatedField(
-        many=True,
-        slug_field='name',
-        queryset=Material.objects.all()
-    )
+    stl_file = serializers.FileField(write_only=True, required=False, allow_null=True)
+    materials = ProductMaterialSerializer(many=True, source='productmaterial_set')
+
     categories = serializers.SlugRelatedField(
         many=True,
         slug_field='name',
@@ -155,7 +160,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'materials', 'categories'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
@@ -170,7 +175,7 @@ class ProductSerializer(serializers.ModelSerializer):
         # Extraer archivos de imagen del campo de solo escritura
         image_files = validated_data.pop('image_files', [])
         stl_file = validated_data.pop('stl_file', None)
-        materials = validated_data.pop('materials', [])
+        materials_data = validated_data.pop('productmaterial_set', [])
         categories = validated_data.pop('categories', [])
 
 
@@ -179,18 +184,26 @@ class ProductSerializer(serializers.ModelSerializer):
         seller = self.context['request'].user.seller
         # seller = Seller.objects.get(userId=4) # TODO CAMBIARR
 
-        # Leer el contenido del archivo STL antes de subirlo
-        stl_file_content = stl_file.read()
+        if stl_file:
+            # Leer el contenido del archivo STL antes de subirlo
+            stl_file_content = stl_file.read()
 
-        # Subir el archivo STL a Supabase y obtener la URL
-        stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
+            # Subir el archivo STL a Supabase y obtener la URL
+            stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
 
-        stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
+            stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
+        else:
+            stl_file_url = None
 
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
-        product.materials.set(materials)
+
+
+        for material_data in materials_data:
+            ProductMaterial.objects.create(product=product, **material_data)
+
         product.categories.set(categories)
+
 
 
         for index, image_file in enumerate(image_files, start=1):

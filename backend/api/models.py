@@ -41,11 +41,21 @@ class Product(models.Model):
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=False) # Placeholder for price
     # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0) # todo agregar
-    materials = models.ManyToManyField('Material')  # Relación muchos a muchos con Material
+    materials = models.ManyToManyField('Material', through='ProductMaterial')  # Relación muchos a muchos con Material
     categories = models.ManyToManyField('Category')  # Relación muchos a muchos con Category
 
     def __str__(self):
         return self.name
+
+class ProductMaterial(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    material = models.ForeignKey(Material, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+
+    class Meta:
+        unique_together = ('product', 'material')
+
+
 
 class PrintRequest(models.Model):
     requestID = models.AutoField(primary_key=True)
