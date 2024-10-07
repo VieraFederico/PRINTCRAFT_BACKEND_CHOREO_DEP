@@ -416,13 +416,21 @@ class CreatePaymentView(APIView):
     def post(self, request):
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
+        product_id = request.data.get("product_id")
+        quantity = request.data.get("quantity")
+        transaction_amount = request.data.get("transaction_amount")
+        email = request.data.get("email")
+
+        if not all([product_id, quantity, transaction_amount, email]):
+            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Datos de la preferencia
         preference_data = {
             "items": [
                 {
-                    "product_id": request.data.get("product_id"),
-                    "quantity": request.data.get("quantity"),
-                    "unit_price": float(request.data.get("transaction_amount"))
+                    "product_id": product_id,
+                    "quantity": int(quantity),
+                    "unit_price": float(transaction_amount)
                 }
             ],
             "payer": {
