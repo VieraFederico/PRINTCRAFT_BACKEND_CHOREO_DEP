@@ -16,6 +16,13 @@ class Seller(models.Model):
     def __str__(self):
         return self.userId.username
 
+
+class Material(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+
+    def __str__(self):
+        return self.name
+
 class Product(models.Model):
     code = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, null = False)
@@ -25,6 +32,8 @@ class Product(models.Model):
     stl_file_url = models.URLField(max_length=200, null=True, blank=True)  # URL del archivo STL
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=False) # Placeholder for price
+    # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0) # todo agregar
+    materials = models.ManyToManyField('Material')  # Relación muchos a muchos con Material
 
     def __str__(self):
         return self.name
@@ -86,14 +95,10 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Image for {self.product.name}"
 
-class Material(models.Model):
-    name = models.CharField(max_length=255, primary_key=True)
-
-    def __str__(self):
-        return self.name
 
 class Category(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
 
     def __str__(self):
         return self.name
+

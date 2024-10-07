@@ -140,12 +140,17 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
     stl_file = serializers.FileField(write_only=True, required=False)
+    materials = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Material.objects.all()
+    )
 
     class Meta:
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'materials'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
@@ -160,10 +165,12 @@ class ProductSerializer(serializers.ModelSerializer):
         # Extraer archivos de imagen del campo de solo escritura
         image_files = validated_data.pop('image_files', [])
         stl_file = validated_data.pop('stl_file', None)
+        materials = validated_data.pop('materials', [])
 
 
         # Asignar el vendedor desde el contexto del request
         seller = self.context['request'].user.seller
+        # seller = Seller.objects.get(userId=4) # TODO CAMBIARR
 
         # Leer el contenido del archivo STL antes de subirlo
         stl_file_content = stl_file.read()
@@ -175,6 +182,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
+        product.materials.set(materials)
 
 
         for index, image_file in enumerate(image_files, start=1):
