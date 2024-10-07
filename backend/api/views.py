@@ -200,7 +200,7 @@ class DeleteProductView(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # todo agregar
+    # tod agregar
 
 
 class IsProductOwnerView(APIView):
@@ -246,7 +246,7 @@ class CreatePrintRequestView(generics.CreateAPIView):
     queryset = PrintRequest.objects.all()
     serializer_class = PrintRequestSerializer
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny] # TODO CAMBIAR !!
+    # permission_classes = [AllowAny] # TOD CAMBIAR !!
 
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
@@ -267,11 +267,11 @@ class SellerPrintRequestListView(generics.ListAPIView):
 
 class AcceptOrRejectPrintRequestView(APIView):
     permission_classes = [IsSeller]
-    # permission_classes = [AllowAny] # TODO CAMBIAR
+    # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, request_id):
         sellerID = request.user.seller
-        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
+        # sellerID = Seller.objects.get(userId=4) # TOD CAMBIAR
 
         try:
             print_request = PrintRequest.objects.get(requestID=request_id, sellerID=sellerID) # sacar sellerID
@@ -301,11 +301,11 @@ class AcceptOrRejectPrintRequestView(APIView):
 
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]  # TODO CAMBIAR
+    # permission_classes = [AllowAny]  # TOD CAMBIAR
 
     def post(self, request, request_id):
         userID = request.user
-        # userID = User.objects.get(id=5) # TODO CAMBIAR
+        # userID = User.objects.get(id=5) # TOD CAMBIAR
 
         try:
             print_request = PrintRequest.objects.get(requestID=request_id, userID=userID) # cambiar lo de userID -> manejarlo con un if
@@ -417,12 +417,14 @@ class CreatePaymentView(APIView):
     def post(self, request):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity")
-        transaction_amount = request.data.get("transaction_amount")
         email = request.data.get("email")
 
+        product_selected = Product.objects.get(code=product_id)
+        transaction_amount = product_selected.price * quantity
+        if quantity > product_selected.stock:
+            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
         if not all([product_id, quantity, transaction_amount, email]):
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
-
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         if not access_token:
             return Response({"error": "Access token must be a valid string."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
