@@ -462,9 +462,9 @@ class CreatePaymentView(APIView):
                 }
             ],
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/success",
-                "failure": "https://3dcapybara.vercel.app/failure",
-                "pending": "https://www.3dcapybara.vercel.app/pending"
+                "success": "https://3dcapybara.vercel.app",
+                "failure": "https://3dcapybara.vercel.app",
+                "pending": "https://www.3dcapybara.vercel.app"
             },
             "auto_return": "approved",
         }
