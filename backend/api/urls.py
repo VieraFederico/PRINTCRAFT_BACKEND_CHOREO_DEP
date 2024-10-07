@@ -25,5 +25,7 @@ urlpatterns = [
     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
     path('products/<int:product_id>/update_stock/', UpdateProductStockView.as_view(), name='update_product_stock'),
     path('design-requests/create/', DesignRequestCreateView.as_view(), name='design-request-create'),
+    path('materials/', MaterialListView.as_view(), name='material-list'),
+    path('sellers/<int:userId>/materials/', SellerMaterialListView.as_view(), name='seller-material-list'),
 
 ]

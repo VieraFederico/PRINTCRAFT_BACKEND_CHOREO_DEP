@@ -45,6 +45,21 @@ def delete_product_and_stl(product_code, seller_id):
     except Exception as e:
         return {"error": str(e)}
 
+class MaterialListView(generics.ListAPIView):
+    queryset = Material.objects.all()
+    serializer_class = MaterialSerializer
+    permission_classes = [AllowAny]
+
+# /api/sellers/<int:userId>/materials/
+class SellerMaterialListView(generics.ListAPIView):
+    serializer_class = MaterialSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        userId = self.kwargs['userId']
+        seller = Seller.objects.get(userId=userId)
+        return seller.materials.all()
+
 ###############
 #### USERS ####
 ###############
