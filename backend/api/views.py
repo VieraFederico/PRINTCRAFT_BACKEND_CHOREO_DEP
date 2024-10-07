@@ -432,7 +432,7 @@ class CreatePaymentView(APIView):
         preference_data = {
             "items": [
                 {
-                    "product_id": product_id,
+                    "product_id": int(product_id),
                     "quantity": int(quantity),
                     "unit_price": float(transaction_amount)
                 }
@@ -441,8 +441,8 @@ class CreatePaymentView(APIView):
                 "email": email
             },
             "back_urls": {
-                "success": "https://www.tusitio.com/success",
-                "failure": "https://www.tusitio.com/failure",
+                "success": "https://3dcapybara.vercel.app/",
+                "failure": "https://3dcapybara.vercel.app/",
                 "pending": "https://www.tusitio.com/pending"
             },
             "auto_return": "approved",
@@ -450,8 +450,9 @@ class CreatePaymentView(APIView):
 
         try:
             preference_response = sdk.preference().create(preference_data)
-            preference = preference_response["response"]
-            return Response(preference, status=status.HTTP_201_CREATED)
+            preference_id = preference_response["response"]["id"]
+            return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+
 
         except Exception as e:
             logger.error(f"Error creating preference: {str(e)}")
