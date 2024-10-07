@@ -415,6 +415,7 @@ import mercadopago
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from decimal import Decimal
 import uuid  # Para generar el idempotency key
 
 class CreatePaymentView(APIView):
@@ -426,8 +427,8 @@ class CreatePaymentView(APIView):
         email = request.data.get("email")
 
         product_selected = Product.objects.get(code=product_id)
-        transaction_amount = product_selected.price * quantity
-        if quantity > product_selected.stock:
+        transaction_amount = Decimal(product_selected.price) * int(quantity)
+        if int(quantity) > product_selected.stock:
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
         if not all([product_id, quantity, transaction_amount, email]):
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
