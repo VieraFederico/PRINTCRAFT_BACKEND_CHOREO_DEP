@@ -59,7 +59,7 @@ class DesignRequest(models.Model):
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada")]
                               )
 """
-
+# PLA, PETG, ABS, Nailon
 
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
@@ -86,3 +86,14 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Image for {self.product.name}"
 
+class Material(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+
+    def __str__(self):
+        return self.name
+
+class Category(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+
+    def __str__(self):
+        return self.name
