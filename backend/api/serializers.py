@@ -129,6 +129,50 @@ class PrintRequestSerializer(serializers.ModelSerializer):
         # return PrintRequest.objects.create(**validated_data)
         return PrintRequest.objects.create(userID=user, stl_url=stl_file_url, **validated_data)
 
+
+class DesignRequestImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DesignRequestImage
+        fields = ['image_url']
+
+
+class DesignRequestSerializer(serializers.ModelSerializer):
+    design_images = DesignRequestImageSerializer(many=True, required=False)
+    design_images_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
+
+
+    class Meta:
+        model = DesignRequest
+        fields = ['requestID', 'userID', 'sellerID', 'description', 'design_images', 'design_images_files', 'quantity', 'material', 'price',
+                  'status']
+        extra_kwargs = {
+            'requestID': {'read_only': True},
+            'userID': {'read_only': True},
+            'status': {'read_only': True},
+            'design_images': {'read_only': True},
+            'design_images_files': {'write_only': True}
+        }
+
+    def create(self, validated_data):
+        design_images_files = validated_data.pop('design_images_files', [])
+        user = self.context['request'].user
+        # user = User.objects.get(id=5)
+        design_request = DesignRequest.objects.create(userID=user, **validated_data)
+
+        for index, image_file in enumerate(design_images_files, start=1):
+            try:
+                file_content = image_file.read()
+                file_name = f"{design_request.requestID}_{index}"
+                bucket_name = 'design_request_images'
+                image_url = upload_file_to_supabase(file_content, bucket_name, file_name)
+                image_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/{bucket_name}/{image_url}"
+                DesignRequestImage.objects.create(image_url=image_url)
+                design_request.design_images.add(DesignRequestImage.objects.get(image_url=image_url))
+            except Exception as e:
+                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+
+        return design_request
+
 ## -------------------------------------------------------------------------------------  ##
 
 class ProductImageSerializer(serializers.ModelSerializer):

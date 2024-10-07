@@ -327,6 +327,11 @@ class UserRespondToPrintRequestView(APIView):
         except PrintRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+class DesignRequestCreateView(generics.CreateAPIView):
+    queryset = DesignRequest.objects.all()
+    serializer_class = DesignRequestSerializer
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
 ################
 #### ORDERS ####
 ################
