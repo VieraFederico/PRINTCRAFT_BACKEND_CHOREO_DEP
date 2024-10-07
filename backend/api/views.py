@@ -412,7 +412,7 @@ from rest_framework import status
 import uuid  # Para generar el idempotency key
 
 class CreatePaymentView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
