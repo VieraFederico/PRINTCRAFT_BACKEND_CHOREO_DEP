@@ -446,9 +446,6 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
-            "payer": {
-                "email": email
-            },
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/success",
                 "failure": "https://3dcapybara.vercel.app/failure",
