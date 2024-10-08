@@ -445,6 +445,7 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
+            "marketplace_fee": 10,
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/success",
                 "failure": "https://3dcapybara.vercel.app/failure",
@@ -460,5 +461,4 @@ class CreatePaymentView(APIView):
 
 
         except Exception as e:
-            logger.error(f"Error creating preference: {str(e)}")
             return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
