@@ -467,7 +467,6 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
-            "marketplace_fee": 10,
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app",
                 "failure": "https://3dcapybara.vercel.app",
