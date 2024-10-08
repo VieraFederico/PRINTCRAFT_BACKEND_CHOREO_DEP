@@ -45,6 +45,21 @@ def delete_product_and_stl(product_code, seller_id):
     except Exception as e:
         return {"error": str(e)}
 
+class MaterialListView(generics.ListAPIView):
+    queryset = Material.objects.all()
+    serializer_class = MaterialSerializer
+    permission_classes = [AllowAny]
+
+# /api/sellers/<int:userId>/materials/
+class SellerMaterialListView(generics.ListAPIView):
+    serializer_class = MaterialSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        userId = self.kwargs['userId']
+        seller = Seller.objects.get(userId=userId)
+        return seller.materials.all()
+
 ###############
 #### USERS ####
 ###############
@@ -68,6 +83,7 @@ class SellerCreateView(generics.CreateAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # todo CAMBIAR
 
 class SellerDetailView(generics.RetrieveAPIView):
     queryset = Seller.objects.all()
@@ -151,6 +167,12 @@ class RecommendedProductListView(generics.ListAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'code'  # Usamos el campo code para la búsqueda
+
+class ProductDetailWithSellerView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductDetailSerializer
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
@@ -447,9 +469,9 @@ class CreatePaymentView(APIView):
             ],
             "marketplace_fee": 10,
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/success",
-                "failure": "https://3dcapybara.vercel.app/failure",
-                "pending": "https://www.3dcapybara.vercel.app/pending"
+                "success": "https://3dcapybara.vercel.app",
+                "failure": "https://3dcapybara.vercel.app",
+                "pending": "https://www.3dcapybara.vercel.app"
             },
             "auto_return": "approved",
         }

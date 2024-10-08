@@ -39,18 +39,27 @@ class SellerSerializer(serializers.ModelSerializer):
         return Seller.objects.create(userId=user, **validated_data)
 """
 
+class MaterialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = ['name']
+
 class SellerSerializer(serializers.ModelSerializer):
-    profile_picture_file = serializers.FileField(write_only=True, required=False)
+    profile_picture_file = serializers.FileField(write_only=True, required=False, allow_null=True)
+    materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True)
 
     class Meta:
         model = Seller
-        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail'] # TODO agregar 'mp_mail'
+        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials'] # TODO agregar 'mp_mail'
         extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
 
     def create(self, validated_data):
 
         profile_picture_file = validated_data.pop('profile_picture_file', None)
+        materials = validated_data.pop('materials', [])
         user = self.context['request'].user
+        # user = User.objects.get(id=5)
+
 
         if profile_picture_file:
             try:
@@ -64,7 +73,9 @@ class SellerSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
         else:
             validated_data['profile_picture'] = None
-        return Seller.objects.create(userId=user, **validated_data)
+        seller = Seller.objects.create(userId=user, **validated_data)
+        seller.materials.set(materials)
+        return seller
         # return Seller.objects.create(userId=4, **validated_data)
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -274,6 +285,29 @@ class ProductSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
 
         return product
+
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    seller_name = serializers.CharField(source='seller.store_name', read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
+    materials = ProductMaterialSerializer(many=True, source='productmaterial_set')
+    categories = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            'code', 'name', 'material', 'stock', 'description',
+            'stl_file_url', 'seller', 'price', 'images', 'categories', 'materials', 'seller_name'
+        ]
+        extra_kwargs = {
+            'code': {'read_only': True},  # Solo lectura
+            'seller': {'read_only': True},  # Solo lectura
+            'stl_file_url': {'read_only': True},  # Solo escritura
+        }
 
 """
 if stl_file:
