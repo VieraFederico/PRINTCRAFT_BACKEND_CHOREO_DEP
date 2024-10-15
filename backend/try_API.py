@@ -4,7 +4,7 @@ Created on Tue Oct 15 08:15:22 2024
 
 @author: Mati
 """
-
+"""
 import requests
 import json
 headers = {
@@ -75,3 +75,4 @@ print(response_myp.json())
 #%% Delete Product
 
 response_del_product = requests.delete("http://127.0.0.1:8000/api/delete/", headers=headers_with_auth)
+"""
