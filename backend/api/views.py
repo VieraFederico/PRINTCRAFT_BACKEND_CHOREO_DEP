@@ -397,7 +397,9 @@ class OrderCreateView(generics.CreateAPIView):
         product.save()
 
         # Guardamos la orden
-        serializer.save()
+        order=serializer.save()
+        return Response({"order_id": order.order_id}, status=status.HTTP_201_CREATED)
+
 
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
