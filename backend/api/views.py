@@ -394,6 +394,28 @@ class DesignRequestCreateView(generics.CreateAPIView):
     serializer_class = DesignRequestSerializer
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
+
+class UserDesignRequestListView(generics.ListAPIView):
+    serializer_class = DesignRequestSerializer
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # TOD CAMBIAR
+
+    def get_queryset(self):
+        user = self.request.user
+        # user = User.objects.get(id=5)
+        return DesignRequest.objects.filter(userID=user)
+
+class SellerDesignRequestListView(generics.ListAPIView):
+    serializer_class = DesignRequestSerializer
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TOD CAMBIAR
+
+    def get_queryset(self):
+        seller = self.request.user.seller
+        # seller = Seller.objects.get(userId=18) # TOD CAMBIAR
+        return DesignRequest.objects.filter(sellerID=seller)
+
+
 ################
 #### ORDERS ####
 ################

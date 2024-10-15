@@ -148,7 +148,7 @@ class DesignRequestImageSerializer(serializers.ModelSerializer):
 
 
 class DesignRequestSerializer(serializers.ModelSerializer):
-    design_images = DesignRequestImageSerializer(many=True, required=False)
+    design_images = DesignRequestImageSerializer(many=True, read_only=True, required=False)
     design_images_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
 
 
@@ -161,7 +161,8 @@ class DesignRequestSerializer(serializers.ModelSerializer):
             'userID': {'read_only': True},
             'status': {'read_only': True},
             'design_images': {'read_only': True},
-            'design_images_files': {'write_only': True}
+            'design_images_files': {'write_only': True},
+            'price': {'read_only': True}
         }
 
     def create(self, validated_data):
