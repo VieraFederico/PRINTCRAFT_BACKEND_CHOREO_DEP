@@ -465,9 +465,11 @@ class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        product_id = request.data.get("product_id")
-        quantity = request.data.get("quantity")
         order_id = request.data.get("order_id")
+        order = Order.objects.get(orderID=order_id)
+        product_id = order.productCode
+        quantity = order.quantity
+
         product_selected = Product.objects.get(code=product_id)
         transaction_amount = Decimal(product_selected.price) * int(quantity)
         if int(quantity) > product_selected.stock:
@@ -502,7 +504,6 @@ class CreatePaymentView(APIView):
             preference_response = sdk.preference().create(preference_data)
             preference_id = preference_response["response"]["id"]
 
-            order = Order.objects.get(orderID=order_id)
             order.preference_id = preference_id
             order.save()
 
