@@ -485,10 +485,10 @@ class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        order_id = request.data.get("order_id")
-        order = Order.objects.get(orderID=order_id)
-        product_id = order.productCode
-        quantity = order.quantity
+
+
+        product_id=request.data.get('product_id')
+        quantity=request.data.get('quantity')
 
         product_selected = Product.objects.get(code=product_id)
         transaction_amount = Decimal(product_selected.price) * int(quantity)
@@ -524,7 +524,12 @@ class CreatePaymentView(APIView):
             preference_response = sdk.preference().create(preference_data)
             preference_id = preference_response["response"]["id"]
 
-            order.preference_id = preference_id
+            order = Order.objects.create(
+                userID=request.user,
+                quantity=quantity,
+                productCode=product_id,
+                preference_id = preference_id
+            )
             order.save()
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
