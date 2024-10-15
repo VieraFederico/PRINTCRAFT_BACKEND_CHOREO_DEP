@@ -523,15 +523,15 @@ class CreatePaymentView(APIView):
         try:
             preference_response = sdk.preference().create(preference_data)
             preference_id = preference_response["response"]["id"]
-
-            order = Order.objects.create(
-                userID=request.user,
-                quantity=quantity,
-                productCode=product_id,
-                preference_id = preference_id
-            )
-            order.save()
-
+            #
+            #order = Order.objects.create(
+            #    userID=request.user,
+            #    quantity=quantity,
+            #    productCode=product_id,
+            #    preference_id = preference_id
+            #)
+            #order.save()
+            
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:

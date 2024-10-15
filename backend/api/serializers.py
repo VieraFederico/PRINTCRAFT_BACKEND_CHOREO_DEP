@@ -432,17 +432,3 @@ class ProductSerializer(serializers.ModelSerializer):
 #     ]
 # }
 """
-
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['orderID', 'userID', 'orderDate', 'quantity', 'productCode', 'status']
-        extra_kwargs = {'orderID': {'read_only': True}, 'orderDate': {'read_only': True}, 'status': {'read_only': True}}
-        #read_only_fields = ['order_id', 'order_date', 'status']  # El ID, la fecha y el estado no se pueden modificar
-
-    def create(self, validated_data):
-        # Al crear una orden, el estado siempre será "pendiente"
-        return Order.objects.create(**validated_data)
-
-
-
