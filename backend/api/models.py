@@ -92,7 +92,7 @@ class DesignRequest(models.Model):
                               choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
                                        ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada"),
-                                       ("Aceptada", "Aceptada")]
+                                       ("Aceptada", "Aceptada"), ("Entregada", "Entregada")]
                               )
 
 # PLA, PETG, ABS, Nailon

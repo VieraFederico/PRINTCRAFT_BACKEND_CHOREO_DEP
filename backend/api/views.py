@@ -369,6 +369,26 @@ class FinalizePrintRequestView(APIView):
         except PrintRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+class MarkAsDeliveredPrintRequestView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def post(self, request, request_id):
+        sellerID = request.user.seller
+        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
+
+        try:
+            print_request = PrintRequest.objects.get(requestID=request_id, sellerID=sellerID)
+            if print_request.status != "Realizada":
+                return Response({"error": "Request is not in a completed state"}, status=status.HTTP_400_BAD_REQUEST)
+
+            print_request.status = "Entregada"
+            print_request.save()
+            return Response({"message": "Request successfully marked as delivered"}, status=status.HTTP_200_OK)
+        except PrintRequest.DoesNotExist:
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
+
+
 class DesignRequestCreateView(generics.CreateAPIView):
     queryset = DesignRequest.objects.all()
     serializer_class = DesignRequestSerializer
