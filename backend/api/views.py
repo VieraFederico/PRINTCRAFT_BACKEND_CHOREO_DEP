@@ -524,18 +524,21 @@ class CreatePaymentView(APIView):
             preference_response = sdk.preference().create(preference_data)
             preference_id = preference_response["response"]["id"]
 
-          #  order = Order.objects.create(
-         #       userID=request.user,
-        #    quantity=quantity,
-           #     productCode=product_id,
-           #     preference_id = preference_id
-           # )
-           # order.save()
+            order_data = {
+                "userID": request.user.id,  # Asignar el ID del usuario
+                "quantity": quantity,
+                "productCode": product_id,
+                "preference_id": preference_id  # Guardar el preference_id en la orden
+            }
+
+            serializer = OrderSerializer(data=order_data)
+            if serializer.is_valid(raise_exception=True):
+                order = serializer.save()  # Crear la orden usando el serializador
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class MercadoPagoNotificationView(APIView):
     def post(self, request):
