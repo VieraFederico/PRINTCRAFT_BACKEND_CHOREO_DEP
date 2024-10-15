@@ -23,6 +23,7 @@ urlpatterns = [
     path('print-requests/<int:request_id>/accept-or-reject/', AcceptOrRejectPrintRequestView.as_view(), name='accept-or-reject-print-request'),
     path('print-requests/<int:request_id>/user-respond/', UserRespondToPrintRequestView.as_view(), name='user-respond-print-request'),
     path('print-requests/<int:request_id>/finalize-print-request/', FinalizePrintRequestView.as_view(), name='finalize-print-request'),
+    path('print-requests/<int:request_id>/mark-as-delivered-print-request/', MarkAsDeliveredPrintRequestView.as_view(), name='mark-as-delivered-print-request'),
     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
     path('products/<int:product_id>/update_stock/', UpdateProductStockView.as_view(), name='update_product_stock'),
     path('design-requests/create/', DesignRequestCreateView.as_view(), name='design-request-create'),
