@@ -526,14 +526,13 @@ class CreatePaymentView(APIView):
 
             order_data = {
                 "quantity": quantity,
-                "productCode": product_selected,  # Pass the product instance
-                "preference_id": preference_id  # Mercado Pago preference ID
+                "productCode": product_id,
+                "preference_id": preference_id
             }
 
-            # Use serializer to validate and save the order
-            serializer = OrderSerializer(data=order_data, context={'request': request})  # Pass request context
+            serializer = OrderSerializer(data=order_data, context={'request': request})
             if serializer.is_valid(raise_exception=True):
-                order = serializer.save()  # Crear la orden usando el serializador
+                serializer.save()
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
