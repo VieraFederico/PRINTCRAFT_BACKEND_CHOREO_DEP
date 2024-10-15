@@ -492,7 +492,7 @@ class CreatePaymentView(APIView):
                 "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
-            "notification_url": "https://3dcapybara.vercel.app/api/notifications", #Agregar Notifiaction nosecuanto para que se guarde la transaccion aunque muera la pagina
+            "notification_url": "https://3dcapybara.vercel.app/api/notifications",
 
         }
 
