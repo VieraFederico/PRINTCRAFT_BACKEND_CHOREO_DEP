@@ -453,7 +453,6 @@ class FileUploadView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-import mercadopago
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -466,7 +465,7 @@ class CreatePaymentView(APIView):
     def post(self, request):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity")
-
+        order_id = request.data.get("order_id")
         product_selected = Product.objects.get(code=product_id)
         transaction_amount = Decimal(product_selected.price) * int(quantity)
         if int(quantity) > product_selected.stock:
@@ -488,17 +487,41 @@ class CreatePaymentView(APIView):
                 }
             ],
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app",
-                "failure": "https://3dcapybara.vercel.app",
-                "pending": "https://www.3dcapybara.vercel.app"
+                "success": "https://3dcapybara.vercel.app/api/sucess",
+                "failure": "https://3dcapybara.vercel.app/api/failure",
+                "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
+            "notification_url": "https://3dcapybara.vercel.app/api/notifications", #Agregar Notifiaction nosecuanto para que se guarde la transaccion aunque muera la pagina
+
         }
 
         try:
             preference_response = sdk.preference().create(preference_data)
             preference_id = preference_response["response"]["id"]
+
+            order = Order.objects.get(orderID=order_id)
+            order.preference_id = preference_id
+            order.save()
+
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class MercadoPagoNotificationView(APIView):
+    def post(self, request):
+        data = request.data
+
+        payment_status = data.get("data", {}).get("status")
+        preference_id = data.get("data", {}).get("id")
+
+        try:
+            order = Order.objects.get(preference_id=preference_id)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        order.status = payment_status
+        order.save()
+
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
