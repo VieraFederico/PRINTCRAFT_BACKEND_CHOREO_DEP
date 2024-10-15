@@ -128,7 +128,7 @@ class PrintRequestSerializer(serializers.ModelSerializer):
         if stl_file:
             try:
                 stl_file_content = stl_file.read()
-                stl_file_url = upload_file_to_supabase(stl_file_content, 'request-stl', f"{img_id}_stl")
+                stl_file_url = upload_file_to_supabase(stl_file_content, 'request-stl', f"{img_id}_stl", content_type="model/stl")
                 stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/request-stl/{stl_file_url}"
                 # validated_data['stl_url'] = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/stl_files/{stl_file_url}"
             except Exception as e:
@@ -244,7 +244,7 @@ class ProductSerializer(serializers.ModelSerializer):
             stl_file_content = stl_file.read()
 
             # Subir el archivo STL a Supabase y obtener la URL
-            stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl")
+            stl_file_url = upload_file_to_supabase(stl_file_content, '3d-archives', f"{product_name}_stl", content_type="model/stl")
 
             stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/3d-archives/{stl_file_url}"
         else:
