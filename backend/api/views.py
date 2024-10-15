@@ -480,6 +480,5 @@ class CreatePaymentView(APIView):
             preference_id = preference_response["response"]["id"]
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
-
         except Exception as e:
             return Response({"error": "An error occurred while creating the payment preference."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

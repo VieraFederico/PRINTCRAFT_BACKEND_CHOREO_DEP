@@ -57,8 +57,6 @@ class ProductMaterial(models.Model):
     class Meta:
         unique_together = ('product', 'material')
 
-
-
 class PrintRequest(models.Model):
     requestID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -93,7 +91,8 @@ class DesignRequest(models.Model):
     status = models.CharField(max_length=255, null=False, default="Pendiente",
                               choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
                                        ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
-                                       ("En proceso", "En proceso"), ("Realizada", "Realizada")]
+                                       ("En proceso", "En proceso"), ("Realizada", "Realizada"),
+                                       ("Aceptada", "Aceptada")]
                               )
 
 # PLA, PETG, ABS, Nailon
