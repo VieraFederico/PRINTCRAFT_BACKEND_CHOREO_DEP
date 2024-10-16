@@ -415,6 +415,49 @@ class SellerDesignRequestListView(generics.ListAPIView):
         # seller = Seller.objects.get(userId=18) # TOD CAMBIAR
         return DesignRequest.objects.filter(sellerID=seller)
 
+class AcceptOrRejectDesignRequestView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def post(self, request, request_id):
+        sellerID = request.user.seller
+        # sellerID = Seller.objects.get(userId=18) # TODO CAMBIAR
+
+        try:
+            design_request = DesignRequest.objects.get(requestID=request_id, sellerID=sellerID)
+            # if design_request.sellerID != sellerID:
+            #     return Response({"error": "You do not have permission to modify this request"}, status=status.HTTP_403_FORBIDDEN)
+            if design_request.status != "Pendiente":
+                return Response({"error": "Request is not pending"}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = request.data.get('response')
+            price = request.data.get('price')
+
+            if response not in ["Accept", "Reject"]:
+                return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if response == "Accept":
+                if not price:
+                    return Response({"error": "Price is required when accepting a request"}, status=status.HTTP_400_BAD_REQUEST)
+                design_request.status = "Cotizada"
+                design_request.price = price
+            else:
+                design_request.status = "Rechazada"
+
+            design_request.save()
+            return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
+        except DesignRequest.DoesNotExist:
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
+
+# class AcceptOrRejectDesignRequestView(APIView):
+
+# class AcceptOrRejectPrintRequestView(APIView):
+
+# class UserRespondToPrintRequestView(APIView):
+
+# class FinalizePrintRequestView(APIView):
+
+# class MarkAsDeliveredPrintRequestView(APIView):
 
 ################
 #### ORDERS ####

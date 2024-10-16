@@ -29,6 +29,7 @@ urlpatterns = [
     path('design-requests/create/', DesignRequestCreateView.as_view(), name='design-request-create'),
     path('design-requests/mine/', UserDesignRequestListView.as_view(), name='user-design-requests'),
     path('design-requests/seller/', SellerDesignRequestListView.as_view(), name='seller-design-requests'),
+    path('design-requests/<int:request_id>/accept-or-reject/', AcceptOrRejectDesignRequestView.as_view(), name='accept-or-reject-design-request'),
     path('materials/', MaterialListView.as_view(), name='material-list'),
     path('sellers/<int:userId>/materials/', SellerMaterialListView.as_view(), name='seller-material-list'),
     path('products/detail/<str:code>/', ProductDetailWithSellerView.as_view(), name='product-detail-with-seller'),
