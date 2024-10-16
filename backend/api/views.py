@@ -496,7 +496,24 @@ class FinalizeDesignRequestView(APIView):
         except DesignRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
-# class MarkAsDeliveredPrintRequestView(APIView):
+class MarkAsDeliveredDesignRequestView(APIView):
+    permission_classes = [IsSeller]
+
+    def post(self, request, request_id):
+        sellerID = request.user.seller
+
+        try:
+            design_request = DesignRequest.objects.get(requestID=request_id, sellerID=sellerID)
+            # if design_request.sellerID != sellerID:
+            #     return Response({"error": "You do not have permission to modify this request"}, status=status.HTTP_403_FORBIDDEN)
+            if design_request.status != "Realizada":
+                return Response({"error": "Request is not in a completed state"}, status=status.HTTP_400_BAD_REQUEST)
+
+            design_request.status = "Entregada"
+            design_request.save()
+            return Response({"message": "Request successfully marked as delivered"}, status=status.HTTP_200_OK)
+        except DesignRequest.DoesNotExist:
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 ################
 #### ORDERS ####
