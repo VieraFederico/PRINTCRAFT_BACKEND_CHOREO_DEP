@@ -312,16 +312,28 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class PrintReverseAuctionSerializer(serializers.ModelSerializer):
+    stl_file = serializers.FileField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = PrintReverseAuction
-        fields = ['requestID', 'userID', 'description', 'quantity', 'material', 'stl_file', 'status', 'accepted_response']
-        extra_kwargs = {'requestID': {'read_only': True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'accepted_response': {'read_only': True}}
+        fields = ['requestID', 'userID', 'description', 'quantity', 'material', 'stl_file', 'stl_file_url', 'status', 'accepted_response']
+        extra_kwargs = {'requestID': {'read_only': True}, 'userID': {'read_only': True}, 'stl_file_url':{'read_only':True}, 'status': {'read_only': True}, 'accepted_response': {'read_only': True}}
 
     def create(self, validated_data):
         user = self.context['request'].user
         # user = User.objects.get(id=8) # TODO CAMBIAR
+
+        stl_file = validated_data.pop('stl_file', None)
+
+        if not stl_file:
+            raise serializers.ValidationError("No se ha proporcionado un archivo STL.")
+
+        stl_file_content = stl_file.read()
+        stl_file_url = upload_file_to_supabase(stl_file_content, 'reverse-auction-stl', f"{uuid.uuid4()}_stl", content_type="model/stl")
+        stl_file_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/reverse-auction-stl/{stl_file_url}"
+
         # reverse-auction-stl
-        return PrintReverseAuction.objects.create(userID=user, **validated_data)
+        return PrintReverseAuction.objects.create(userID=user, stl_file_url=stl_file_url, **validated_data)
 
 
 
