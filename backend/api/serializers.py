@@ -316,8 +316,8 @@ class PrintReverseAuctionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrintReverseAuction
-        fields = ['requestID', 'userID', 'description', 'quantity', 'material', 'stl_file', 'stl_file_url', 'status', 'accepted_response']
-        extra_kwargs = {'requestID': {'read_only': True}, 'userID': {'read_only': True}, 'stl_file_url':{'read_only':True}, 'status': {'read_only': True}, 'accepted_response': {'read_only': True}}
+        fields = ['requestID', 'userID', 'description', 'quantity', 'material', 'stl_file', 'stl_file_url', 'status', 'accepted_response', 'response_count']
+        extra_kwargs = {'requestID': {'read_only': True}, 'userID': {'read_only': True}, 'stl_file_url':{'read_only':True}, 'status': {'read_only': True}, 'accepted_response': {'read_only': True}, 'response_count': {'read_only': True}}
 
     def create(self, validated_data):
         user = self.context['request'].user
