@@ -535,6 +535,15 @@ class UserPrintReverseAuctionListView(generics.ListAPIView):
         # user = User.objects.get(id=8)
         return PrintReverseAuction.objects.filter(userID=user)
 
+class OpenPrintReverseAuctionListView(generics.ListAPIView):
+    serializer_class = PrintReverseAuctionSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return PrintReverseAuction.objects.filter(status="Open")
+
+
+
 """
 Crear subasta inversa
 /api/print-reverse-auction/create/
