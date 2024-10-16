@@ -515,6 +515,45 @@ class MarkAsDeliveredDesignRequestView(APIView):
         except DesignRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+##########################
+#### INVERSE AUCTIONS ####
+##########################
+
+class PrintReverseAuctionCreateView(generics.CreateAPIView):
+    queryset = PrintReverseAuction.objects.all()
+    serializer_class = PrintReverseAuctionSerializer
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+
+"""
+Crear subasta inversa
+/api/print-reverse-auction/create/
+POST
+JSON a enviar
+{
+  description,
+  quantity,
+  material,
+}
+y archivo STL
+"""
+"""
+Mirar las subastas inversas para impresión que inicie
+/api/print-reverse-auction/mine/
+GET
+te da
+{
+  requestID,
+  description (string/text),
+  quantity,
+  material, 
+  stl_url,
+  responses, // cantidad de vendedores que mandaron cotización 
+  userID
+}
+"""
+
 ################
 #### ORDERS ####
 ################
@@ -550,6 +589,7 @@ class UserOrderListView(generics.ListAPIView):
         # Filtrar las órdenes por el usuario autenticado
         user = self.request.user
         return Order.objects.filter(userID=user)
+
 
 
 ###############

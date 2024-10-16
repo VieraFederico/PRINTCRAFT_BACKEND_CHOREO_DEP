@@ -33,6 +33,7 @@ urlpatterns = [
     path('design-requests/<int:request_id>/user-respond/', UserRespondToDesignRequestView.as_view(), name='user-respond-design-request'),
     path('design-requests/<int:request_id>/finalize-design-request/', FinalizeDesignRequestView.as_view(), name='finalize-design-request'),
     path('design-requests/<int:request_id>/mark-as-delivered-design-request/', MarkAsDeliveredDesignRequestView.as_view(), name='mark-as-delivered-design-request'),
+    path('print-reverse-auction/create/', PrintReverseAuctionCreateView.as_view(), name='print-reverse-auction-create'),
     path('materials/', MaterialListView.as_view(), name='material-list'),
     path('sellers/<int:userId>/materials/', SellerMaterialListView.as_view(), name='seller-material-list'),
     path('products/detail/<str:code>/', ProductDetailWithSellerView.as_view(), name='product-detail-with-seller'),
