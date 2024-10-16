@@ -449,9 +449,32 @@ class AcceptOrRejectDesignRequestView(APIView):
         except DesignRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
-# class AcceptOrRejectDesignRequestView(APIView):
+class UserRespondToDesignRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]  # TODO CAMBIAR
 
-# class AcceptOrRejectPrintRequestView(APIView):
+    def post(self, request, request_id):
+        userID = request.user
+        # userID = User.objects.get(id=5) # TODO CAMBIAR
+
+        try:
+            design_request = DesignRequest.objects.get(requestID=request_id, userID=userID)
+            if design_request.status != "Cotizada":
+                return Response({"error": "Request is not in a quotable state"}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = request.data.get('response')
+            if response not in ["Accept", "Reject"]:
+                return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if response == "Accept":
+                design_request.status = "Aceptada"
+            else:
+                design_request.status = "Cancelada"
+
+            design_request.save()
+            return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
+        except DesignRequest.DoesNotExist:
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 # class UserRespondToPrintRequestView(APIView):
 
