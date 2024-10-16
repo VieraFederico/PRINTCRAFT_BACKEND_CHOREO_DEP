@@ -336,10 +336,21 @@ class PrintReverseAuctionSerializer(serializers.ModelSerializer):
         return PrintReverseAuction.objects.create(userID=user, stl_file_url=stl_file_url, **validated_data)
 
 
-
 class PrintReverseAuctionResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrintReverseAuctionResponse
         fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
+        extra_kwargs = {'responseID': {'read_only': True}, 'seller': {'read_only': True}, 'created_at': {'read_only': True}, 'status': {'read_only': True}}
+"""
+    def create(self, validated_data):
+        # seller = self.context['request'].user.seller
+        seller = User.objects.get(id=4).seller # TODO CAMBIAR
 
+        auction = validated_data['auction']
+
+        if PrintReverseAuctionResponse.objects.filter(auction=auction, seller=seller).exists():
+            raise serializers.ValidationError("Ya has respondido a esta subasta.")
+
+        return PrintReverseAuctionResponse.objects.create(seller=seller, **validated_data)
+"""
 

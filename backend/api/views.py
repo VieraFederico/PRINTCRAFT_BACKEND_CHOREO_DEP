@@ -542,6 +542,28 @@ class OpenPrintReverseAuctionListView(generics.ListAPIView):
     def get_queryset(self):
         return PrintReverseAuction.objects.filter(status="Open")
 
+class CreatePrintReverseAuctionResponseView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def post(self, request, auction_id):
+        sellerID = request.user.seller
+        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
+        try:
+            auction = PrintReverseAuction.objects.get(requestID=auction_id, status="Open")
+        except PrintReverseAuction.DoesNotExist:
+            return Response({'error': 'Auction not found or not open'}, status=status.HTTP_404_NOT_FOUND)
+
+        response = request.data.get('response')
+        price = request.data.get('price')
+        if not price:
+            return Response({'error': 'Price is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        auction.response_count += 1
+        auction.save()
+
+        response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
+        return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
 
 """
