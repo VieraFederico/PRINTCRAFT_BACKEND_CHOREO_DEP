@@ -152,7 +152,7 @@ class PrintReverseAuctionResponse(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=255, null=False, default="Pending",
                               choices=[("Pending", "Pending"), ("Accepted", "Accepted"), ("Rejected", "Rejected")])
-
+# pendiente, aceptada, rechazada, realizada, entregada
 
     def __str__(self):
         return f"Response {self.responseID} for Auction {self.auction.requestID} by {self.seller.store_name}"

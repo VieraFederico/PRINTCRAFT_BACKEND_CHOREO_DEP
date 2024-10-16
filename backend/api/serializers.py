@@ -320,6 +320,7 @@ class PrintReverseAuctionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         # user = User.objects.get(id=8) # TODO CAMBIAR
+        # reverse-auction-stl
         return PrintReverseAuction.objects.create(userID=user, **validated_data)
 
 
