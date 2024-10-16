@@ -566,6 +566,14 @@ class CreatePrintReverseAuctionResponseView(APIView):
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
 
+class PrintReverseAuctionResponseListView(generics.ListAPIView):
+    serializer_class = PrintReverseAuctionResponseSerializer
+    permission_classes = [AllowAny] # TODO -> ¿lo puede ver cualquiera?
+
+    def get_queryset(self):
+        auction_id = self.kwargs['auction_id']
+        return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
 """
 Crear subasta inversa
 /api/print-reverse-auction/create/
