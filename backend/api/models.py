@@ -124,5 +124,35 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Image for {self.product.name}"
 
+# Crear modelo PrintInverseAuction
+# Crear modelo PrintInverseAuctionResponse
+
+# idem para DesignInverseAuction y DesignInverseAuctionResponse
+
+class PrintReverseAuction(models.Model):
+    requestID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    description = models.TextField()
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=True)
+    stl_file = models.URLField(max_length=200, null=False)
+    status = models.CharField(max_length=255, null=False, default="Open",
+                              choices=[("Open", "Open"), ("Closed", "Closed")])
+    accepted_response = models.OneToOneField('PrintReverseAuctionResponse', on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_auction')
 
 
+    def __str__(self):
+        return f"Reverse Auction {self.requestID} by {self.userID.username}"
+
+class PrintReverseAuctionResponse(models.Model):
+    responseID = models.AutoField(primary_key=True)
+    auction = models.ForeignKey(PrintReverseAuction, related_name='responses', on_delete=models.CASCADE)
+    seller = models.ForeignKey('Seller', on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=255, null=False, default="Pending",
+                              choices=[("Pending", "Pending"), ("Accepted", "Accepted"), ("Rejected", "Rejected")])
+
+
+    def __str__(self):
+        return f"Response {self.responseID} for Auction {self.auction.requestID} by {self.seller.store_name}"
