@@ -622,6 +622,25 @@ class CompleteAuctionResponseView(APIView):
         except PrintReverseAuctionResponse.DoesNotExist:
             return Response({"error": "Accepted auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+
+class DeliverAuctionResponseView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def post(self, request, response_id):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=4) # TODO CAMBIAR
+        try:
+            response = PrintReverseAuctionResponse.objects.get(responseID=response_id, seller=seller, status="Completed")
+            response.status = "Delivered"
+            response.save()
+            response.auction.status = "Delivered"
+            response.auction.save()
+
+            return Response({"message": "Auction response marked as delivered successfully"}, status=status.HTTP_200_OK)
+        except PrintReverseAuctionResponse.DoesNotExist:
+            return Response({"error": "Completed auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
+
 """
 Crear subasta inversa
 /api/print-reverse-auction/create/

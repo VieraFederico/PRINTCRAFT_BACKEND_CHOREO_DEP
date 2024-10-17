@@ -40,6 +40,7 @@ urlpatterns = [
     path('print-reverse-auction/<int:auction_id>/responses/', PrintReverseAuctionResponseListView.as_view(), name='print-reverse-auction-responses'),
     path('print-reverse-auction/<int:auction_id>/accept-response/<int:response_id>/', AcceptAuctionResponseView.as_view(), name='accept-auction-response'),
     path('print-reverse-auction/response/<int:response_id>/complete/', CompleteAuctionResponseView.as_view(), name='complete-auction-response'),
+    path('print-reverse-auction/response/<int:response_id>/deliver/', DeliverAuctionResponseView.as_view(), name='deliver-auction-response'),
     path('materials/', MaterialListView.as_view(), name='material-list'),
     path('sellers/<int:userId>/materials/', SellerMaterialListView.as_view(), name='seller-material-list'),
     path('products/detail/<str:code>/', ProductDetailWithSellerView.as_view(), name='product-detail-with-seller'),
