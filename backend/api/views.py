@@ -574,6 +574,36 @@ class PrintReverseAuctionResponseListView(generics.ListAPIView):
         auction_id = self.kwargs['auction_id']
         return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
 
+
+class AcceptAuctionResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def post(self, request, auction_id, response_id):
+        userID = request.user
+        # userID = User.objects.get(id=7) # TODO CAMBIAR
+        try:
+            auction = PrintReverseAuction.objects.get(requestID=auction_id, status="Open", userID=userID)
+            response = PrintReverseAuctionResponse.objects.get(responseID=response_id, auction=auction)
+
+            # Aceptar la respuesta indicada
+            response.status = "Accepted"
+            response.save()
+
+            # Actualizar el accepted_response en la subasta
+            auction.accepted_response = response
+            auction.status = "Closed"
+            auction.save()
+
+            # Rechazar todas las demás respuestas
+            PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
+
+            return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
+        except PrintReverseAuction.DoesNotExist:
+            return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
+        except PrintReverseAuctionResponse.DoesNotExist:
+            return Response({"error": "Auction response not found"}, status=status.HTTP_404_NOT_FOUND)
+
 """
 Crear subasta inversa
 /api/print-reverse-auction/create/
