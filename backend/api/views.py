@@ -642,6 +642,14 @@ class DeliverAuctionResponseView(APIView):
         except PrintReverseAuctionResponse.DoesNotExist:
             return Response({"error": "Completed auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+
+class DesignReverseAuctionCreateView(generics.CreateAPIView):
+    queryset = DesignReverseAuction.objects.all()
+    serializer_class = DesignReverseAuctionSerializer
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+
 """
 Crear subasta inversa
 /api/print-reverse-auction/create/

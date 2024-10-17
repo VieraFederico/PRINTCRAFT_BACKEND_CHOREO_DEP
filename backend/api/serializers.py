@@ -341,16 +341,38 @@ class PrintReverseAuctionResponseSerializer(serializers.ModelSerializer):
         model = PrintReverseAuctionResponse
         fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
         extra_kwargs = {'responseID': {'read_only': True}, 'seller': {'read_only': True}, 'created_at': {'read_only': True}, 'status': {'read_only': True}}
-"""
+
+
+
+
+class DesignReverseAuctionSerializer(serializers.ModelSerializer):
+    design_images = DesignRequestImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
+    image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
+
+    class Meta:
+        model = DesignReverseAuction
+        fields = ['requestID', 'userID', 'description', 'quantity', 'material', 'image_files', 'design_images', 'status', 'accepted_response', 'response_count']
+        extra_kwargs = {'requestID': {'read_only': True}, 'userID': {'read_only': True}, 'image_files': {'write_only':True}, 'design_images':{'read_only':True}, 'status': {'read_only': True}, 'accepted_response': {'read_only': True}, 'response_count': {'read_only': True}}
+
     def create(self, validated_data):
-        # seller = self.context['request'].user.seller
-        seller = User.objects.get(id=4).seller # TODO CAMBIAR
+        user = self.context['request'].user
+        # user = User.objects.get(id=8) # TODO CAMBIAR
+        image_files = validated_data.pop('image_files', [])
+        design_reverse_auction = DesignReverseAuction.objects.create(userID=user, **validated_data)
 
-        auction = validated_data['auction']
+        for index, image_file in enumerate(image_files, start=1):
+            try:
+                file_content = image_file.read()
+                file_name = f"reverse_auction_image_{design_reverse_auction.requestID}_{index}"
+                bucket_name = 'reverse-auction-image'
+                image_url = upload_file_to_supabase(file_content, bucket_name, file_name)
+                image_url = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/{bucket_name}/{image_url}"
+                DesignRequestImage.objects.create(image_url=image_url)
+                design_reverse_auction.design_images.add(DesignRequestImage.objects.get(image_url=image_url))
+            except Exception as e:
+                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
 
-        if PrintReverseAuctionResponse.objects.filter(auction=auction, seller=seller).exists():
-            raise serializers.ValidationError("Ya has respondido a esta subasta.")
+        return design_reverse_auction
 
-        return PrintReverseAuctionResponse.objects.create(seller=seller, **validated_data)
-"""
+
 
