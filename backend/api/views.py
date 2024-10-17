@@ -574,7 +574,7 @@ class PrintReverseAuctionResponseListView(generics.ListAPIView):
         auction_id = self.kwargs['auction_id']
         return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
 
-
+# TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TODO CAMBIAR
@@ -605,6 +605,7 @@ class AcceptAuctionResponseView(APIView):
             return Response({"error": "Auction response not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+# TODO: Cambiar nombre de la vista a CompletePrintReverseAuctionResponseView
 class CompleteAuctionResponseView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny] # TODO CAMBIAR
@@ -622,7 +623,7 @@ class CompleteAuctionResponseView(APIView):
         except PrintReverseAuctionResponse.DoesNotExist:
             return Response({"error": "Accepted auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
-
+# TODO: Cambiar nombre de la vista a DeliverPrintReverseAuctionResponseView
 class DeliverAuctionResponseView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny] # TODO CAMBIAR
