@@ -374,5 +374,9 @@ class DesignReverseAuctionSerializer(serializers.ModelSerializer):
 
         return design_reverse_auction
 
-
+class DesignReverseAuctionResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DesignReverseAuctionResponse
+        fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
+        extra_kwargs = {'responseID': {'read_only': True}, 'seller': {'read_only': True}, 'created_at': {'read_only': True}, 'status': {'read_only': True}}
 
