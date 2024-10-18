@@ -1,6 +1,7 @@
 import mercadopago
 from django.shortcuts import render
 from django.contrib.auth.models import User
+from mercadopago import sdk
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,6 +12,11 @@ from .permissions import *
 from django.conf import settings
 from django.http import JsonResponse
 from api.services.supabase_client import *
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from decimal import Decimal
+import uuid  # Para generar el idempotency key
 
 ####################
 #### AUXILIARES ####
@@ -322,10 +328,14 @@ class AcceptOrRejectPrintRequestView(APIView):
         except PrintRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from decimal import Decimal
+import uuid
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]  # TOD CAMBIAR
-
     def post(self, request, request_id):
         userID = request.user
         # userID = User.objects.get(id=5) # TOD CAMBIAR
@@ -341,6 +351,37 @@ class UserRespondToPrintRequestView(APIView):
 
             if response == "Accept":
                 print_request.status = "Aceptada"
+                product_id = request_id
+                quantity = request.get("quantity")
+                transaction_amount = request.get("price")
+                access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+                sdk = mercadopago.SDK(access_token)
+                preference_data = {
+                    "items": [
+                        {
+                            "product_id": int(product_id),
+                            "quantity": int(quantity),
+                            "unit_price": float(transaction_amount)
+                        }
+                    ],
+                    "back_urls": {
+                        "success": "https://3dcapybara.vercel.app/api/sucess",
+                        "failure": "https://3dcapybara.vercel.app/api/failure",
+                        "pending": "https://www.3dcapybara.vercel.app/api/pending"
+                    },
+                    "auto_return": "approved",
+                    "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
+
+                }
+                try:
+                    preference_response = sdk.preference().create(preference_data)
+                    preference_id = preference_response["response"]["id"]
+
+                    return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+
+                except Exception as e:
+                    return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 print_request.status = "Cancelada"
 
@@ -513,6 +554,37 @@ class UserRespondToDesignRequestView(APIView):
 
             if response == "Accept":
                 design_request.status = "Aceptada"
+                product_id = request_id
+                quantity = request.get("quantity")
+                transaction_amount = request.get("price")
+                access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+                sdk = mercadopago.SDK(access_token)
+                preference_data = {
+                    "items": [
+                        {
+                            "product_id": int(product_id),
+                            "quantity": int(quantity),
+                            "unit_price": float(transaction_amount)
+                        }
+                    ],
+                    "back_urls": {
+                        "success": "https://3dcapybara.vercel.app/api/sucess",
+                        "failure": "https://3dcapybara.vercel.app/api/failure",
+                        "pending": "https://www.3dcapybara.vercel.app/api/pending"
+                    },
+                    "auto_return": "approved",
+                    "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
+
+                }
+                try:
+                    preference_response = sdk.preference().create(preference_data)
+                    preference_id = preference_response["response"]["id"]
+
+                    return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+
+                except Exception as e:
+                    return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 design_request.status = "Cancelada"
 
@@ -656,8 +728,38 @@ class AcceptAuctionResponseView(APIView):
                 status="Aceptada"
             )
             """
+            product_id = auction.requestID
+            quantity =  auction.quantity
+            transaction_amount = response.price
+            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+            sdk = mercadopago.SDK(access_token)
+            preference_data = {
+                "items": [
+                    {
+                        "product_id": int(product_id),
+                        "quantity": int(quantity),
+                        "unit_price": float(transaction_amount)
+                    }
+                ],
+                "back_urls": {
+                    "success": "https://3dcapybara.vercel.app/api/sucess",
+                    "failure": "https://3dcapybara.vercel.app/api/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/api/pending"
+                },
+                "auto_return": "approved",
+                "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
 
-            return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
+            }
+            try:
+                preference_response = sdk.preference().create(preference_data)
+                preference_id = preference_response["response"]["id"]
+
+                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            #return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
         except PrintReverseAuction.DoesNotExist:
             return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
         except PrintReverseAuctionResponse.DoesNotExist:
@@ -791,7 +893,37 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
             design_request.design_images.set(auction.design_images.all())
             """
+            product_id = auction.requestID
+            quantity =  auction.quantity
+            transaction_amount = response.price
+            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+            sdk = mercadopago.SDK(access_token)
+            preference_data = {
+                "items": [
+                    {
+                        "product_id": int(product_id),
+                        "quantity": int(quantity),
+                        "unit_price": float(transaction_amount)
+                    }
+                ],
+                "back_urls": {
+                    "success": "https://3dcapybara.vercel.app/api/sucess",
+                    "failure": "https://3dcapybara.vercel.app/api/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/api/pending"
+                },
+                "auto_return": "approved",
+                "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
 
+            }
+            try:
+                preference_response = sdk.preference().create(preference_data)
+                preference_id = preference_response["response"]["id"]
+
+                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
         except DesignReverseAuction.DoesNotExist:
             return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
@@ -955,11 +1087,7 @@ class FileUploadView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid  # Para generar el idempotency key
+
 
 class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -996,7 +1124,7 @@ class CreatePaymentView(APIView):
                 "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
-            "notification_url": "https://3dcapybara.vercel.app/api/notifications",
+            "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
 
         }
 
@@ -1019,7 +1147,7 @@ class CreatePaymentView(APIView):
         except Exception as e:
             return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class MercadoPagoNotificationView(APIView):
+class MercadoPagoNotificationViewOrder(APIView):
     def post(self, request):
         data = request.data
 
@@ -1033,5 +1161,37 @@ class MercadoPagoNotificationView(APIView):
 
         order.status = payment_status
         order.save()
+
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+class MercadoPagoNotificationViewPrintRequest(APIView):
+    def post(self, request):
+        data = request.data
+
+        payment_status = data.get("data", {}).get("status")
+        preference_id = data.get("data", {}).get("id")
+
+        try:
+            request = PrintRequest.objects.get(preference_id=preference_id)
+        except Order.DoesNotExist:
+            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        request.save()
+
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+class MercadoPagoNotificationViewDesignRequest(APIView):
+    def post(self, request):
+        data = request.data
+
+        payment_status = data.get("data", {}).get("status")
+        preference_id = data.get("data", {}).get("id")
+
+        try:
+            request = DesignRequest.objects.get(preference_id=preference_id)
+        except Order.DoesNotExist:
+            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
