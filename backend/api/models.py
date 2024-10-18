@@ -71,7 +71,7 @@ class PrintRequest(models.Model):
                                        ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada")]
                               )
-
+    preference_id = models.CharField(max_length=255, null=True, blank=True)
 
 class DesignRequestImage(models.Model):
     image_url = models.URLField(max_length=200, primary_key=True)
@@ -95,6 +95,7 @@ class DesignRequest(models.Model):
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada"),
                                        ("Aceptada", "Aceptada"), ("Entregada", "Entregada")]
                               )
+    preference_id = models.CharField(max_length=255, null=True, blank=True)
 
 """
 class DesignReverseAuction(models.Model):
