@@ -72,6 +72,7 @@ class PrintRequest(models.Model):
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada")]
                               )
 
+
 class DesignRequestImage(models.Model):
     image_url = models.URLField(max_length=200, primary_key=True)
 
@@ -94,6 +95,33 @@ class DesignRequest(models.Model):
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada"),
                                        ("Aceptada", "Aceptada"), ("Entregada", "Entregada")]
                               )
+
+"""
+class DesignReverseAuction(models.Model):
+    requestID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    description = models.TextField()
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=255, null=False, default="Open",
+                              choices=[("Open", "Open"), ("Closed", "Closed")])
+    response_count = models.IntegerField(null=False, default=0)
+    accepted_response = models.OneToOneField('DesignReverseAuctionResponse', on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_auction')
+    design_images = models.ManyToManyField('DesignRequestImage')
+
+class DesignReverseAuctionResponse(models.Model):
+    responseID = models.AutoField(primary_key=True)
+    auction = models.ForeignKey(DesignReverseAuction, related_name='responses', on_delete=models.CASCADE)
+    seller = models.ForeignKey('Seller', on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=255, null=False, default="Pending",
+                              choices=[("Pending", "Pending"), ("Accepted", "Accepted"), ("Rejected", "Rejected")])
+
+SELECT a.requestID, a.userID, a.description, a.quantity
+FROM DesignReverseAuction a, DesignReverseAuctionResponse r
+
+"""
 
 # PLA, PETG, ABS, Nailon
 

@@ -415,6 +415,51 @@ class SellerDesignRequestListView(generics.ListAPIView):
         # seller = Seller.objects.get(userId=18) # TOD CAMBIAR
         return DesignRequest.objects.filter(sellerID=seller)
 
+# TODO
+"""
+descripción
+cantidad
+material
+"""
+"""
+necesito que cambies está vista para que a la respuesta se le unan las DesignReverseAuctionResponse x DesignReverseAuction que el seller haya cotizado
+
+campo       | -> |  donde lo consigo
+requestID   | -> |  DesignRequest
+userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
+    description = models.TextField()
+    design_images = models.ManyToManyField('DesignRequestImage')
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    status = models.CharField(max_length=255, null=False, default="Pendiente",
+                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
+                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
+                                       ("En proceso", "En proceso"), ("Realizada", "Realizada"),
+                                       ("Aceptada", "Aceptada"), ("Entregada", "Entregada")]
+                              )
+"""
+
+"""
+class SellerDesignOrdersListView(generics.ListAPIView)
+
+tiene que hacer una UNION entre las DesignRequests y las DesignReverseAuctions del seller
+
+en SQL sería algo así:
+SELECT *
+FROM DesignRequests
+WHERE sellerID = 1
+UNION
+SELECT *
+FROM DesignReverseAuctions
+WHERE sellerID = 1
+
+# falta juntar DesignReverseAuctions con DesignReverseAuctionResponse
+# falta renombrar
+
+"""
+
 class AcceptOrRejectDesignRequestView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny] # TODO CAMBIAR
@@ -598,6 +643,20 @@ class AcceptAuctionResponseView(APIView):
             # Rechazar todas las demás respuestas
             PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
+            """
+            # TODO: crear un PrintRequest con los datos de la subasta aceptada, como si desde el inicio hubiera sido un PrintRequest
+            PrintRequest.objects.create(
+                userID=auction.userID,
+                sellerID=response.seller,
+                stl_url=auction.stl_file_url,
+                description=auction.description,
+                quantity=auction.quantity,
+                material=auction.material,
+                price=response.price,
+                status="Aceptada"
+            )
+            """
+
             return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
         except PrintReverseAuction.DoesNotExist:
             return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
@@ -718,6 +777,21 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
             DesignReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
+            """
+            # TODO: crear un DesignRequest con los datos de la subasta aceptada, como si desde el inicio hubiera sido un DesignRequest
+            design_request = DesignRequest.objects.create(
+                userID=auction.userID,
+                sellerID=response.seller,
+                description=auction.description,
+                quantity=auction.quantity,
+                material=auction.material,
+                price=response.price,
+                status="Aceptada"
+            )
+
+            design_request.design_images.set(auction.design_images.all())
+            """
+
             return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
         except DesignReverseAuction.DoesNotExist:
             return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
@@ -824,6 +898,17 @@ class UserOrderListView(generics.ListAPIView):
         user = self.request.user
         return Order.objects.filter(userID=user)
 
+class SellerOrderListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsSeller]  # Solo vendedores pueden ver sus órdenes
+    # permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        # Filtrar las órdenes por el vendedor autenticado
+        seller = self.request.user.seller
+        # seller = Seller.objects.get(userId=29)  # TODO CAMBIAR
+
+        return Order.objects.filter(productCode__seller=seller)
 
 
 ###############

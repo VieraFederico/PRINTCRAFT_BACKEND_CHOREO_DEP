@@ -11,6 +11,7 @@ urlpatterns = [
     path('products/seller/<int:userId>/', views.SellerProductListView.as_view(), name='seller-product-list'),
     path('orders/create/', views.OrderCreateView.as_view(), name='order-create'),  # Crear una orden
     path('orders/mine/', views.UserOrderListView.as_view(), name='user-order-list'),  # Ver mis órdenes
+    path('seller-orders/', SellerOrderListView.as_view(), name='seller-orders'),
     path('products/recommended/', views.RecommendedProductListView.as_view(), name='recommended-product-list'),
     path('products/<int:code>/', ProductDetailView.as_view(), name='product-detail'),
     path('payment/', CreatePaymentView.as_view(), name='create-payment'),  # Ruta para crear un pago
