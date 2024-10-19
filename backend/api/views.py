@@ -698,7 +698,7 @@ class AcceptAuctionResponseView(APIView):
 
     def post(self, request, auction_id, response_id):
         userID = request.user
-        # userID = User.objects.get(id=7) # TODO CAMBIAR
+        # userID = User.objects.get(id=8) # TODO CAMBIAR
         try:
             auction = PrintReverseAuction.objects.get(requestID=auction_id, status="Open", userID=userID)
             response = PrintReverseAuctionResponse.objects.get(responseID=response_id, auction=auction)
@@ -715,8 +715,6 @@ class AcceptAuctionResponseView(APIView):
             # Rechazar todas las demás respuestas
             PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
-            """
-            # TODO: crear un PrintRequest con los datos de la subasta aceptada, como si desde el inicio hubiera sido un PrintRequest
             PrintRequest.objects.create(
                 userID=auction.userID,
                 sellerID=response.seller,
@@ -727,7 +725,7 @@ class AcceptAuctionResponseView(APIView):
                 price=response.price,
                 status="Aceptada"
             )
-            """
+
             product_id = auction.requestID
             quantity =  auction.quantity
             transaction_amount = response.price
@@ -852,12 +850,14 @@ class CreateDesignReverseAuctionResponseView(APIView):
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
-    serializer_class = DesignReverseAuctionResponseSerializer
-    permission_classes = [AllowAny]
+    serializer_class = DesignReverseAuctionResponseCombinedSerializer
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def get_queryset(self):
-        auction_id = self.kwargs['auction_id']
-        return DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+        seller = self.request.user.seller
+        # seller = Seller.objects.get(userId=4)  # TODO CAMBIAR
+        return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller)
 
 class AcceptDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -879,8 +879,6 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
             DesignReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
-            """
-            # TODO: crear un DesignRequest con los datos de la subasta aceptada, como si desde el inicio hubiera sido un DesignRequest
             design_request = DesignRequest.objects.create(
                 userID=auction.userID,
                 sellerID=response.seller,
@@ -892,7 +890,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             )
 
             design_request.design_images.set(auction.design_images.all())
-            """
+
             product_id = auction.requestID
             quantity =  auction.quantity
             transaction_amount = response.price
