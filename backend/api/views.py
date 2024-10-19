@@ -682,6 +682,16 @@ class CreatePrintReverseAuctionResponseView(APIView):
         response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
+    serializer_class = PrintReverseAuctionResponseCombinedSerializer
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny] # TODO CAMBIAR
+
+    def get_queryset(self):
+        seller = self.request.user.seller
+        # seller = Seller.objects.get(userId=4) # TODO CAMBIAR
+        return PrintReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+
 
 class PrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseSerializer

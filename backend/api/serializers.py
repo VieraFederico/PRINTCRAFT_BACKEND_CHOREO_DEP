@@ -400,3 +400,24 @@ class DesignReverseAuctionResponseCombinedSerializer(serializers.ModelSerializer
             'response_count': obj.auction.response_count,
             'design_images': [image.image_url for image in obj.auction.design_images.all()]
         }
+
+
+class PrintReverseAuctionResponseCombinedSerializer(serializers.ModelSerializer):
+    auction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PrintReverseAuctionResponse
+        fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
+
+    def get_auction(self, obj):
+        return {
+            'requestID': obj.auction.requestID,
+            'userID': obj.auction.userID.id,
+            'description': obj.auction.description,
+            'quantity': obj.auction.quantity,
+            'material': obj.auction.material,
+            'status': obj.auction.status,
+            'accepted_response': obj.auction.accepted_response.responseID if obj.auction.accepted_response else None,
+            'response_count': obj.auction.response_count,
+            'stl_file_url': obj.auction.stl_file_url
+        }

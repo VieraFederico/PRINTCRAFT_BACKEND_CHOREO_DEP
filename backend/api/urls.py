@@ -36,6 +36,7 @@ urlpatterns = [
     path('design-requests/<int:request_id>/mark-as-delivered/', MarkAsDeliveredDesignRequestView.as_view(), name='mark-as-delivered-design-request'),
     path('print-reverse-auction/create/', PrintReverseAuctionCreateView.as_view(), name='print-reverse-auction-create'),
     path('print-reverse-auction/mine/', UserPrintReverseAuctionListView.as_view(), name='user-print-reverse-auctions'),
+    path('print-reverse-auction/seller/', QuotizedPrintReverseAuctionResponseListView.as_view(), name='seller-print-reverse-auctions'),
     path('print-reverse-auction/open/', OpenPrintReverseAuctionListView.as_view(), name='open-print-reverse-auction-list'),
     path('print-reverse-auction/<int:auction_id>/create-response/', CreatePrintReverseAuctionResponseView.as_view(), name='create-print-reverse-auction-response'),
     path('print-reverse-auction/<int:auction_id>/responses/', PrintReverseAuctionResponseListView.as_view(), name='print-reverse-auction-responses'),
