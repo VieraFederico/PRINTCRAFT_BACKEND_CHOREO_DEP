@@ -849,7 +849,7 @@ class CreateDesignReverseAuctionResponseView(APIView):
         response = DesignReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
-class QuotizedReverseAuctionResponseListView(generics.ListAPIView):
+class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseCombinedSerializer
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny]  # TODO CAMBIAR
@@ -859,6 +859,7 @@ class QuotizedReverseAuctionResponseListView(generics.ListAPIView):
         # seller = Seller.objects.get(userId=4)  # TODO CAMBIAR
         # return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller) # TODO CAMBIAR
         return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+
 
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseSerializer
