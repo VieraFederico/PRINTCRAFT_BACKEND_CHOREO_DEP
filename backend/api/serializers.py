@@ -397,5 +397,6 @@ class DesignReverseAuctionResponseCombinedSerializer(serializers.ModelSerializer
             'material': obj.auction.material,
             'status': obj.auction.status,
             'accepted_response': obj.auction.accepted_response.responseID if obj.auction.accepted_response else None,
-            'response_count': obj.auction.response_count
+            'response_count': obj.auction.response_count,
+            'design_images': [image.image_url for image in obj.auction.design_images.all()]
         }

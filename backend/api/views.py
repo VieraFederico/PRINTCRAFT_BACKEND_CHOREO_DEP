@@ -857,6 +857,7 @@ class QuotizedReverseAuctionResponseListView(generics.ListAPIView):
     def get_queryset(self):
         seller = self.request.user.seller
         # seller = Seller.objects.get(userId=4)  # TODO CAMBIAR
+        # return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller) # TODO CAMBIAR
         return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
 
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
