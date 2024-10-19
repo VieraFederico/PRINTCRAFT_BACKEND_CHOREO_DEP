@@ -380,3 +380,22 @@ class DesignReverseAuctionResponseSerializer(serializers.ModelSerializer):
         fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
         extra_kwargs = {'responseID': {'read_only': True}, 'seller': {'read_only': True}, 'created_at': {'read_only': True}, 'status': {'read_only': True}}
 
+
+class DesignReverseAuctionResponseCombinedSerializer(serializers.ModelSerializer):
+    auction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DesignReverseAuctionResponse
+        fields = ['responseID', 'auction', 'seller', 'price', 'created_at', 'status']
+
+    def get_auction(self, obj):
+        return {
+            'requestID': obj.auction.requestID,
+            'userID': obj.auction.userID.id,
+            'description': obj.auction.description,
+            'quantity': obj.auction.quantity,
+            'material': obj.auction.material,
+            'status': obj.auction.status,
+            'accepted_response': obj.auction.accepted_response.responseID if obj.auction.accepted_response else None,
+            'response_count': obj.auction.response_count
+        }
