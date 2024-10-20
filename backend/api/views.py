@@ -356,6 +356,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
 import uuid
+# TODO!!!
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]  # TOD CAMBIAR
@@ -566,7 +567,7 @@ class UserRespondToDesignRequestView(APIView):
 
     def post(self, request, request_id):
         userID = request.user
-        # userID = User.objects.get(id=5) # TODO CAMBIAR
+        # userID = User.objects.get(id=8) # TODO CAMBIAR
 
         try:
             design_request = DesignRequest.objects.get(requestID=request_id, userID=userID)
@@ -580,8 +581,10 @@ class UserRespondToDesignRequestView(APIView):
             if response == "Accept":
                 design_request.status = "Aceptada"
                 product_id = request_id
-                quantity = request.get("quantity")
-                transaction_amount = request.get("price")
+                quantity = design_request.quantity
+                # quantity = request.get("quantity")
+                transaction_amount = design_request.price
+                # transaction_amount = request.get("price")
                 access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
                 sdk = mercadopago.SDK(access_token)
                 preference_data = {
