@@ -277,6 +277,7 @@ class CreatePrintRequestView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TOD CAMBIAR !!
 
+
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -284,7 +285,29 @@ class UserPrintRequestListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return PrintRequest.objects.filter(userID=user)
+"""
+class UserPrintRequestListView(APIView):
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # TODO CAMBIAR
 
+    def get(self, request):
+        # user = request.user
+        user = User.objects.get(id=5)
+        print_requests = PrintRequest.objects.filter(userID=user)
+        response_data = [
+            {
+                "requestID": print_request.requestID,
+                "description": print_request.description,
+                "quantity": print_request.quantity,
+                "material": print_request.material,
+                "stl_file_url": print_request.stl_file_url,
+                "status": print_request.status,
+                "response_count": print_request.response_count,
+            }
+            for print_request in print_requests
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
+"""
 class SellerPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsSeller]
@@ -338,7 +361,7 @@ class UserRespondToPrintRequestView(APIView):
     # permission_classes = [AllowAny]  # TOD CAMBIAR
     def post(self, request, request_id):
         userID = request.user
-        # userID = User.objects.get(id=5) # TOD CAMBIAR
+        # userID = User.objects.get(id=8) # TOD CAMBIAR
 
         try:
             print_request = PrintRequest.objects.get(requestID=request_id, userID=userID) # cambiar lo de userID -> manejarlo con un if
@@ -352,8 +375,10 @@ class UserRespondToPrintRequestView(APIView):
             if response == "Accept":
                 print_request.status = "Aceptada"
                 product_id = request_id
-                quantity = request.get("quantity")
-                transaction_amount = request.get("price")
+                quantity = print_request.quantity
+                # quantity = request.get("quantity")
+                transaction_amount = print_request.price
+                # transaction_amount = request.get("price")
                 access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
                 sdk = mercadopago.SDK(access_token)
                 preference_data = {
