@@ -277,7 +277,7 @@ class CreatePrintRequestView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TOD CAMBIAR !!
 
-
+"""
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -287,27 +287,49 @@ class UserPrintRequestListView(generics.ListAPIView):
         return PrintRequest.objects.filter(userID=user)
 """
 class UserPrintRequestListView(APIView):
-    # permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny]  # TODO CAMBIAR
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def get(self, request):
-        # user = request.user
-        user = User.objects.get(id=5)
+        user = request.user
+        # user = User.objects.get(id=5)
         print_requests = PrintRequest.objects.filter(userID=user)
+
         response_data = [
             {
                 "requestID": print_request.requestID,
+                "userID": print_request.userID.id,
                 "description": print_request.description,
                 "quantity": print_request.quantity,
                 "material": print_request.material,
-                "stl_file_url": print_request.stl_file_url,
+                "stl_url": print_request.stl_url,
                 "status": print_request.status,
-                "response_count": print_request.response_count,
+                "price": print_request.price,
+                "preference_id": print_request.preference_id,
+                "direccion_del_vendedor": print_request.sellerID.address,
+                "seller_name": print_request.sellerID.store_name
+
             }
             for print_request in print_requests
         ]
         return Response(response_data, status=status.HTTP_200_OK)
 """
+    requestID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
+    stl_url = models.URLField(max_length=200, null=False)
+    description = models.TextField()
+    quantity = models.IntegerField(null=False)
+    material = models.CharField(max_length=255, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    status = models.CharField(max_length=255, null=False, default="Pendiente",
+                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
+                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
+                                       ("En proceso", "En proceso"), ("Realizada", "Realizada")]
+                              )
+    preference_id
+"""
+
 class SellerPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsSeller]
@@ -462,6 +484,7 @@ class DesignRequestCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
 
+"""
 class UserDesignRequestListView(generics.ListAPIView):
     serializer_class = DesignRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -471,6 +494,73 @@ class UserDesignRequestListView(generics.ListAPIView):
         user = self.request.user
         # user = User.objects.get(id=5)
         return DesignRequest.objects.filter(userID=user)
+"""
+class UserDesignRequestListView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]  # TODO CAMBIAR
+
+    def get(self, request):
+        user = request.user
+        # user = User.objects.get(id=5)
+        design_requests = DesignRequest.objects.filter(userID=user)
+
+        response_data = [
+            {
+                "requestID": design_request.requestID,
+                "userID": design_request.userID.id,
+                "description": design_request.description,
+                "quantity": design_request.quantity,
+                "material": design_request.material,
+                "status": design_request.status,
+                "price": design_request.price,
+                "preference_id": design_request.preference_id,
+                "direccion_del_vendedor": design_request.sellerID.address,
+                "seller_name": design_request.sellerID.store_name,
+                "images": [image.image_url for image in design_request.design_images.all()]
+
+            }
+            for design_request in design_requests
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
+"""
+class DesignRequest(models.Model):
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
+    design_images = models.ManyToManyField('DesignRequestImage')
+    material = models.CharField(max_length=255, null=True)
+   
+
+"""
+
+
+"""
+class UserPrintRequestListView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]  # TODO CAMBIAR
+
+    def get(self, request):
+        user = request.user
+        # user = User.objects.get(id=5)
+        print_requests = PrintRequest.objects.filter(userID=user)
+
+        response_data = [
+            {
+                "requestID": print_request.requestID,
+                "userID": print_request.userID.id,
+                "description": print_request.description,
+                "quantity": print_request.quantity,
+                "material": print_request.material,
+                "stl_url": print_request.stl_url,
+                "status": print_request.status,
+                "price": print_request.price,
+                "preference_id": print_request.preference_id,
+                "direccion_del_vendedor": print_request.sellerID.address,
+                "seller_name": print_request.sellerID.store_name
+            
+            }
+            for print_request in print_requests
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
+"""
 
 class SellerDesignRequestListView(generics.ListAPIView):
     serializer_class = DesignRequestSerializer
