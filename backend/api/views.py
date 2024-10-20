@@ -293,6 +293,7 @@ class UserPrintRequestListView(APIView):
     def get(self, request):
         user = request.user
         # user = User.objects.get(id=5)
+        # user = User.objects.get(id=29)
         print_requests = PrintRequest.objects.filter(userID=user)
 
         response_data = [
@@ -306,8 +307,9 @@ class UserPrintRequestListView(APIView):
                 "status": print_request.status,
                 "price": print_request.price,
                 "preference_id": print_request.preference_id,
-                "direccion_del_vendedor": print_request.sellerID.address,
-                "seller_name": print_request.sellerID.store_name
+                # "direccion_del_vendedor": print_request.sellerID.address,
+                "direccion_del_vendedor": print_request.sellerID.address if print_request.sellerID else None,
+                "seller_name": print_request.sellerID.store_name if print_request.sellerID else None
 
             }
             for print_request in print_requests
@@ -514,10 +516,9 @@ class UserDesignRequestListView(APIView):
                 "status": design_request.status,
                 "price": design_request.price,
                 "preference_id": design_request.preference_id,
-                "direccion_del_vendedor": design_request.sellerID.address,
-                "seller_name": design_request.sellerID.store_name,
+                "direccion_del_vendedor": design_request.sellerID.address if design_request.sellerID else None,
+                "seller_name": design_request.sellerID.store_name if design_request.sellerID else None,
                 "images": [image.image_url for image in design_request.design_images.all()]
-
             }
             for design_request in design_requests
         ]
