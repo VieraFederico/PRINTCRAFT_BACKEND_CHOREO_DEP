@@ -46,7 +46,7 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 class SellerSerializer(serializers.ModelSerializer):
     profile_picture_file = serializers.FileField(write_only=True, required=False, allow_null=True)
-    materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True)
+    materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True) # TODO required=False
 
     class Meta:
         model = Seller
@@ -204,7 +204,7 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
     stl_file = serializers.FileField(write_only=True, required=False, allow_null=True)
-    materials = ProductMaterialSerializer(many=True, source='productmaterial_set')
+    materials = ProductMaterialSerializer(many=True, source='productmaterial_set', required=False) # TODO required=False
 
     categories = serializers.SlugRelatedField(
         many=True,
