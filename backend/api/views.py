@@ -1402,13 +1402,45 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
 
 from ollama import chat
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+import ollama  # Ensure the import is correct
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+import ollama
+
+
 class CositoAIAPIView(APIView):
     permission_classes = [AllowAny]
-    def post(self):
-        response = ollama.chat(model='llama3.1', messages=[
-            {
-                'role': 'user',
-                'content': 'Why is the sky blue?',
-            },
-        ])
-        return response
+
+    def post(self, request):
+        prompt = request.data.get('prompt', '')
+
+        if not prompt:
+            return Response({'error': 'No prompt provided'}, status=400)
+
+        # Mensaje que indica la tarea de Cosito AI
+        cosito_task_description = (
+            "Tu tarea es identificar un objeto basándote en la descripción que el usuario te proporcione. "
+            "El usuario intentará describir un objeto, y tú deberás decirle qué objeto es."
+        )
+
+        def generate_response(prompt):
+            stream = ollama.chat(
+                model='llama3',
+                messages=[
+                    {'role': 'system', 'content': cosito_task_description},  # Descripción de la tarea
+                    {'role': 'user', 'content': prompt}
+                ],
+                stream=True,
+            )
+            for chunk in stream:
+                yield chunk['message']['content']
+
+        response_content = ''.join(generate_response(prompt))
+
+        return Response({'response': response_content}, status=200)
