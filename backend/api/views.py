@@ -1022,12 +1022,10 @@ class OpenDesignReverseAuctionListView(generics.ListAPIView):
 
 
 class CreateDesignReverseAuctionResponseView(APIView):
-    permission_classes = [IsSeller]
-    # permission_classes = [AllowAny] # TODO CAMBIAR
+    permission_classes = [IsAuthenticated, IsSeller]
 
     def post(self, request, auction_id):
         sellerID = request.user.seller
-        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
         try:
             auction = DesignReverseAuction.objects.get(requestID=auction_id, status="Open")
         except DesignReverseAuction.DoesNotExist:
