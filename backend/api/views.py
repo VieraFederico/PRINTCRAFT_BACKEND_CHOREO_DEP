@@ -364,7 +364,7 @@ class UserPrintRequestListView(APIView):
             {
                 "requestID": print_request.requestID,
                 "userID": print_request.userID.id,
-                "sellerID": print_request.sellerID.id if print_request.sellerID else None,
+                "sellerID": print_request.sellerID.userId.id if print_request.sellerID else None,
                 "description": print_request.description,
                 "quantity": print_request.quantity,
                 "material": print_request.material,
@@ -575,7 +575,7 @@ class UserDesignRequestListView(APIView):
             {
                 "requestID": design_request.requestID,
                 "userID": design_request.userID.id,
-                "sellerID": design_request.sellerID.id if design_request.sellerID else None,
+                "sellerID": design_request.sellerID.userId.id if design_request.sellerID else None,
                 "description": design_request.description,
                 "quantity": design_request.quantity,
                 "material": design_request.material,
