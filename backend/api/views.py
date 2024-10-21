@@ -854,8 +854,8 @@ class UserPrintReverseAuctionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # user = User.objects.get(id=8)
-        return PrintReverseAuction.objects.filter(userID=user)
+        # user = User.objects.get(id=142)
+        return PrintReverseAuction.objects.filter(userID=user, status="Open")
 
 class OpenPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
