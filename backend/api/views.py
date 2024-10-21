@@ -1427,6 +1427,7 @@ class CositoAIAPIView(APIView):
         cosito_task_description = (
             "Tu tarea es identificar un objeto basándote en la descripción que el usuario te proporcione. "
             "El usuario intentará describir un objeto, y tú deberás decirle qué objeto es."
+            "Tu respuesta SIEMPRE debe ser el nombre del objeto, SIEMPRE SOLO EL NOMBRE"
         )
 
         def generate_response(prompt):
