@@ -736,7 +736,7 @@ class UserRespondToDesignRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                design_request.status = "Aceptada"
+                design_request.status = "En Proceso"
                 product_id = request_id
                 quantity = design_request.quantity
                 # quantity = request.get("quantity")
@@ -1408,40 +1408,36 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 import ollama  # Ensure the import is correct
 
+import openai
+
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-import ollama
+from rest_framework import status
+import openai
+from django.conf import settings
 
-
-class CositoAIAPIView(APIView):
-    permission_classes = [AllowAny]
+class CositoAI(APIView):
+    permission_classes = [AllowAny]  # Allow any access to this view
 
     def post(self, request):
-        prompt = request.data.get('prompt', '')
+        try:
+            user_input = request.data.get('input')
 
-        if not prompt:
-            return Response({'error': 'No prompt provided'}, status=400)
-
-        # Mensaje que indica la tarea de Cosito AI
-        cosito_task_description = (
-            "Tu tarea es identificar un objeto basándote en la descripción que el usuario te proporcione. "
-            "El usuario intentará describir un objeto, y tú deberás decirle qué objeto es."
-            "Tu respuesta SIEMPRE debe ser el nombre del objeto, SIEMPRE SOLO EL NOMBRE"
-        )
-
-        def generate_response(prompt):
-            stream = ollama.chat(
-                model='llama3',
+            openai.api_key = settings.OPENAI_API_KEY
+            response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",  # Specify the model
                 messages=[
-                    {'role': 'system', 'content': cosito_task_description},  # Descripción de la tarea
-                    {'role': 'user', 'content': prompt}
+                    {
+                        "role": "user",
+                        "content": f"¿Cuál es el nombre del producto para la descripción: '{user_input}'?"
+                    }
                 ],
-                stream=True,
             )
-            for chunk in stream:
-                yield chunk['message']['content']
 
-        response_content = ''.join(generate_response(prompt))
+            product_name = response.choices[0].message['content'].strip()
+            return Response({'response': product_name}, status=status.HTTP_200_OK)
 
-        return Response({'response': response_content}, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
