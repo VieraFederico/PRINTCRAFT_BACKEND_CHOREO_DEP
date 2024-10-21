@@ -483,7 +483,7 @@ class UserRespondToPrintRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                print_request.status = "Aceptada"
+                print_request.status = "En Proceso"
                 product_id = request_id
                 quantity = print_request.quantity
                 # quantity = request.get("quantity")
@@ -1422,7 +1422,8 @@ class MercadoPagoNotificationViewPrintRequest(APIView):
             request = PrintRequest.objects.get(preference_id=preference_id)
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-
+        #saracatunga
+        request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
@@ -1439,6 +1440,7 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
