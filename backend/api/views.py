@@ -1030,8 +1030,8 @@ class UserDesignReverseAuctionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # user = User.objects.get(id=8)
-        return DesignReverseAuction.objects.filter(userID=user)
+        # user = User.objects.get(id=142)
+        return DesignReverseAuction.objects.filter(userID=user, status="Open")
 
 class OpenDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
