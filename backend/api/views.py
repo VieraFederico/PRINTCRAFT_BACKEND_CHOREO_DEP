@@ -1,3 +1,23 @@
+"""
+/api/seller-orders/
+orderid
+userid (se puede fletar)
+orderdate
+quantity
+productcode
+status
+
+email del usuario
+nombre del producto
+
+"""
+
+"""
+/
+cuando acepto reverse auction, cambiar el status
+
+"""
+
 from http.client import responses
 
 import mercadopago
@@ -1022,12 +1042,10 @@ class OpenDesignReverseAuctionListView(generics.ListAPIView):
 
 
 class CreateDesignReverseAuctionResponseView(APIView):
-    permission_classes = [IsSeller]
-    # permission_classes = [AllowAny] # TODO CAMBIAR
+    permission_classes = [IsAuthenticated, IsSeller]
 
     def post(self, request, auction_id):
         sellerID = request.user.seller
-        # sellerID = Seller.objects.get(userId=4) # TODO CAMBIAR
         try:
             auction = DesignReverseAuction.objects.get(requestID=auction_id, status="Open")
         except DesignReverseAuction.DoesNotExist:
@@ -1233,18 +1251,43 @@ class UserOrderListView(generics.ListAPIView):
         # Filtrar las órdenes por el usuario autenticado
         user = self.request.user
         return Order.objects.filter(userID=user)
-
+"""
 class SellerOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [IsSeller]  # Solo vendedores pueden ver sus órdenes
-    # permission_classes = [AllowAny]
+    # permission_classes = [IsSeller]  # Solo vendedores pueden ver sus órdenes
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Filtrar las órdenes por el vendedor autenticado
-        seller = self.request.user.seller
-        # seller = Seller.objects.get(userId=29)  # TODO CAMBIAR
+        # seller = self.request.user.seller
+        seller = Seller.objects.get(userId=29)  # TODO CAMBIAR
 
         return Order.objects.filter(productCode__seller=seller)
+"""
+class SellerOrderListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=29)  # TODO CAMBIAR
+
+        orders = Order.objects.filter(productCode__seller=seller)
+        response_data = [
+            {
+                "orderid": order.orderID,
+                "productcode": order.productCode.code,
+                "quantity": order.quantity,
+                "total_price": order.productCode.price * order.quantity,
+                "status": order.status,
+                "orderdate": order.orderDate,
+                "userid" : order.userID.id,
+                "user_email": order.userID.email,
+                "product_name": order.productCode.name
+            }
+            for order in orders
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 ###############
