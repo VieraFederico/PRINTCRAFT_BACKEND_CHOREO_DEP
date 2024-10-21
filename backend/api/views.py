@@ -194,6 +194,22 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
+from rest_framework import generics
+from .models import Product
+from .serializers import ProductSerializer
+from rest_framework.permissions import AllowAny
+# from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+
+class ProductSearchView(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [SearchFilter, OrderingFilter] # DjangoFilterBackend
+    # filterset_fields = ['material', 'categories__name']
+    search_fields = ['name', 'description']
+    ordering_fields = ['price', 'name']
+
 class SellerProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
