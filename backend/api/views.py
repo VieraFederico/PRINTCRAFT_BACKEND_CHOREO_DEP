@@ -1252,6 +1252,38 @@ class UserOrderListView(generics.ListAPIView):
         user = self.request.user
         return Order.objects.filter(userID=user)
 """
+
+class UserOrderListView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        # user = User.objects.get(id=142)
+        orders = Order.objects.filter(userID=user)
+
+        response_data = [
+            {
+                "orderid": order.orderID,
+                "productcode": order.productCode.code,
+                "quantity": order.quantity,
+                "total_price": order.productCode.price * order.quantity,
+                "status": order.status,
+                "orderdate": order.orderDate,
+                "sellerid": order.productCode.seller.userId.id,
+                # "seller_email": order.productCode.seller.userId.email,
+                "product_name": order.productCode.name,
+            }
+            for order in orders
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+"""
+nombre_producto
+precio_total
+"""
+
+"""
 class SellerOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     # permission_classes = [IsSeller]  # Solo vendedores pueden ver sus órdenes
