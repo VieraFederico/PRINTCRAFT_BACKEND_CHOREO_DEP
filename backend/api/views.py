@@ -854,8 +854,8 @@ class UserPrintReverseAuctionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # user = User.objects.get(id=8)
-        return PrintReverseAuction.objects.filter(userID=user)
+        # user = User.objects.get(id=142)
+        return PrintReverseAuction.objects.filter(userID=user, status="Open")
 
 class OpenPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
@@ -1030,8 +1030,8 @@ class UserDesignReverseAuctionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # user = User.objects.get(id=8)
-        return DesignReverseAuction.objects.filter(userID=user)
+        # user = User.objects.get(id=142)
+        return DesignReverseAuction.objects.filter(userID=user, status="Open")
 
 class OpenDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
@@ -1242,7 +1242,7 @@ class OrderCreateView(generics.CreateAPIView):
         order=serializer.save()
         return Response({"order_id": order.order_id}, status=status.HTTP_201_CREATED)
 
-
+"""
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden ver sus órdenes
@@ -1251,6 +1251,38 @@ class UserOrderListView(generics.ListAPIView):
         # Filtrar las órdenes por el usuario autenticado
         user = self.request.user
         return Order.objects.filter(userID=user)
+"""
+
+class UserOrderListView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        # user = User.objects.get(id=142)
+        orders = Order.objects.filter(userID=user)
+
+        response_data = [
+            {
+                "orderid": order.orderID,
+                "productcode": order.productCode.code,
+                "quantity": order.quantity,
+                "total_price": order.productCode.price * order.quantity,
+                "status": order.status,
+                "orderdate": order.orderDate,
+                "sellerid": order.productCode.seller.userId.id,
+                # "seller_email": order.productCode.seller.userId.email,
+                "product_name": order.productCode.name,
+            }
+            for order in orders
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+"""
+nombre_producto
+precio_total
+"""
+
 """
 class SellerOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
