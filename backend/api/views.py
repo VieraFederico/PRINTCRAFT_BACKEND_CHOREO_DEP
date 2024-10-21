@@ -1,7 +1,10 @@
+from http.client import responses
+
 import mercadopago
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from mercadopago import sdk
+from pyexpat.errors import messages
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -1397,31 +1400,15 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import ollama
-import json
-"""
+from ollama import chat
+
 class CositoAIAPIView(APIView):
-    def post(self, request):
-        try:
-            # Obtener la descripción del producto desde el cuerpo de la solicitud
-            description = request.data.get('description', '')
-
-            # Definir el prompt para mantener a Cosito AI en personaje y en español
-            if description:
-            if description:
-                prompt = f""""""Eres Cosito AI, un asistente en un mercado de impresión 3D. Tu trabajo es ayudar a los usuarios a encontrar el producto que describen.
-                La descripción es: '{description}'. ¿Cuál producto crees que sería?""""""
-
-                # Enviar el prompt a Ollama AI
-                response = ollama.complete(model="gpt-3", prompt=prompt)
-
-                # Retornar la respuesta de Cosito AI
-                return Response({'response': response['choices'][0]['text'].strip()}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'No description provided'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-"""
+    permission_classes = [AllowAny]
+    def post(self):
+        response = ollama.chat(model='llama3.1', messages=[
+            {
+                'role': 'user',
+                'content': 'Why is the sky blue?',
+            },
+        ])
+        return response
