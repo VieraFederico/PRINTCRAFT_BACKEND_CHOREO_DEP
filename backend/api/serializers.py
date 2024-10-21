@@ -46,7 +46,8 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 class SellerSerializer(serializers.ModelSerializer):
     profile_picture_file = serializers.FileField(write_only=True, required=False, allow_null=True)
-    materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True) # TODO required=False
+    materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True, required=False)
+    # materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True, required=False)
 
     class Meta:
         model = Seller
