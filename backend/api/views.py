@@ -40,7 +40,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
 import uuid  # Para generar el idempotency key
-import ollama
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json####################
@@ -1476,17 +1475,6 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-from ollama import chat
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-import ollama  # Ensure the import is correct
-
-import openai
-
 
 import cohere
 from django.conf import settings
