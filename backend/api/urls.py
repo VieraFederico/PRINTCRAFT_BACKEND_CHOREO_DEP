@@ -64,3 +64,4 @@ urlpatterns = [
     path('cosito_ai/', CositoAIAPIView.as_view(), name='cosito_ai_response'),
 
 ]
+#
