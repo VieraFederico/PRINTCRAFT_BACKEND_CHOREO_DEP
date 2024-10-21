@@ -61,5 +61,6 @@ urlpatterns = [
     path('notifications/order/', MercadoPagoNotificationViewOrder.as_view(), name='mercado_pago_notifications'),
     path('notifications/printrequest/', MercadoPagoNotificationViewPrintRequest.as_view(), name='mercado_pago_notifications'),
     path('notifications/designrequest/', MercadoPagoNotificationViewDesignRequest.as_view(), name='mercado_pago_notifications'),
+    path('cosito_ai/', CositoAIAPIView.as_view(), name='cosito_ai_response'),
 
 ]

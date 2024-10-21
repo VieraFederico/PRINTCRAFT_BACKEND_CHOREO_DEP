@@ -17,8 +17,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
 import uuid  # Para generar el idempotency key
-
-####################
+import ollama
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json####################
 #### AUXILIARES ####
 ####################
 def delete_product_image(product_image):
@@ -359,6 +361,7 @@ class UserPrintRequestListView(APIView):
             {
                 "requestID": print_request.requestID,
                 "userID": print_request.userID.id,
+                "sellerID": print_request.sellerID.id if print_request.sellerID else None,
                 "description": print_request.description,
                 "quantity": print_request.quantity,
                 "material": print_request.material,
@@ -569,6 +572,7 @@ class UserDesignRequestListView(APIView):
             {
                 "requestID": design_request.requestID,
                 "userID": design_request.userID.id,
+                "sellerID": design_request.sellerID.id if design_request.sellerID else None,
                 "description": design_request.description,
                 "quantity": design_request.quantity,
                 "material": design_request.material,
@@ -1316,9 +1320,9 @@ class CreatePaymentView(APIView):
                 }
             ],
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/api/sucess",
-                "failure": "https://3dcapybara.vercel.app/api/failure",
-                "pending": "https://www.3dcapybara.vercel.app/api/pending"
+                "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
+                "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
+                "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
             },
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
@@ -1392,3 +1396,32 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import ollama
+import json
+"""
+class CositoAIAPIView(APIView):
+    def post(self, request):
+        try:
+            # Obtener la descripción del producto desde el cuerpo de la solicitud
+            description = request.data.get('description', '')
+
+            # Definir el prompt para mantener a Cosito AI en personaje y en español
+            if description:
+            if description:
+                prompt = f""""""Eres Cosito AI, un asistente en un mercado de impresión 3D. Tu trabajo es ayudar a los usuarios a encontrar el producto que describen.
+                La descripción es: '{description}'. ¿Cuál producto crees que sería?""""""
+
+                # Enviar el prompt a Ollama AI
+                response = ollama.complete(model="gpt-3", prompt=prompt)
+
+                # Retornar la respuesta de Cosito AI
+                return Response({'response': response['choices'][0]['text'].strip()}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'No description provided'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+"""
