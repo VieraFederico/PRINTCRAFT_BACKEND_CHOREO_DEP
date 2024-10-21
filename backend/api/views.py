@@ -1456,33 +1456,40 @@ import ollama  # Ensure the import is correct
 import openai
 
 
+import cohere
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-import openai
-from django.conf import settings
+from rest_framework.permissions import AllowAny
 
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view
 
     def post(self, request):
         try:
+            # Get user input from the request
             user_input = request.data.get('input')
 
-            openai.api_key = settings.OPENAI_API_KEY
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",  # Specify the model
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"¿Cuál es el nombre del producto para la descripción: '{user_input}'?"
-                    }
-                ],
+            # Initialize Cohere API client
+            co = cohere.Client(settings.COHERE_API_KEY)
+
+            # Make a request to Cohere's generate API
+            response = co.generate(
+                model='command-xlarge-nightly',  # Cohere model to use
+                prompt=f"Para la descripción: '{user_input}', devuelve únicamente el nombre del producto, sin ninguna explicación ni texto adicional:",
+                max_tokens=20,  # Limiting the number of tokens for a short response
+                temperature=0.5,  # Controls randomness in response, lower values = more deterministic
+                stop_sequences=["\n"]  # Stop generation after a newline
             )
 
-            product_name = response.choices[0].message['content'].strip()
+            # Extract the generated product name from the response
+            product_name = response.generations[0].text.strip()
+
+            # Return the product name as the response
             return Response({'response': product_name}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
