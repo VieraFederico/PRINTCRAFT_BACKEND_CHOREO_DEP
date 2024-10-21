@@ -173,6 +173,22 @@ class ProductCreateView(generics.CreateAPIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny]
 
+class DeleteProductView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def delete(self, request, product_id):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=4)
+        try:
+            product = Product.objects.get(code=product_id, seller=seller)
+            product.delete()
+            return Response({"message": "Product deleted successfully"}, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found or you do not have permission to delete this product"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -246,7 +262,7 @@ class DeleteProductView(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 """
 
-
+"""
 class DeleteProductView(APIView):
     permission_classes = [IsSeller]
 
@@ -257,7 +273,7 @@ class DeleteProductView(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
     # tod agregar
-
+"""
 
 class IsProductOwnerView(APIView):
     permission_classes = [IsSeller]
