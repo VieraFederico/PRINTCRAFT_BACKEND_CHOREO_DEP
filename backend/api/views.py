@@ -1242,7 +1242,7 @@ class OrderCreateView(generics.CreateAPIView):
         order=serializer.save()
         return Response({"order_id": order.order_id}, status=status.HTTP_201_CREATED)
 
-
+"""
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden ver sus órdenes
