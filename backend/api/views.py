@@ -482,7 +482,7 @@ class UserRespondToPrintRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                print_request.status = "En Proceso"
+                print_request.status = "Cotizada"
                 product_id = request_id
                 quantity = print_request.quantity
                 # quantity = request.get("quantity")
@@ -755,7 +755,7 @@ class UserRespondToDesignRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                design_request.status = "En Proceso"
+                design_request.status = "Cotizada"
                 product_id = request_id
                 quantity = design_request.quantity
                 # quantity = request.get("quantity")
