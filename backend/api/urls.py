@@ -64,7 +64,6 @@ urlpatterns = [
     path('notifications/printrequest/', MercadoPagoNotificationViewPrintRequest.as_view(), name='mercado_pago_notifications'),
     path('notifications/designrequest/', MercadoPagoNotificationViewDesignRequest.as_view(), name='mercado_pago_notifications'),
     path('cosito/', CositoAI.as_view(), name='cosito_ai'),
-
     path('cosito-id/', CositoAIID.as_view(), name='cosito_ai'),
 
 ]

@@ -1730,6 +1730,7 @@ class CositoAIID(APIView):
 
             # Step 2: Iterate through each product and get Cohere's response
             for product in products:
+                product_id = product.code  # Get product ID
                 product_name = product.name  # Get product name
                 product_description = product.description  # Get product description
 
@@ -1739,26 +1740,24 @@ class CositoAIID(APIView):
                           f"Respond with a score (1-10) indicating how well it matches.")
 
                 response = co.generate(
-                    model='command-xlarge-nightly',  # Cohere model to use
+                    model='command-xlarge-nightly',
                     prompt=prompt,
                     max_tokens=10,
-                    temperature=0.5,
-                    stop_sequences=["\n"]
+                    temperature=0.5
                 )
 
                 # Extract the score from Cohere's response
                 score = float(response.generations[0].text.strip())
-                product_scores.append((product_name, score))  # Store product name and score
+                product_scores.append((product_id, score))  # Store product ID and score
 
             # Step 3: Find the product with the highest score
             best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
 
             if best_product:
-                return Response({'response': best_product[0]}, status=status.HTTP_200_OK)  # Return the best product name
+                return Response({'response': best_product[0]},
+                                status=status.HTTP_200_OK)  # Return the best product name
             else:
                 return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
