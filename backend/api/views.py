@@ -1164,7 +1164,7 @@ class QuotizedDesignReverseAuctionResponseListView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
+"""
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseSerializer
     permission_classes = [AllowAny]
@@ -1172,6 +1172,28 @@ class DesignReverseAuctionResponseListView(generics.ListAPIView):
     def get_queryset(self):
         auction_id = self.kwargs['auction_id']
         return DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+"""
+class DesignReverseAuctionResponseListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, auction_id):
+        responses = DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+        response_data = [
+            {
+                "responseID": response.responseID,
+                "seller": response.seller.userId.id,
+                "price": response.price,
+                "status": response.status,
+                "created_at": response.created_at,
+                # "auction": response.auction.requestID,
+                "sellerName": response.seller.store_name,
+                "sellerAddress": response.seller.address
+            }
+            for response in responses
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class AcceptDesignReverseAuctionResponseView(APIView):
