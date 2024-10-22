@@ -1401,6 +1401,21 @@ class CompleteOrderView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+class DeliverOrderView(APIView):
+    # permission_classes = [IsSeller]
+    permission_classes = [AllowAny]
+
+    def post(self, request, order_id):
+        # seller = request.user.seller
+        seller = Seller.objects.get(userId=142)
+        try:
+            order = Order.objects.get(orderID=order_id, productCode__seller=seller)
+            order.status = "Entregada"
+            order.save()
+            return Response({"message": "Order marked as delivered successfully"}, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
+
 class UserOrderListView(APIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
