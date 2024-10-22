@@ -887,6 +887,7 @@ class CreatePrintReverseAuctionResponseView(APIView):
         response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+"""
 class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseCombinedSerializer
     permission_classes = [IsSeller]
@@ -896,6 +897,57 @@ class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
         seller = self.request.user.seller
         # seller = Seller.objects.get(userId=4) # TODO CAMBIAR
         return PrintReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+"""
+
+# class QuotatedPrintOrdersListView(APIView):
+class QuotizedPrintReverseAuctionResponseListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=142) # TODO CAMBIAR
+        quotated_responses = PrintReverseAuctionResponse.objects.filter(seller=seller, status="Pending")
+        printed_requests = PrintRequest.objects.filter(sellerID=seller, status="Cotizada")
+
+        response_data = [
+            {
+                "userID": response.auction.userID.id,
+                "description": response.auction.description,
+                "quantity": response.auction.quantity,
+                "material": response.auction.material,
+                "price": response.price,
+                "status": response.status,
+                "stl_url": response.auction.stl_file_url,
+            }
+            for response in quotated_responses
+        ]
+
+        response_data += [
+            {
+                "userID": request.userID.id,
+                "description": request.description,
+                "quantity": request.quantity,
+                "material": request.material,
+                "price": request.price,
+                "status": request.status,
+                "stl_url": request.stl_url,
+            }
+            for request in printed_requests
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+"""
+nueva view que retorne las design/print-requests cotizadas, join design/print-reverse-auction
+
+{
+    
+}
+
+
+"""
 
 
 class PrintReverseAuctionResponseListView(generics.ListAPIView):
