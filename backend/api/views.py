@@ -1626,7 +1626,8 @@ class MercadoPagoNotificationViewPrintRequest(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
         #saracatunga
-        request.status="Aceptada"
+        if payment_status == "approved":
+            request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
@@ -1643,7 +1644,8 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        request.status="Aceptada"
+        if payment_status == "approved":
+            request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
