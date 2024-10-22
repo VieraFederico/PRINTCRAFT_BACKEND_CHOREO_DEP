@@ -42,7 +42,8 @@ from decimal import Decimal
 import uuid  # Para generar el idempotency key
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json####################
+import json
+####################
 #### AUXILIARES ####
 ####################
 def delete_product_image(product_image):
