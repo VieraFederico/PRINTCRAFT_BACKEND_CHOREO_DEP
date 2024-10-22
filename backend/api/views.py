@@ -40,7 +40,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
 import uuid  # Para generar el idempotency key
-import ollama
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json####################
@@ -483,7 +482,7 @@ class UserRespondToPrintRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                print_request.status = "En Proceso"
+                print_request.status = "Cotizada"
                 product_id = request_id
                 quantity = print_request.quantity
                 # quantity = request.get("quantity")
@@ -756,7 +755,7 @@ class UserRespondToDesignRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                design_request.status = "En Proceso"
+                design_request.status = "Cotizada"
                 product_id = request_id
                 quantity = design_request.quantity
                 # quantity = request.get("quantity")
@@ -1529,44 +1528,40 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
-from ollama import chat
-
+import cohere
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-import ollama  # Ensure the import is correct
-
-import openai
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import openai
-from django.conf import settings
 
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view
 
     def post(self, request):
         try:
+            # Get user input from the request
             user_input = request.data.get('input')
 
-            openai.api_key = settings.OPENAI_API_KEY
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",  # Specify the model
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"¿Cuál es el nombre del producto para la descripción: '{user_input}'?"
-                    }
-                ],
+            # Initialize Cohere API client
+            co = cohere.Client(settings.COHERE_API_KEY)
+
+            # Make a request to Cohere's generate API
+            response = co.generate(
+                model='command-xlarge-nightly',  # Cohere model to use
+                prompt=f"Para la descripción: '{user_input}', devuelve únicamente el nombre del producto, sin ninguna explicación ni texto adicional:",
+                max_tokens=20,  # Limiting the number of tokens for a short response
+                temperature=0.5,  # Controls randomness in response, lower values = more deterministic
+                stop_sequences=["\n"]  # Stop generation after a newline
             )
 
-            product_name = response.choices[0].message['content'].strip()
+            # Extract the generated product name from the response
+            product_name = response.generations[0].text.strip()
+
+            # Return the product name as the response
             return Response({'response': product_name}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
