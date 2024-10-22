@@ -949,7 +949,7 @@ nueva view que retorne las design/print-requests cotizadas, join design/print-re
 
 """
 
-
+"""
 class PrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseSerializer
     permission_classes = [AllowAny] # TODO -> ¿lo puede ver cualquiera?
@@ -957,6 +957,27 @@ class PrintReverseAuctionResponseListView(generics.ListAPIView):
     def get_queryset(self):
         auction_id = self.kwargs['auction_id']
         return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+"""
+class PrintReverseAuctionResponseListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, auction_id):
+        responses = PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+        response_data = [
+            {
+                "responseID": response.responseID,
+                "seller": response.seller.userId.id,
+                "price": response.price,
+                "status": response.status,
+                "created_at": response.created_at,
+                # "auction": response.auction.requestID,
+                "sellerName": response.seller.store_name,
+                "sellerAddress": response.seller.address
+            }
+            for response in responses
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
 
 # TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
