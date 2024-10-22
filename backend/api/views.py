@@ -498,7 +498,6 @@ class UserRespondToPrintRequestView(APIView):
                             "unit_price": float(transaction_amount)
                         }
                     ],
-                    "marketplace_fee":"10",
                     "back_urls": {
                         "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                         "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -506,7 +505,9 @@ class UserRespondToPrintRequestView(APIView):
                     },
                     "auto_return": "approved",
                     "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
-
+                    "additional_info": {
+                        "marketplace_fee": 10
+                    }
                 }
                 try:
                     preference_response = sdk.preference().create(preference_data)
@@ -771,7 +772,6 @@ class UserRespondToDesignRequestView(APIView):
                             "unit_price": float(transaction_amount)
                         }
                     ],
-                    "marketplace_fee": "10",
                     "back_urls": {
                         "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                         "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -779,7 +779,9 @@ class UserRespondToDesignRequestView(APIView):
                     },
                     "auto_return": "approved",
                     "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
-
+                    "additional_info": {
+                        "marketplace_fee":10
+                    }
                 }
                 try:
                     preference_response = sdk.preference().create(preference_data)
@@ -1027,7 +1029,6 @@ class AcceptAuctionResponseView(APIView):
                         "unit_price": float(transaction_amount)
                     }
                 ],
-                "marketplace_fee": "10",
                 "back_urls": {
                     "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -1035,7 +1036,9 @@ class AcceptAuctionResponseView(APIView):
                 },
                 "auto_return": "approved",
                 "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
-
+                "additional_info": {
+                    "marketplace_fee":10
+                }
             }
             try:
                 preference_response = sdk.preference().create(preference_data)
@@ -1263,7 +1266,6 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                         "unit_price": float(transaction_amount)
                     }
                 ],
-                "marketplace_fee": "10",
                 "back_urls": {
                     "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -1271,7 +1273,9 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                 },
                 "auto_return": "approved",
                 "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
-
+                "additional_info": {
+                    "marketplace_fee":10
+                }
             }
             try:
                 preference_response = sdk.preference().create(preference_data)
@@ -1562,7 +1566,6 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
-            "marketplace_fee": "10",
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                 "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -1570,7 +1573,9 @@ class CreatePaymentView(APIView):
             },
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
-
+            "additional_info": {
+                "marketplace_fee":10
+            }
         }
 
         try:
