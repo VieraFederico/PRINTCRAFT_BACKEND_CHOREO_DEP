@@ -42,7 +42,8 @@ from decimal import Decimal
 import uuid  # Para generar el idempotency key
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json####################
+import json
+####################
 #### AUXILIARES ####
 ####################
 def delete_product_image(product_image):
@@ -886,6 +887,7 @@ class CreatePrintReverseAuctionResponseView(APIView):
         response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+"""
 class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseCombinedSerializer
     permission_classes = [IsSeller]
@@ -895,8 +897,59 @@ class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
         seller = self.request.user.seller
         # seller = Seller.objects.get(userId=4) # TODO CAMBIAR
         return PrintReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+"""
+
+# class QuotatedPrintOrdersListView(APIView):
+class QuotizedPrintReverseAuctionResponseListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=142) # TODO CAMBIAR
+        quotated_responses = PrintReverseAuctionResponse.objects.filter(seller=seller, status="Pending")
+        printed_requests = PrintRequest.objects.filter(sellerID=seller, status="Cotizada")
+
+        response_data = [
+            {
+                "userID": response.auction.userID.id,
+                "description": response.auction.description,
+                "quantity": response.auction.quantity,
+                "material": response.auction.material,
+                "price": response.price,
+                "status": response.status,
+                "stl_url": response.auction.stl_file_url,
+            }
+            for response in quotated_responses
+        ]
+
+        response_data += [
+            {
+                "userID": request.userID.id,
+                "description": request.description,
+                "quantity": request.quantity,
+                "material": request.material,
+                "price": request.price,
+                "status": request.status,
+                "stl_url": request.stl_url,
+            }
+            for request in printed_requests
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
+"""
+nueva view que retorne las design/print-requests cotizadas, join design/print-reverse-auction
+
+{
+    
+}
+
+
+"""
+
+"""
 class PrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseSerializer
     permission_classes = [AllowAny] # TODO -> ¿lo puede ver cualquiera?
@@ -904,6 +957,27 @@ class PrintReverseAuctionResponseListView(generics.ListAPIView):
     def get_queryset(self):
         auction_id = self.kwargs['auction_id']
         return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+"""
+class PrintReverseAuctionResponseListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, auction_id):
+        responses = PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+        response_data = [
+            {
+                "responseID": response.responseID,
+                "seller": response.seller.userId.id,
+                "price": response.price,
+                "status": response.status,
+                "created_at": response.created_at,
+                # "auction": response.auction.requestID,
+                "sellerName": response.seller.store_name,
+                "sellerAddress": response.seller.address
+            }
+            for response in responses
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
 
 # TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
@@ -1061,6 +1135,7 @@ class CreateDesignReverseAuctionResponseView(APIView):
         response = DesignReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+"""
 class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseCombinedSerializer
     permission_classes = [IsSeller]
@@ -1071,8 +1146,46 @@ class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
         # seller = Seller.objects.get(userId=4)  # TODO CAMBIAR
         # return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller) # TODO CAMBIAR
         return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+"""
+class QuotizedDesignReverseAuctionResponseListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
 
+    def get(self, request):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=142) # TODO CAMBIAR
+        quotated_responses = DesignReverseAuctionResponse.objects.filter(seller=seller, status="Pending")
+        quotated_requests = DesignRequest.objects.filter(sellerID=seller, status="Cotizada")
 
+        response_data = [
+            {
+                "userID": response.auction.userID.id,
+                "description": response.auction.description,
+                "quantity": response.auction.quantity,
+                "material": response.auction.material,
+                "price": response.price,
+                "status": response.status,
+                "images": [image.image_url for image in response.auction.design_images.all()]
+            }
+            for response in quotated_responses
+        ]
+
+        response_data += [
+            {
+                "userID": request.userID.id,
+                "description": request.description,
+                "quantity": request.quantity,
+                "material": request.material,
+                "price": request.price,
+                "status": request.status,
+                "images": [image.image_url for image in request.design_images.all()]
+            }
+            for request in quotated_requests
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+"""
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseSerializer
     permission_classes = [AllowAny]
@@ -1080,6 +1193,28 @@ class DesignReverseAuctionResponseListView(generics.ListAPIView):
     def get_queryset(self):
         auction_id = self.kwargs['auction_id']
         return DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+"""
+class DesignReverseAuctionResponseListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, auction_id):
+        responses = DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
+
+        response_data = [
+            {
+                "responseID": response.responseID,
+                "seller": response.seller.userId.id,
+                "price": response.price,
+                "status": response.status,
+                "created_at": response.created_at,
+                # "auction": response.auction.requestID,
+                "sellerName": response.seller.store_name,
+                "sellerAddress": response.seller.address
+            }
+            for response in responses
+        ]
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class AcceptDesignReverseAuctionResponseView(APIView):
