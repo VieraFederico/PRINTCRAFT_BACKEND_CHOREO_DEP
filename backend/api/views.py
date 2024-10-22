@@ -1387,12 +1387,12 @@ class UserOrderListView(generics.ListAPIView):
         return Order.objects.filter(userID=user)
 """
 class CompleteOrderView(APIView):
-    # permission_classes = [IsSeller]
-    permission_classes = [AllowAny]
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
 
     def post(self, request, order_id):
-        # seller = request.user.seller
-        seller = Seller.objects.get(userId=142)
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=142)
         try:
             order = Order.objects.get(orderID=order_id, productCode__seller=seller)
             order.status = "Completada"
