@@ -68,7 +68,7 @@ class PrintRequest(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     status = models.CharField(max_length=255, null=False, default="Pendiente",
                               choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
-                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
+                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"), ("Aceptada", "Aceptada"),
                                        ("En proceso", "En proceso"), ("Realizada", "Realizada")]
                               )
     preference_id = models.CharField(max_length=255, null=True, blank=True)
