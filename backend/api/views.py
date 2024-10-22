@@ -1113,6 +1113,7 @@ class CreateDesignReverseAuctionResponseView(APIView):
         response = DesignReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+"""
 class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseCombinedSerializer
     permission_classes = [IsSeller]
@@ -1123,6 +1124,44 @@ class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
         # seller = Seller.objects.get(userId=4)  # TODO CAMBIAR
         # return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller) # TODO CAMBIAR
         return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
+"""
+class QuotizedDesignReverseAuctionResponseListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=142) # TODO CAMBIAR
+        quotated_responses = DesignReverseAuctionResponse.objects.filter(seller=seller, status="Pending")
+        quotated_requests = DesignRequest.objects.filter(sellerID=seller, status="Cotizada")
+
+        response_data = [
+            {
+                "userID": response.auction.userID.id,
+                "description": response.auction.description,
+                "quantity": response.auction.quantity,
+                "material": response.auction.material,
+                "price": response.price,
+                "status": response.status,
+                "images": [image.image_url for image in response.auction.design_images.all()]
+            }
+            for response in quotated_responses
+        ]
+
+        response_data += [
+            {
+                "userID": request.userID.id,
+                "description": request.description,
+                "quantity": request.quantity,
+                "material": request.material,
+                "price": request.price,
+                "status": request.status,
+                "images": [image.image_url for image in request.design_images.all()]
+            }
+            for request in quotated_requests
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
