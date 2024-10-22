@@ -483,7 +483,6 @@ class UserRespondToPrintRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                print_request.status = "Cotizada"
                 product_id = request_id
                 quantity = print_request.quantity
                 # quantity = request.get("quantity")
@@ -756,7 +755,6 @@ class UserRespondToDesignRequestView(APIView):
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
             if response == "Accept":
-                design_request.status = "Cotizada"
                 product_id = request_id
                 quantity = design_request.quantity
                 # quantity = request.get("quantity")
@@ -1647,31 +1645,58 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from django.conf import settings
+import cohere
+from .models import Product  # Assuming you have a Product model
+
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view
 
     def post(self, request):
         try:
-            # Get user input from the request
             user_input = request.data.get('input')
 
-            # Initialize Cohere API client
+            # Step 1: Get all products from the database
+            products = Product.objects.all()
+
+            # Prepare a list to store responses
+            product_scores = []
+
+            # Initialize Cohere client
             co = cohere.Client(settings.COHERE_API_KEY)
 
-            # Make a request to Cohere's generate API
-            response = co.generate(
-                model='command-xlarge-nightly',  # Cohere model to use
-                prompt=f"Para la descripción: '{user_input}', devuelve únicamente el nombre del producto, sin ninguna explicación ni texto adicional:",
-                max_tokens=20,  # Limiting the number of tokens for a short response
-                temperature=0.5,  # Controls randomness in response, lower values = more deterministic
-                stop_sequences=["\n"]  # Stop generation after a newline
-            )
+            # Step 2: Iterate through each product and get Cohere's response
+            for product in products:
+                product_name = product.name  # Get product name
+                product_description = product.description  # Get product description
 
-            # Extract the generated product name from the response
-            product_name = response.generations[0].text.strip()
+                # Create the prompt using both name and description
+                prompt = (f"Evaluate the product '{product_name}' with description: '{product_description}' "
+                          f"against this user description: '{user_input}'. "
+                          f"Respond with a score (1-10) indicating how well it matches.")
 
-            # Return the product name as the response
-            return Response({'response': product_name}, status=status.HTTP_200_OK)
+                response = co.generate(
+                    model='command-xlarge-nightly',  # Cohere model to use
+                    prompt=prompt,
+                    max_tokens=10,
+                    temperature=0.5,
+                    stop_sequences=["\n"]
+                )
+
+                # Extract the score from Cohere's response
+                score = float(response.generations[0].text.strip())
+                product_scores.append((product_name, score))  # Store product name and score
+
+            # Step 3: Find the product with the highest score
+            best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
+
+            if best_product:
+                return Response({'response': best_product[0]}, status=status.HTTP_200_OK)  # Return the best product name
+            else:
+                return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
