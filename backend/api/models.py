@@ -158,6 +158,16 @@ class ProductImage(models.Model):
 
 # idem para DesignInverseAuction y DesignInverseAuctionResponse
 
+class ProductReview(models.Model):
+    product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(null=False, choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for {self.product.name} by {self.user.username}"
+
 class PrintReverseAuction(models.Model):
     requestID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
