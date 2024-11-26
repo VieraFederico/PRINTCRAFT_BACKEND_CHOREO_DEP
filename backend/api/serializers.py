@@ -92,6 +92,13 @@ class OrderSerializer(serializers.ModelSerializer):
         validated_data['userID'] = user
         return Order.objects.create(**validated_data)
 
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields = ['id', 'product', 'user', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+
 """
 class PrintRequestSerializer(serializers.ModelSerializer):
     class Meta:
