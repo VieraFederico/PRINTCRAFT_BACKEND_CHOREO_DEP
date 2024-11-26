@@ -45,6 +45,8 @@ class Product(models.Model):
     # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0) # todo agregar
     materials = models.ManyToManyField('Material', through='ProductMaterial')  # Relación muchos a muchos con Material
     categories = models.ManyToManyField('Category')  # Relación muchos a muchos con Category
+    review_count = models.IntegerField(default=0)
+    review_sum = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -162,7 +164,7 @@ class ProductReview(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(null=False, choices=[(i, i) for i in range(1, 6)])
-    comment = models.TextField(null=True, blank=True)
+    comment = models.TextField(null=True, blank=True) # meter max_length de 255
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
