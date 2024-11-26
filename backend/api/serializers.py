@@ -224,7 +224,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials', 'review_sum', 'review_count'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
@@ -310,12 +310,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'images', 'categories', 'materials', 'seller_name'
+            'stl_file_url', 'seller', 'price', 'images', 'categories', 'materials', 'seller_name', 'review_sum', 'review_count' #'reviews'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
             'seller': {'read_only': True},  # Solo lectura
             'stl_file_url': {'read_only': True},  # Solo escritura
+            'review_sum': {'read_only': True},
+            'review_count': {'read_only': True}
         }
 
 
