@@ -289,11 +289,11 @@ class ProductReviewListCreateView(generics.ListCreateAPIView):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    # permission_classes = [AllowAny]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        # user = User.objects.get(id=142)
-        user = self.request.user
+        user = User.objects.get(id=142)
+        # user = self.request.user
         # product = serializer.validated_data['product']
 
         # Check if the user has bought the product
@@ -301,12 +301,18 @@ class ProductReviewListCreateView(generics.ListCreateAPIView):
         #     raise serializers.ValidationError("You can only review products you have purchased.")
         serializer.save(user=user)
 
-
-
 class ProductReviewDetailView(generics.RetrieveAPIView):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
     permission_classes = [AllowAny]
+
+class ProductReviewsByProductCodeView(generics.ListAPIView):
+    serializer_class = ProductReviewSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        product_code = self.kwargs['product_code']
+        return ProductReview.objects.filter(product__code=product_code)
 
 
 """
