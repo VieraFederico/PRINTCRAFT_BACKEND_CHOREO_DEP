@@ -284,6 +284,31 @@ class ProductSellerDetailView(APIView):
             return Response(seller_data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class ProductReviewListCreateView(generics.ListCreateAPIView):
+    queryset = ProductReview.objects.all()
+    serializer_class = ProductReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        # user = User.objects.get(id=142)
+        user = self.request.user
+        # product = serializer.validated_data['product']
+
+        # Check if the user has bought the product
+        # if not Order.objects.filter(userID=user, productCode=product).exists():
+        #     raise serializers.ValidationError("You can only review products you have purchased.")
+        serializer.save(user=user)
+
+
+
+class ProductReviewDetailView(generics.RetrieveAPIView):
+    queryset = ProductReview.objects.all()
+    serializer_class = ProductReviewSerializer
+    permission_classes = [AllowAny]
+
+
 """
 class DeleteProductView(APIView):
     # permission_classes = [IsSeller]
