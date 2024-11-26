@@ -230,6 +230,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'code': {'read_only': True},  # Solo lectura
             'seller': {'read_only': True},  # Solo lectura
             'stl_file_url': {'read_only': True},  # Solo escritura
+            'review_sum': {'read_only': True},
+            'review_count': {'read_only': True}
             # 'stl_file': {'write_only': True},  # Solo escritura
         }
 
