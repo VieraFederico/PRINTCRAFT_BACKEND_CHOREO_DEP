@@ -292,13 +292,22 @@ class ProductReviewListCreateView(generics.ListCreateAPIView):
     # permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        user = User.objects.get(id=142)
-        # user = self.request.user
-        # product = serializer.validated_data['product']
+        # user = User.objects.get(id=142)
+        user = self.request.user
+        product = serializer.validated_data['product']
+        rating = serializer.validated_data['rating']
 
         # Check if the user has bought the product
         # if not Order.objects.filter(userID=user, productCode=product).exists():
         #     raise serializers.ValidationError("You can only review products you have purchased.")
+
+        # check that the user has not already reviewed the product
+        # if ProductReview.objects.filter(user=user, product=product).exists():
+        #     raise serializers.ValidationError("You have already reviewed this product.")
+
+        product.review_count += 1
+        product.review_sum += rating
+        product.save()
         serializer.save(user=user)
 
 
