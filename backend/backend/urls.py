@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from backend.api.views.views import CreateUserView, FileUploadView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from backend.api.views.files_views import FileUploadView
+from backend.api.views.user_views import CreateUserView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
