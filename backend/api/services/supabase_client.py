@@ -9,8 +9,8 @@ def upload_file_to_supabase(file, bucket_name, file_name, content_type="image/jp
     # response = supabase.storage.from_("images").upload(file_name, file)
     response = supabase.storage.from_(bucket_name).upload(file=file, path=file_name, file_options={"content-type": content_type})
 
-    if response.is_error:
-        raise Exception(response.error)
+    if response.error:
+        raise Exception(f"Error uploading file: {response.error.message}")
     return file_name
 
 def remove_file_from_supabase(bucket_name, file_name):
