@@ -207,7 +207,7 @@ class ProductMaterialSerializer(serializers.ModelSerializer):
         model = ProductMaterial
         fields = ['material', 'price']
 
-
+# TODO: update serializer to include reviews
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)  # Relación con las imágenes a través de la ForeignKey
     image_files = serializers.ListField(child=serializers.FileField(), write_only=True, required=False)
@@ -297,7 +297,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
         return product
 
-
+# TO-DO: update serializer to include reviews
 class ProductDetailSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source='seller.store_name', read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
@@ -307,6 +307,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         slug_field='name',
         queryset=Category.objects.all()
     )
+    # reviews = ProductReviewSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
