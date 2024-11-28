@@ -3,7 +3,7 @@ from itertools import product
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import *
+from .models.models import *
 from rest_framework import serializers
 from api.services.supabase_client import *
 

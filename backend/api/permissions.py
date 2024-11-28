@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from .models import Seller
+from .models.models import Seller
 
 class IsSeller(permissions.BasePermission):
     """

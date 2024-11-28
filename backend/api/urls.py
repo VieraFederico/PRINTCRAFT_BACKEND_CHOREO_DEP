@@ -1,6 +1,6 @@
 from django.urls import path
-from . import views
-from .views import *
+from .views import views
+from .views.views import * # type: ignore
 urlpatterns = [
     path("seller/", views.SellerCreateView.as_view(), name="seller_create"),
     path("user/data/", views.ReturnUserDataView.as_view(), name="user_data"),
