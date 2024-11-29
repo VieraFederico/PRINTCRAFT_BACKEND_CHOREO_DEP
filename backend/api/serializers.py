@@ -79,18 +79,61 @@ class SellerSerializer(serializers.ModelSerializer):
         return seller
         # return Seller.objects.create(userId=4, **validated_data)
 
+class OrderProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ['product', 'quantity']
+
 class OrderSerializer(serializers.ModelSerializer):
+    order_products = OrderProductSerializer(many=True)
+
     class Meta:
         model = Order
-        fields = ['orderID', 'userID', 'orderDate', 'quantity', 'productCode', 'status']
-        extra_kwargs = {'userID': {'read_only': True}, 'orderID': {'read_only': True}, 'orderDate': {'read_only': True}, 'status': {'read_only': True}}
-        #read_only_fields = ['order_id', 'order_date', 'status']  # El ID, la fecha y el estado no se pueden modificar
+        fields = ['orderID', 'userID', 'orderDate', 'status', 'order_products']
+        extra_kwargs = {
+            'userID': {'read_only': True},
+            'orderID': {'read_only': True},
+            'orderDate': {'read_only': True},
+            'status': {'read_only': True},
+        }
+
+    def validate(self, data):
+        products = data.get('order_products')
+        if not products:
+            raise serializers.ValidationError("The order must contain at least one product.")
+
+        # Validar que todos los productos sean del mismo vendedor
+        seller_ids = {prod['product'].seller.userId for prod in products}
+        if len(seller_ids) > 1:
+            raise serializers.ValidationError("All products must belong to the same seller.")
+
+        # Validar stock
+        for prod in products:
+            if prod['product'].stock < prod['quantity']:
+                raise serializers.ValidationError(
+                    f"Not enough stock for product {prod['product'].name}."
+                )
+
+        return data
 
     def create(self, validated_data):
-        # Al crear una orden, el estado siempre será "pendiente"
         user = self.context['request'].user
+        # user = User.objects.get(id=142)
         validated_data['userID'] = user
-        return Order.objects.create(**validated_data)
+        products_data = validated_data.pop('order_products')
+        order = Order.objects.create(**validated_data)
+
+        # Crear los objetos OrderProduct y actualizar el stock
+        for prod_data in products_data:
+            product = prod_data['product']
+            quantity = prod_data['quantity']
+            OrderProduct.objects.create(order=order, product=product, quantity=quantity)
+
+            # Actualizar stock del producto
+            product.stock -= quantity
+            product.save()
+
+        return order
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):

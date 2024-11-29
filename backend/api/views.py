@@ -1401,25 +1401,15 @@ te da
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden crear órdenes
-
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Obtenemos los datos del serializer
-        quantity = serializer.validated_data['quantity']
-        product = serializer.validated_data['productCode']
+        # user = User.objects.get(id=142)
+        user = self.request.user
+        serializer.save(userID=user)
 
-        # Verificamos si la cantidad solicitada es menor o igual al stock disponible
-        if product.stock < quantity:
-            raise serializers.ValidationError('La cantidad solicitada excede el stock disponible.')
 
-        # Actualizamos el stock del producto
-        product.stock -= quantity
-        product.save()
 
-        # Guardamos la orden
-        order=serializer.save()
-        return Response({"order_id": order.order_id}, status=status.HTTP_201_CREATED)
 
 """
 class UserOrderListView(generics.ListAPIView):
@@ -1461,6 +1451,7 @@ class DeliverOrderView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+"""
 class UserOrderListView(APIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
@@ -1484,6 +1475,37 @@ class UserOrderListView(APIView):
             }
             for order in orders
         ]
+        return Response(response_data, status=status.HTTP_200_OK)
+"""
+class UserOrderListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = self.request.user
+        # user = User.objects.get(id=142)
+        orders = Order.objects.filter(userID=user)
+
+        response_data = []
+        for order in orders:
+            order_data = {
+                "orderid": order.orderID,
+                "status": order.status,
+                "orderdate": order.orderDate,
+                "total_price": sum(
+                    op.product.price * op.quantity for op in order.order_products.all()
+                ),
+                "products": [
+                    {
+                        "productcode": op.product.code,
+                        "product_name": op.product.name,
+                        "quantity": op.quantity,
+                        "price_per_unit": op.product.price,
+                    }
+                    for op in order.order_products.all()
+                ],
+            }
+            response_data.append(order_data)
+
         return Response(response_data, status=status.HTTP_200_OK)
 
 """
