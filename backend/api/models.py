@@ -12,9 +12,6 @@ class Seller(models.Model):
     # TODO AGREGAR!!!
     mp_mail = models.EmailField(max_length=255, null=False)
 
-    # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
-    # total_sales = models.IntegerField(default=0)
-
     def __str__(self):
         return self.userId.username
 

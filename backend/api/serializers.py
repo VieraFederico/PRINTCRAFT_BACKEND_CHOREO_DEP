@@ -3,7 +3,10 @@ from itertools import product
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import *
+
+from .models import Seller, Material, Order, ProductReview, PrintRequest, DesignRequestImage, DesignRequest, \
+    ProductImage, ProductMaterial, Category, Product, PrintReverseAuction, PrintReverseAuctionResponse, \
+    DesignReverseAuction, DesignReverseAuctionResponse
 from rest_framework import serializers
 from api.services.supabase_client import *
 
