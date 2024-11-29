@@ -43,6 +43,13 @@ import uuid  # Para generar el idempotency key
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from rest_framework import generics
+from .models import Product
+from .serializers import ProductSerializer
+from rest_framework.permissions import AllowAny
+# from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+
 ####################
 #### AUXILIARES ####
 ####################
@@ -218,13 +225,6 @@ class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
-
-from rest_framework import generics
-from .models import Product
-from .serializers import ProductSerializer
-from rest_framework.permissions import AllowAny
-# from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
 
 class ProductSearchView(generics.ListAPIView):
     queryset = Product.objects.all()
