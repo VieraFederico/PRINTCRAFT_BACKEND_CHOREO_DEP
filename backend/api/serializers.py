@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from .models import Seller, Material, Order, ProductReview, PrintRequest, DesignRequestImage, DesignRequest, \
     ProductImage, ProductMaterial, Category, Product, PrintReverseAuction, PrintReverseAuctionResponse, \
-    DesignReverseAuction, DesignReverseAuctionResponse
+    DesignReverseAuction, DesignReverseAuctionResponse, OrderProduct
 from rest_framework import serializers
 from api.services.supabase_client import *
 

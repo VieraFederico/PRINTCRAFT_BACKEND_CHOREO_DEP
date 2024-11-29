@@ -9,7 +9,7 @@ class PrintReverseAuctionCreateView(generics.CreateAPIView):
     queryset = PrintReverseAuction.objects.all()
     serializer_class = PrintReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny] # TODO CAMBIAR
+
 
 class UserPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
