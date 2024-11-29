@@ -128,6 +128,7 @@ FROM DesignReverseAuction a, DesignReverseAuctionResponse r
 
 # PLA, PETG, ABS, Nailon
 
+"""
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -146,6 +147,27 @@ class Order(models.Model):
     # AGREGAR INFORMACIÓN DE PAGO!!!
 
     # ELIMINAR EN EL FUTURO
+"""
+
+class Order(models.Model):
+    orderID = models.AutoField(primary_key=True)
+    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    orderDate = models.DateTimeField(auto_now_add=True, null=False)
+    status = models.CharField(max_length=255, null=False, default="En proceso")
+    preference_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return f"Order {self.orderID}"
+
+
+class OrderProduct(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_products")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"Order {self.order.orderID} - Product {self.product.name}"
+
 
 
 class ProductImage(models.Model):
