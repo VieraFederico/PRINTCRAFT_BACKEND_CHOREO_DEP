@@ -1,4 +1,8 @@
-from general_imports import *
+import mercadopago
+from ..models import PrintRequest, DesignRequest
+from ..serializers import PrintRequestSerializer, DesignRequestSerializer
+from .general_imports import *
+from ..permissions import IsSeller
 
 class CreatePrintRequestView(generics.CreateAPIView):
     queryset = PrintRequest.objects.all()

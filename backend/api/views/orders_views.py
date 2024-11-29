@@ -1,4 +1,8 @@
-from general_imports import *
+from .. import serializers
+from ..models import Order
+from ..permissions import IsSeller
+from ..serializers import OrderSerializer
+from .general_imports import *
 
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()

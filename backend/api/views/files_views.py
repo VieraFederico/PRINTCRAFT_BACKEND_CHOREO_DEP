@@ -1,4 +1,4 @@
-from general_imports import *
+from .general_imports import *
 from api.services.supabase_client import *
 
 

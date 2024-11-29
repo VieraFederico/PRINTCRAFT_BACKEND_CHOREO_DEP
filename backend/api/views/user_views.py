@@ -1,10 +1,6 @@
-from backend.api.serializers import UserSerializer
-from general_imports import *
+from .general_imports import *
+from ..serializers import UserSerializer
 
-
-###############
-#### USERS ####
-###############
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer

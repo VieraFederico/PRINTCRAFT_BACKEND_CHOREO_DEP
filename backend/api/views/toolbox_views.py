@@ -1,6 +1,6 @@
-from backend.api.models import Material, Product, Seller
-from backend.api.serializers import MaterialSerializer
-from general_imports import *
+from ..models import Material, Product, Seller
+from ..serializers import MaterialSerializer
+from .general_imports import *
 from api.services.supabase_client import *
 
 ####################

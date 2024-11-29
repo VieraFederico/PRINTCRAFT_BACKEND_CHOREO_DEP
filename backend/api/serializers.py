@@ -3,7 +3,10 @@ from itertools import product
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models.models import *
+
+from .models import Seller, Material, Order, ProductReview, PrintRequest, DesignRequestImage, DesignRequest, \
+    ProductImage, ProductMaterial, Category, Product, PrintReverseAuction, PrintReverseAuctionResponse, \
+    DesignReverseAuction, DesignReverseAuctionResponse
 from rest_framework import serializers
 from api.services.supabase_client import *
 
@@ -84,7 +87,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['orderID', 'userID', 'orderDate', 'quantity', 'productCode', 'status']
         extra_kwargs = {'userID': {'read_only': True}, 'orderID': {'read_only': True}, 'orderDate': {'read_only': True}, 'status': {'read_only': True}}
-        #read_only_fields = ['order_id', 'order_date', 'status']  # El ID, la fecha y el estado no se pueden modificar
+        #read_only_fields = ['order_id', 'order_date', 'status'] # El ID, la fecha y el estado no se pueden modificar
 
     def create(self, validated_data):
         # Al crear una orden, el estado siempre será "pendiente"

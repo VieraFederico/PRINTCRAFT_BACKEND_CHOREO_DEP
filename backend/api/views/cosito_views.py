@@ -1,7 +1,6 @@
-
 from .general_imports import *
-from models import Product
-import cohere # type: ignore
+from ..models import Product
+import cohere
 
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view

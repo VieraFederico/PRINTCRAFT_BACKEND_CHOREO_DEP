@@ -1,13 +1,11 @@
-from general_imports import *
-
-from rest_framework import generics
-from ..models.models import Product
-from ..serializers import ProductSerializer
+from .general_imports import *
+from ..permissions import IsSeller
+from rest_framework import generics, permissions
+from ..serializers import ProductSerializer, ProductDetailSerializer, ProductReviewSerializer
 from rest_framework.permissions import AllowAny
 # from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-
-from models import Product
+from ..models import Product, Seller, ProductReview
 
 
 class ProductCreateView(generics.CreateAPIView):

@@ -1,9 +1,9 @@
 import mercadopago
-from backend.api.permissions import IsSeller
-from general_imports import *
+from ..permissions import IsSeller
+from .general_imports import *
 
-from models import DesignRequest, DesignReverseAuction, DesignReverseAuctionResponse, PrintReverseAuction,PrintReverseAuctionResponse,PrintRequest
-from serializers import DesignReverseAuctionSerializer, PrintReverseAuctionSerializer
+from ..models import DesignRequest, DesignReverseAuction, DesignReverseAuctionResponse, PrintReverseAuction,PrintReverseAuctionResponse,PrintRequest
+from ..serializers import DesignReverseAuctionSerializer, PrintReverseAuctionSerializer
 
 class PrintReverseAuctionCreateView(generics.CreateAPIView):
     queryset = PrintReverseAuction.objects.all()

@@ -1,14 +1,17 @@
 from django.urls import path
 
-from backend.api.views.cosito_views import CositoAI, CositoAIID
-from backend.api.views.inverse_auction_views import DesignReverseAuctionCreateView, PrintReverseAuctionCreateView, QuotizedDesignReverseAuctionResponseListView, QuotizedPrintReverseAuctionResponseListView, UserDesignReverseAuctionListView, UserPrintReverseAuctionListView
-from backend.api.views.mp_views import CreatePaymentView, MercadoPagoNotificationViewDesignRequest, MercadoPagoNotificationViewOrder, MercadoPagoNotificationViewPrintRequest
-from backend.api.views.orders_views import CompleteOrderView, DeliverOrderView, SellerOrderListView
-from backend.api.views.product_views import DeleteProductView, IsProductOwnerView, ProductDetailWithSellerView, ProductReviewDetailView, ProductReviewListCreateView, ProductReviewsByProductCodeView, ProductSearchView, UpdateProductStockView
-from backend.api.views.request_views import AcceptOrRejectDesignRequestView, AcceptOrRejectPrintRequestView, CreatePrintRequestView, DesignRequestCreateView, FinalizeDesignRequestView, FinalizePrintRequestView, MarkAsDeliveredDesignRequestView, MarkAsDeliveredPrintRequestView, SellerDesignRequestListView, SellerPrintRequestListView, UserDesignRequestListView, UserPrintRequestListView, UserRespondToDesignRequestView, UserRespondToPrintRequestView
-from backend.api.views.seller_views import SellerCreateView, SellerDetailView, UpdateProfilePictureView
-from backend.api.views.toolbox_views import MaterialListView, SellerMaterialListView
-from backend.api.views.user_views import DeleteUserView
+from .views.cosito_views import CositoAI, CositoAIID
+from .views.inverse_auction_views import DesignReverseAuctionCreateView, PrintReverseAuctionCreateView, QuotizedDesignReverseAuctionResponseListView, QuotizedPrintReverseAuctionResponseListView, UserDesignReverseAuctionListView, UserPrintReverseAuctionListView
+from .views.mp_views import CreatePaymentView, MercadoPagoNotificationViewDesignRequest, MercadoPagoNotificationViewOrder, MercadoPagoNotificationViewPrintRequest
+from .views.orders_views import CompleteOrderView, DeliverOrderView, SellerOrderListView, UserOrderListView, \
+    OrderCreateView
+from .views.product_views import DeleteProductView, IsProductOwnerView, ProductDetailWithSellerView, \
+    ProductReviewDetailView, ProductReviewListCreateView, ProductReviewsByProductCodeView, ProductSearchView, \
+    UpdateProductStockView, RecommendedProductListView, SellerProductListView, ProductListView, ProductCreateView
+from .views.request_views import AcceptOrRejectDesignRequestView, AcceptOrRejectPrintRequestView, CreatePrintRequestView, DesignRequestCreateView, FinalizeDesignRequestView, FinalizePrintRequestView, MarkAsDeliveredDesignRequestView, MarkAsDeliveredPrintRequestView, SellerDesignRequestListView, SellerPrintRequestListView, UserDesignRequestListView, UserPrintRequestListView, UserRespondToDesignRequestView, UserRespondToPrintRequestView
+from .views.seller_views import SellerCreateView, SellerDetailView, UpdateProfilePictureView, SellerListView
+from .views.toolbox_views import MaterialListView, SellerMaterialListView
+from .views.user_views import DeleteUserView, ReturnUserDataView
 from . import views
 from .views import *
 
@@ -17,31 +20,31 @@ urlpatterns = [
     # Seller-related URLs
     path("seller/", SellerCreateView.as_view(), name="seller_create"),
     path("seller/<int:userId>/", SellerDetailView.as_view(), name="seller-detail"),
-    path("sellers/", views.SellerListView.as_view(), name="seller-list"),
+    path("sellers/", SellerListView.as_view(), name="seller-list"),
     path("sellers/<int:userId>/materials/", SellerMaterialListView.as_view(), name="seller-material-list"),
     path("seller/update-profile-picture/", UpdateProfilePictureView.as_view(), name="update-profile-picture"),
 
     # User-related URLs
-    path("user/data/", views.ReturnUserDataView.as_view(), name="user_data"),
+    path("user/data/", ReturnUserDataView.as_view(), name="user_data"),
     path("delete-user/", DeleteUserView.as_view(), name="delete-user"),
 
     # Product-related URLs
-    path("products/create/", views.ProductCreateView.as_view(), name="product-create"),
-    path("products/", views.ProductListView.as_view(), name="product-list"),
+    path("products/create/", ProductCreateView.as_view(), name="product-create"),
+    path("products/", ProductListView.as_view(), name="product-list"),
     path("products/<int:product_id>/", DeleteProductView.as_view(), name="delete-product"),
     path("products/<int:product_id>/update_stock/", UpdateProductStockView.as_view(), name="update_product_stock"),
-    path("products/seller/<int:userId>/", views.SellerProductListView.as_view(), name="seller-product-list"),
-    path("products/recommended/", views.RecommendedProductListView.as_view(), name="recommended-product-list"),
+    path("products/seller/<int:userId>/", SellerProductListView.as_view(), name="seller-product-list"),
+    path("products/recommended/", RecommendedProductListView.as_view(), name="recommended-product-list"),
     path("products/<int:code>/", ProductSearchView.as_view(), name="product-detail"),
     path("products/search/", ProductSearchView.as_view(), name="product-search"),
     path("products/detail/<str:code>/", ProductDetailWithSellerView.as_view(), name="product-detail-with-seller"),
     path("products/<int:product_id>/is_owner/", IsProductOwnerView.as_view(), name="is_product_owner"),
 
     # Order-related URLs
-    path("orders/create/", views.OrderCreateView.as_view(), name="order-create"),
+    path("orders/create/", OrderCreateView.as_view(), name="order-create"),
     path("orders/complete/<int:order_id>/", CompleteOrderView.as_view(), name="complete-order"),
     path("orders/deliver/<int:order_id>/", DeliverOrderView.as_view(), name="deliver-order"),
-    path("orders/mine/", views.UserOrderListView.as_view(), name="user-order-list"),
+    path("orders/mine/", UserOrderListView.as_view(), name="user-order-list"),
     path("seller-orders/", SellerOrderListView.as_view(), name="seller-orders"),
 
     # Print Request URLs

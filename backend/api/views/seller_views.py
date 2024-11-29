@@ -1,5 +1,5 @@
-from backend.api.permissions import IsSeller
-from general_imports import *
+from ..permissions import IsSeller
+from .general_imports import *
 from ..serializers import SellerSerializer
 from ..models import Seller
 from api.services.supabase_client import *

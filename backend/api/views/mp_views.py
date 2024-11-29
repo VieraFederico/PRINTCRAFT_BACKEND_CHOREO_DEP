@@ -1,9 +1,9 @@
 from decimal import Decimal
-from general_imports import *
+from .general_imports import *
 
 import mercadopago # type: ignore
-from models import Product,Order,PrintRequest,DesignRequest
-from serializers import OrderSerializer
+from ..models import Product,Order,PrintRequest,DesignRequest
+from ..serializers import OrderSerializer
 
 
 class CreatePaymentView(APIView):
