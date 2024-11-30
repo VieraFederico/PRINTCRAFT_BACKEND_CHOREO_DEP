@@ -49,7 +49,11 @@ from .serializers import ProductSerializer
 from rest_framework.permissions import AllowAny
 # from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from decimal import Decimal
+import uuid
 
 ####################
 #### AUXILIARES ####
@@ -60,7 +64,6 @@ def delete_product_image(product_image):
         product_image.delete()
     except Exception as e:
         raise Exception(f"Error removing image: {str(e)}")
-
 
 def delete_product_and_stl(product_code, seller_id):
     try:
@@ -85,12 +88,10 @@ def delete_product_and_stl(product_code, seller_id):
     except Exception as e:
         return {"error": str(e)}
 
-
 class MaterialListView(generics.ListAPIView):
     queryset = Material.objects.all()
     serializer_class = MaterialSerializer
     permission_classes = [AllowAny]
-
 
 # /api/sellers/<int:userId>/materials/
 class SellerMaterialListView(generics.ListAPIView):
@@ -102,7 +103,6 @@ class SellerMaterialListView(generics.ListAPIView):
         seller = Seller.objects.get(userId=userId)
         return seller.materials.all()
 
-
 ###############
 #### USERS ####
 ###############
@@ -111,7 +111,6 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-
 class ReturnUserDataView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -119,10 +118,8 @@ class ReturnUserDataView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
-
 class DeleteUserView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny]
 
     def delete(self, request):
@@ -158,19 +155,16 @@ class SellerCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # todo CAMBIAR
 
-
 class SellerDetailView(generics.RetrieveAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     permission_classes = [AllowAny]
     lookup_field = 'userId'  # Usamos el campo userId para la búsqueda
 
-
 class SellerListView(generics.ListAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     permission_classes = [AllowAny]
-
 
 class UpdateProfilePictureView(APIView):
     permission_classes = [IsSeller]
@@ -193,8 +187,7 @@ class UpdateProfilePictureView(APIView):
             try:
                 remove_file_from_supabase(bucket_name, old_file_name)
             except Exception as e:
-                return Response({"error": f"Error removing old profile picture: {str(e)}"},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({"error": f"Error removing old profile picture: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Upload new profile picture
         new_file_name = f"{seller.userId.id}_profile_picture"
@@ -203,13 +196,9 @@ class UpdateProfilePictureView(APIView):
             new_profile_picture_url = upload_file_to_supabase(new_file, bucket_name, new_file_name)
             seller.profile_picture = new_profile_picture_url
             seller.save()
-            return Response(
-                {"message": "Profile picture updated successfully", "profile_picture_url": new_profile_picture_url},
-                status=status.HTTP_200_OK)
+            return Response({"message": "Profile picture updated successfully", "profile_picture_url": new_profile_picture_url}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": f"Error uploading new profile picture: {str(e)}"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({"error": f"Error uploading new profile picture: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # {"error":"Error uploading new profile picture: expected str, bytes or os.PathLike object, not InMemoryUploadedFile"}
 ##################
@@ -221,10 +210,8 @@ class ProductCreateView(generics.CreateAPIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny]
 
-
 class DeleteProductView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def delete(self, request, product_id):
@@ -235,27 +222,23 @@ class DeleteProductView(APIView):
             product.delete()
             return Response({"message": "Product deleted successfully"}, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
-            return Response({"error": "Product not found or you do not have permission to delete this product"},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Product not found or you do not have permission to delete this product"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
-
 class ProductSearchView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
-    filter_backends = [SearchFilter, OrderingFilter]  # DjangoFilterBackend
+    filter_backends = [SearchFilter, OrderingFilter] # DjangoFilterBackend
     # filterset_fields = ['material', 'categories__name']
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'name']
-
 
 class SellerProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -268,7 +251,6 @@ class SellerProductListView(generics.ListAPIView):
         # Filtrar productos por el vendedor
         return Product.objects.filter(seller=seller)
 
-
 class RecommendedProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
@@ -277,20 +259,17 @@ class RecommendedProductListView(generics.ListAPIView):
         # Obtener los productos más vendidos
         return Product.objects.order_by('-stock')[:4]
 
-
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
 
-
 class ProductDetailWithSellerView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
     permission_classes = [AllowAny]
     lookup_field = 'code'  # Usamos el campo code para la búsqueda
-
 
 class ProductSellerDetailView(APIView):
     permission_classes = [AllowAny]
@@ -311,12 +290,10 @@ class ProductSellerDetailView(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-
 class ProductReviewListCreateView(generics.ListCreateAPIView):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
     # permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
@@ -343,7 +320,6 @@ class ProductReviewDetailView(generics.RetrieveAPIView):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
     permission_classes = [AllowAny]
-
 
 class ProductReviewsByProductCodeView(generics.ListAPIView):
     serializer_class = ProductReviewSerializer
@@ -386,7 +362,6 @@ class DeleteProductView(APIView):
     # tod agregar
 """
 
-
 class IsProductOwnerView(APIView):
     permission_classes = [IsSeller]
 
@@ -402,9 +377,9 @@ class IsProductOwnerView(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+
 class UpdateProductStockView(APIView):
     permission_classes = [IsSeller]
-
     def post(self, request, product_id):
         try:
             product = Product.objects.get(code=product_id)
@@ -432,7 +407,6 @@ class CreatePrintRequestView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TOD CAMBIAR !!
 
-
 """
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
@@ -442,11 +416,8 @@ class UserPrintRequestListView(generics.ListAPIView):
         user = self.request.user
         return PrintRequest.objects.filter(userID=user)
 """
-
-
 class UserPrintRequestListView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def get(self, request):
@@ -475,8 +446,6 @@ class UserPrintRequestListView(APIView):
             for print_request in print_requests
         ]
         return Response(response_data, status=status.HTTP_200_OK)
-
-
 """
     requestID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -494,7 +463,6 @@ class UserPrintRequestListView(APIView):
     preference_id
 """
 
-
 class SellerPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsSeller]
@@ -506,7 +474,6 @@ class SellerPrintRequestListView(generics.ListAPIView):
 
 class AcceptOrRejectPrintRequestView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, request_id):
@@ -514,7 +481,7 @@ class AcceptOrRejectPrintRequestView(APIView):
         # sellerID = Seller.objects.get(userId=4) # TOD CAMBIAR
 
         try:
-            print_request = PrintRequest.objects.get(requestID=request_id, sellerID=sellerID)  # sacar sellerID
+            print_request = PrintRequest.objects.get(requestID=request_id, sellerID=sellerID) # sacar sellerID
             # if print_request.sellerID != sellerID:
             #   return Response({"error": "You do not have permission to modify this request"}, status=status.HTTP_403_FORBIDDEN)
             if print_request.status != "Pendiente":
@@ -528,8 +495,7 @@ class AcceptOrRejectPrintRequestView(APIView):
 
             if response == "Accept":
                 if not price:
-                    return Response({"error": "Price is required when accepting a request"},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Price is required when accepting a request"}, status=status.HTTP_400_BAD_REQUEST)
                 print_request.status = "Cotizada"
                 print_request.price = price
             else:
@@ -538,29 +504,19 @@ class AcceptOrRejectPrintRequestView(APIView):
             print_request.save()
             return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except PrintRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 
 # TODO!!!
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny]  # TOD CAMBIAR
     def post(self, request, request_id):
         userID = request.user
         # userID = User.objects.get(id=8) # TOD CAMBIAR
 
         try:
-            print_request = PrintRequest.objects.get(requestID=request_id,
-                                                     userID=userID)  # cambiar lo de userID -> manejarlo con un if
+            print_request = PrintRequest.objects.get(requestID=request_id, userID=userID) # cambiar lo de userID -> manejarlo con un if
             if print_request.status != "Cotizada":
                 return Response({"error": "Request is not in a quotable state"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -610,9 +566,7 @@ class UserRespondToPrintRequestView(APIView):
             print_request.save()
             return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except PrintRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class FinalizePrintRequestView(APIView):
     permission_classes = [IsSeller]
@@ -632,13 +586,10 @@ class FinalizePrintRequestView(APIView):
             print_request.save()
             return Response({"message": "Request successfully finalized"}, status=status.HTTP_200_OK)
         except PrintRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class MarkAsDeliveredPrintRequestView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def post(self, request, request_id):
@@ -654,8 +605,7 @@ class MarkAsDeliveredPrintRequestView(APIView):
             print_request.save()
             return Response({"message": "Request successfully marked as delivered"}, status=status.HTTP_200_OK)
         except PrintRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class DesignRequestCreateView(generics.CreateAPIView):
@@ -663,7 +613,6 @@ class DesignRequestCreateView(generics.CreateAPIView):
     serializer_class = DesignRequestSerializer
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
-
 
 """
 class UserDesignRequestListView(generics.ListAPIView):
@@ -676,11 +625,8 @@ class UserDesignRequestListView(generics.ListAPIView):
         # user = User.objects.get(id=5)
         return DesignRequest.objects.filter(userID=user)
 """
-
-
 class UserDesignRequestListView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def get(self, request):
@@ -706,16 +652,15 @@ class UserDesignRequestListView(APIView):
             for design_request in design_requests
         ]
         return Response(response_data, status=status.HTTP_200_OK)
-
-
 """
 class DesignRequest(models.Model):
     sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
     design_images = models.ManyToManyField('DesignRequestImage')
     material = models.CharField(max_length=255, null=True)
-
+   
 
 """
+
 
 """
 class UserPrintRequestListView(APIView):
@@ -740,25 +685,22 @@ class UserPrintRequestListView(APIView):
                 "preference_id": print_request.preference_id,
                 "direccion_del_vendedor": print_request.sellerID.address,
                 "seller_name": print_request.sellerID.store_name
-
+            
             }
             for print_request in print_requests
         ]
         return Response(response_data, status=status.HTTP_200_OK)
 """
 
-
 class SellerDesignRequestListView(generics.ListAPIView):
     serializer_class = DesignRequestSerializer
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def get_queryset(self):
         seller = self.request.user.seller
         # seller = Seller.objects.get(userId=18) # TOD CAMBIAR
         return DesignRequest.objects.filter(sellerID=seller)
-
 
 # TODO
 """
@@ -805,10 +747,8 @@ WHERE sellerID = 1
 
 """
 
-
 class AcceptOrRejectDesignRequestView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, request_id):
@@ -830,8 +770,7 @@ class AcceptOrRejectDesignRequestView(APIView):
 
             if response == "Accept":
                 if not price:
-                    return Response({"error": "Price is required when accepting a request"},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Price is required when accepting a request"}, status=status.HTTP_400_BAD_REQUEST)
                 design_request.status = "Cotizada"
                 design_request.price = price
             else:
@@ -840,13 +779,10 @@ class AcceptOrRejectDesignRequestView(APIView):
             design_request.save()
             return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class UserRespondToDesignRequestView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def post(self, request, request_id):
@@ -886,7 +822,7 @@ class UserRespondToDesignRequestView(APIView):
                     "auto_return": "approved",
                     "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
                     "additional_info": {
-                        "marketplace_fee": 10
+                        "marketplace_fee":10
                     }
                 }
                 try:
@@ -904,8 +840,7 @@ class UserRespondToDesignRequestView(APIView):
             design_request.save()
             return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class FinalizeDesignRequestView(APIView):
@@ -925,9 +860,7 @@ class FinalizeDesignRequestView(APIView):
             design_request.save()
             return Response({"message": "Request successfully finalized"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class MarkAsDeliveredDesignRequestView(APIView):
     permission_classes = [IsSeller]
@@ -946,9 +879,7 @@ class MarkAsDeliveredDesignRequestView(APIView):
             design_request.save()
             return Response({"message": "Request successfully marked as delivered"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 ##########################
 #### INVERSE AUCTIONS ####
@@ -960,18 +891,15 @@ class PrintReverseAuctionCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
-
 class UserPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def get_queryset(self):
         user = self.request.user
         # user = User.objects.get(id=142)
         return PrintReverseAuction.objects.filter(userID=user, status="Open")
-
 
 class OpenPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
@@ -980,10 +908,8 @@ class OpenPrintReverseAuctionListView(generics.ListAPIView):
     def get_queryset(self):
         return PrintReverseAuction.objects.filter(status="Open")
 
-
 class CreatePrintReverseAuctionResponseView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, auction_id):
@@ -1003,9 +929,7 @@ class CreatePrintReverseAuctionResponseView(APIView):
         auction.save()
 
         response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
-        return Response({'message': 'Response created successfully', 'response_id': response.responseID},
-                        status=status.HTTP_201_CREATED)
-
+        return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
 """
 class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
@@ -1019,11 +943,9 @@ class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
         return PrintReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
 """
 
-
 # class QuotatedPrintOrdersListView(APIView):
 class QuotizedPrintReverseAuctionResponseListView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1065,7 +987,7 @@ class QuotizedPrintReverseAuctionResponseListView(APIView):
 nueva view que retorne las design/print-requests cotizadas, join design/print-reverse-auction
 
 {
-
+    
 }
 
 
@@ -1080,8 +1002,6 @@ class PrintReverseAuctionResponseListView(generics.ListAPIView):
         auction_id = self.kwargs['auction_id']
         return PrintReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
 """
-
-
 class PrintReverseAuctionResponseListView(APIView):
     permission_classes = [AllowAny]
 
@@ -1103,11 +1023,9 @@ class PrintReverseAuctionResponseListView(APIView):
         ]
         return Response(response_data, status=status.HTTP_200_OK)
 
-
 # TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, auction_id, response_id):
@@ -1127,8 +1045,7 @@ class AcceptAuctionResponseView(APIView):
             auction.save()
 
             # Rechazar todas las demás respuestas
-            PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(
-                status="Rejected")
+            PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
             PrintRequest.objects.create(
                 userID=auction.userID,
@@ -1141,7 +1058,7 @@ class AcceptAuctionResponseView(APIView):
             )
 
             product_id = auction.requestID
-            quantity = auction.quantity
+            quantity =  auction.quantity
             transaction_amount = response.price
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             sdk = mercadopago.SDK(access_token)
@@ -1161,7 +1078,7 @@ class AcceptAuctionResponseView(APIView):
                 "auto_return": "approved",
                 "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
                 "additional_info": {
-                    "marketplace_fee": 10
+                    "marketplace_fee":10
                 }
             }
             try:
@@ -1173,7 +1090,7 @@ class AcceptAuctionResponseView(APIView):
             except Exception as e:
                 return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
+            #return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
         except PrintReverseAuction.DoesNotExist:
             return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
         except PrintReverseAuctionResponse.DoesNotExist:
@@ -1183,7 +1100,6 @@ class AcceptAuctionResponseView(APIView):
 # TODO: Cambiar nombre de la vista a CompletePrintReverseAuctionResponseView
 class CompleteAuctionResponseView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, response_id):
@@ -1197,22 +1113,18 @@ class CompleteAuctionResponseView(APIView):
             response.auction.save()
             return Response({"message": "Auction response marked as completed successfully"}, status=status.HTTP_200_OK)
         except PrintReverseAuctionResponse.DoesNotExist:
-            return Response({"error": "Accepted auction response not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Accepted auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 # TODO: Cambiar nombre de la vista a DeliverPrintReverseAuctionResponseView
 class DeliverAuctionResponseView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, response_id):
         seller = request.user.seller
         # seller = Seller.objects.get(userId=4) # TODO CAMBIAR
         try:
-            response = PrintReverseAuctionResponse.objects.get(responseID=response_id, seller=seller,
-                                                               status="Completed")
+            response = PrintReverseAuctionResponse.objects.get(responseID=response_id, seller=seller, status="Completed")
             response.status = "Delivered"
             response.save()
             response.auction.status = "Delivered"
@@ -1220,9 +1132,7 @@ class DeliverAuctionResponseView(APIView):
 
             return Response({"message": "Auction response marked as delivered successfully"}, status=status.HTTP_200_OK)
         except PrintReverseAuctionResponse.DoesNotExist:
-            return Response(
-                {"error": "Completed auction response not found or you do not have permission to modify it"},
-                status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Completed auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class DesignReverseAuctionCreateView(generics.CreateAPIView):
@@ -1231,18 +1141,15 @@ class DesignReverseAuctionCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
-
 class UserDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def get_queryset(self):
         user = self.request.user
         # user = User.objects.get(id=142)
         return DesignReverseAuction.objects.filter(userID=user, status="Open")
-
 
 class OpenDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
@@ -1271,9 +1178,7 @@ class CreateDesignReverseAuctionResponseView(APIView):
         auction.save()
 
         response = DesignReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
-        return Response({'message': 'Response created successfully', 'response_id': response.responseID},
-                        status=status.HTTP_201_CREATED)
-
+        return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
 """
 class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
@@ -1287,11 +1192,8 @@ class QuotizedDesignReverseAuctionResponseListView(generics.ListAPIView):
         # return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller) # TODO CAMBIAR
         return DesignReverseAuctionResponse.objects.select_related('auction').filter(seller=seller, status="Pending")
 """
-
-
 class QuotizedDesignReverseAuctionResponseListView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1328,7 +1230,6 @@ class QuotizedDesignReverseAuctionResponseListView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
 """
 class DesignReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionResponseSerializer
@@ -1339,8 +1240,6 @@ class DesignReverseAuctionResponseListView(generics.ListAPIView):
         return DesignReverseAuctionResponse.objects.filter(auction__requestID=auction_id)
 
 """
-
-
 class DesignReverseAuctionResponseListView(APIView):
     permission_classes = [AllowAny]
 
@@ -1365,7 +1264,6 @@ class DesignReverseAuctionResponseListView(APIView):
 
 class AcceptDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, auction_id, response_id):
@@ -1382,8 +1280,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             auction.status = "Closed"
             auction.save()
 
-            DesignReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(
-                status="Rejected")
+            DesignReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
 
             design_request = DesignRequest.objects.create(
                 userID=auction.userID,
@@ -1397,7 +1294,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             design_request.design_images.set(auction.design_images.all())
 
             product_id = auction.requestID
-            quantity = auction.quantity
+            quantity =  auction.quantity
             transaction_amount = response.price
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             sdk = mercadopago.SDK(access_token)
@@ -1417,7 +1314,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                 "auto_return": "approved",
                 "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
                 "additional_info": {
-                    "marketplace_fee": 10
+                    "marketplace_fee":10
                 }
             }
             try:
@@ -1438,36 +1335,30 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
 class CompleteDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, response_id):
         seller = request.user.seller
         # seller = Seller.objects.get(userId=4) # TOD CAMBIAR
         try:
-            response = DesignReverseAuctionResponse.objects.get(responseID=response_id, seller=seller,
-                                                                status="Accepted")
+            response = DesignReverseAuctionResponse.objects.get(responseID=response_id, seller=seller, status="Accepted")
             response.status = "Completed"
             response.save()
             response.auction.status = "Completed"
             response.auction.save()
             return Response({"message": "Auction response marked as completed successfully"}, status=status.HTTP_200_OK)
         except DesignReverseAuctionResponse.DoesNotExist:
-            return Response({"error": "Accepted auction response not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Accepted auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class DeliverDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, response_id):
         seller = request.user.seller
         # seller = Seller.objects.get(userId=4) # TOD CAMBIAR
         try:
-            response = DesignReverseAuctionResponse.objects.get(responseID=response_id, seller=seller,
-                                                                status="Completed")
+            response = DesignReverseAuctionResponse.objects.get(responseID=response_id, seller=seller, status="Completed")
             response.status = "Delivered"
             response.save()
             response.auction.status = "Delivered"
@@ -1475,10 +1366,7 @@ class DeliverDesignReverseAuctionResponseView(APIView):
 
             return Response({"message": "Auction response marked as delivered successfully"}, status=status.HTTP_200_OK)
         except DesignReverseAuctionResponse.DoesNotExist:
-            return Response(
-                {"error": "Completed auction response not found or you do not have permission to modify it"},
-                status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Completed auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 """
 Crear subasta inversa
@@ -1508,7 +1396,6 @@ te da
 }
 """
 
-
 ################
 #### ORDERS ####
 ################
@@ -1523,6 +1410,8 @@ class OrderCreateView(generics.CreateAPIView):
         serializer.save(userID=user)
 
 
+
+
 """
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
@@ -1533,11 +1422,8 @@ class UserOrderListView(generics.ListAPIView):
         user = self.request.user
         return Order.objects.filter(userID=user)
 """
-
-
 class CompleteOrderView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def post(self, request, order_id):
@@ -1549,13 +1435,10 @@ class CompleteOrderView(APIView):
             order.save()
             return Response({"message": "Order marked as completed successfully"}, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
-            return Response({"error": "Order not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 class DeliverOrderView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def post(self, request, order_id):
@@ -1567,9 +1450,7 @@ class DeliverOrderView(APIView):
             order.save()
             return Response({"message": "Order marked as delivered successfully"}, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
-            return Response({"error": "Order not found or you do not have permission to modify it"},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response({"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
 """
 class UserOrderListView(APIView):
@@ -1597,8 +1478,6 @@ class UserOrderListView(APIView):
         ]
         return Response(response_data, status=status.HTTP_200_OK)
 """
-
-
 class UserOrderListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1630,7 +1509,6 @@ class UserOrderListView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
 """
 nombre_producto
 precio_total
@@ -1649,11 +1527,8 @@ class SellerOrderListView(generics.ListAPIView):
 
         return Order.objects.filter(productCode__seller=seller)
 """
-
-
 class SellerOrderListView(APIView):
     permission_classes = [IsSeller]
-
     # permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1669,7 +1544,7 @@ class SellerOrderListView(APIView):
                 "total_price": order.productCode.price * order.quantity,
                 "status": order.status,
                 "orderdate": order.orderDate,
-                "userid": order.userID.id,
+                "userid" : order.userID.id,
                 "user_email": order.userID.email,
                 "product_name": order.productCode.name
             }
@@ -1702,7 +1577,6 @@ class FileUploadView(APIView):
             # return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 """
 
-
 class FileUploadView(APIView):
     permission_classes = [AllowAny]
 
@@ -1724,13 +1598,15 @@ class FileUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
-        product_id = request.data.get("product_id")
-        quantity = request.data.get("quantity")
+
+        product_id=request.data.get("product_id")
+        quantity=request.data.get("quantity")
 
         product_selected = Product.objects.get(code=product_id)
         transaction_amount = Decimal(product_selected.price) * int(quantity)
@@ -1740,8 +1616,7 @@ class CreatePaymentView(APIView):
             return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         if not access_token:
-            return Response({"error": "Access token must be a valid string."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "Access token must be a valid string."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         sdk = mercadopago.SDK(access_token)
 
@@ -1761,7 +1636,7 @@ class CreatePaymentView(APIView):
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
             "additional_info": {
-                "marketplace_fee": 10
+                "marketplace_fee":10
             }
         }
 
@@ -1782,9 +1657,7 @@ class CreatePaymentView(APIView):
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class MercadoPagoNotificationViewOrder(APIView):
     def post(self, request):
@@ -1803,7 +1676,6 @@ class MercadoPagoNotificationViewOrder(APIView):
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
-
 class MercadoPagoNotificationViewPrintRequest(APIView):
     def post(self, request):
         data = request.data
@@ -1815,13 +1687,12 @@ class MercadoPagoNotificationViewPrintRequest(APIView):
             request = PrintRequest.objects.get(preference_id=preference_id)
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-        # saracatunga
+        #saracatunga
         if payment_status == "approved":
-            request.status = "Aceptada"
+            request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
-
 
 class MercadoPagoNotificationViewDesignRequest(APIView):
     def post(self, request):
@@ -1836,11 +1707,10 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if payment_status == "approved":
-            request.status = "Aceptada"
+            request.status="Aceptada"
         request.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
-
 
 import cohere
 from django.conf import settings
@@ -1855,7 +1725,6 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 import cohere
 from .models import Product  # Assuming you have a Product model
-
 
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view
@@ -1899,8 +1768,7 @@ class CositoAI(APIView):
             best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
 
             if best_product:
-                return Response({'response': best_product[0]},
-                                status=status.HTTP_200_OK)  # Return the best product name
+                return Response({'response': best_product[0]}, status=status.HTTP_200_OK)  # Return the best product name
             else:
                 return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -1957,3 +1825,25 @@ class CositoAIID(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+"""
+for order in orders:
+    order_data = {
+        "orderid": order.orderID,
+        "status": order.status,
+        "orderdate": order.orderDate,
+        "total_price": sum(
+            op.product.price * op.quantity for op in order.order_products.all()
+        ),
+        "products": [
+            {
+                "productcode": op.product.code,
+                "product_name": op.product.name,
+                "quantity": op.quantity,
+                "price_per_unit": op.product.price,
+            }
+            for op in order.order_products.all()
+        ],
+    }
+    response_data.append(order_data)
+"""
