@@ -1,7 +1,10 @@
 from decimal import Decimal
+
+from django.core.exceptions import ObjectDoesNotExist
+
 from .general_imports import *
 
-import mercadopago # type: ignore
+import mercadopago
 from ..models import Product,Order,PrintRequest,DesignRequest
 from ..serializers import OrderSerializer
 
@@ -66,55 +69,42 @@ class CreatePaymentView(APIView):
         except Exception as e:
             return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class MercadoPagoNotificationViewOrder(APIView):
+class BaseMercadoPagoNotificationView(APIView):
+    model = None
+    status_mapping = {
+        "approved": "Aceptada",
+        "cancelled": "Cancelada",
+        "rejected": "Cancelada"
+    }
     def post(self, request):
+        if not self.model:
+            return Response(
+                {"error": "Model not configured for notification view"},status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         data = request.data
-
         payment_status = data.get("data", {}).get("status")
         preference_id = data.get("data", {}).get("id")
 
         try:
-            order = Order.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        order.status = payment_status
-        order.save()
-
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-class MercadoPagoNotificationViewPrintRequest(APIView):
-    def post(self, request):
-        data = request.data
-
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
-
-        try:
-            request = PrintRequest.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-        #saracatunga
-        if payment_status == "approved":
-            request.status="Aceptada"
-        request.save()
+            instance = self.model.objects.get(preference_id=preference_id)
+        except ObjectDoesNotExist:
+            return Response(
+                {"error": f"{self.model.__name__} not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        instance.status = self.status_mapping.get(
+            payment_status,
+            payment_status
+        )
+        instance.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
-class MercadoPagoNotificationViewDesignRequest(APIView):
-    def post(self, request):
-        data = request.data
 
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
+class MercadoPagoNotificationViewOrder(BaseMercadoPagoNotificationView):
+    model = Order
 
-        try:
-            request = DesignRequest.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+class MercadoPagoNotificationViewPrintRequest(BaseMercadoPagoNotificationView):
+    model = PrintRequest
 
-        if payment_status == "approved":
-            request.status="Aceptada"
-        request.save()
-
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
+class MercadoPagoNotificationViewDesignRequest(BaseMercadoPagoNotificationView):
+    model = DesignRequest
