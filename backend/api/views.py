@@ -1603,39 +1603,48 @@ class CreatePaymentView(APIView):
 
     def post(self, request):
 
+        order_products = request.data.get("order_products")
+        if not order_products:
+            return Response({"error": "The order must contain at least one product."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        product_id=request.data.get("product_id")
-        quantity=request.data.get("quantity")
+        items = []
+        total_amount = 0
+        for item in order_products:
+            product_id = item.get("product")
+            quantity = item.get("quantity")
 
-        product_selected = Product.objects.get(code=product_id)
-        transaction_amount = Decimal(product_selected.price) * int(quantity)
-        if int(quantity) > product_selected.stock:
-            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
-        if not all([product_id, quantity, transaction_amount]):
-            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+            if not product_id or not quantity:
+                return Response({"error": "Each product must have an ID and quantity."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                product = Product.objects.get(code=product_id)
+            except Product.DoesNotExist:
+                return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            if product.stock < int(quantity):
+                return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+            items.append({
+                "product_id": product.name,
+                "quantity": int(quantity),
+                "unit_price": float(product.price)
+            })
+            total_amount += product.price * int(quantity)
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-        if not access_token:
-            return Response({"error": "Access token must be a valid string."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        if not access_token: return Response({"error": "Access token not configured."},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         sdk = mercadopago.SDK(access_token)
 
         preference_data = {
-            "items": [
-                {
-                    "product_id": int(product_id),
-                    "quantity": int(quantity),
-                    "unit_price": float(transaction_amount)
-                }
-            ],
+            "items": items,
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                 "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
                 "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
             },
             "auto_return": "approved",
-            "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
             "additional_info": {
-                "marketplace_fee":10
+                "marketplace_fee":float(total_amount)*0.1
             }
         }
 
@@ -1644,8 +1653,7 @@ class CreatePaymentView(APIView):
             preference_id = preference_response["response"]["id"]
 
             order_data = {
-                "quantity": quantity,
-                "productCode": product_id,
+                "order_products": order_products,
                 "preference_id": preference_id
             }
 
@@ -1658,6 +1666,7 @@ class CreatePaymentView(APIView):
         except Exception as e:
             return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+"""
 class MercadoPagoNotificationViewOrder(APIView):
     def post(self, request):
         data = request.data
@@ -1674,6 +1683,7 @@ class MercadoPagoNotificationViewOrder(APIView):
         order.save()
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
+"""
 
 class MercadoPagoNotificationViewPrintRequest(APIView):
     def post(self, request):
@@ -1686,7 +1696,7 @@ class MercadoPagoNotificationViewPrintRequest(APIView):
             request = PrintRequest.objects.get(preference_id=preference_id)
         except Order.DoesNotExist:
             return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-        #saracatunga
+
         if payment_status == "approved":
             request.status="Aceptada"
         request.save()
@@ -1711,6 +1721,26 @@ class MercadoPagoNotificationViewDesignRequest(APIView):
 
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
+class MercadoPagoSuccessView(APIView):
+    def post(self,request):
+        data = request.data
+        payment_status = data.get("data", {}).get("status")
+        preference_id = data.get("data", {}).get("id")
+
+        models_to_check = [Order, PrintRequest, DesignRequest]
+        for model in models_to_check:
+            try:
+                request_or_order  = model.objects.get(preference_id=preference_id)
+                if payment_status == "approved":
+                    request_or_order.status = "Aceptada"
+                request_or_order.save()
+                return Response({"status": "success"}, status=status.HTTP_200_OK)
+            except Order.DoesNotExist:
+                continue
+        return Response({"error": "No matching request or order found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 import cohere
 from django.conf import settings
 from rest_framework.views import APIView
@@ -1723,7 +1753,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 import cohere
-from .models import Product  # Assuming you have a Product model
+from .models import Product
 
 class CositoAI(APIView):
     permission_classes = [AllowAny]  # Allow any access to this view
@@ -1824,3 +1854,5 @@ class CositoAIID(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

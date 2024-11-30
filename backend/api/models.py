@@ -249,4 +249,3 @@ class DesignReverseAuctionResponse(models.Model):
 
     def __str__(self):
         return f"Response {self.responseID} for Auction {self.auction.requestID} by {self.seller.store_name}"
-
