@@ -1824,3 +1824,25 @@ class CositoAIID(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+"""
+for order in orders:
+    order_data = {
+        "orderid": order.orderID,
+        "status": order.status,
+        "orderdate": order.orderDate,
+        "total_price": sum(
+            op.product.price * op.quantity for op in order.order_products.all()
+        ),
+        "products": [
+            {
+                "productcode": op.product.code,
+                "product_name": op.product.name,
+                "quantity": op.quantity,
+                "price_per_unit": op.product.price,
+            }
+            for op in order.order_products.all()
+        ],
+    }
+    response_data.append(order_data)
+"""
