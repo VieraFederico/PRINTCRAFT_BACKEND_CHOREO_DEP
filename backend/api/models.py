@@ -10,6 +10,7 @@ class Seller(models.Model):
     materials = models.ManyToManyField('Material', related_name='sellers')  # Nueva relación muchos a muchos
 
     # TODO AGREGAR!!!
+    # HOLA
     mp_mail = models.EmailField(max_length=255, null=False)
 
     # rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
