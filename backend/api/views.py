@@ -49,6 +49,11 @@ from .serializers import ProductSerializer
 from rest_framework.permissions import AllowAny
 # from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from decimal import Decimal
+import uuid
 
 ####################
 #### AUXILIARES ####
@@ -501,11 +506,7 @@ class AcceptOrRejectPrintRequestView(APIView):
         except PrintRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid
+
 # TODO!!!
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
