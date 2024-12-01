@@ -480,6 +480,7 @@ class UserPrintRequestListView(APIView):
 class SellerPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
     permission_classes = [IsSeller]
+    pagination_class = None
 
     def get_queryset(self):
         seller = self.request.user.seller
@@ -708,6 +709,7 @@ class UserPrintRequestListView(APIView):
 class SellerDesignRequestListView(generics.ListAPIView):
     serializer_class = DesignRequestSerializer
     permission_classes = [IsSeller]
+    pagination_class = None
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def get_queryset(self):
@@ -906,6 +908,7 @@ class PrintReverseAuctionCreateView(generics.CreateAPIView):
 class UserPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def get_queryset(self):
@@ -916,6 +919,7 @@ class UserPrintReverseAuctionListView(generics.ListAPIView):
 class OpenPrintReverseAuctionListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         return PrintReverseAuction.objects.filter(status="Open")
@@ -1155,6 +1159,7 @@ class DesignReverseAuctionCreateView(generics.CreateAPIView):
 class UserDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def get_queryset(self):
@@ -1165,6 +1170,7 @@ class UserDesignReverseAuctionListView(generics.ListAPIView):
 class OpenDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         return DesignReverseAuction.objects.filter(status="Open")
