@@ -260,6 +260,8 @@ class ProductSerializer(serializers.ModelSerializer):
     stl_file = serializers.FileField(write_only=True, required=False, allow_null=True)
     materials = ProductMaterialSerializer(many=True, source='productmaterial_set', required=False) # TODO required=False
 
+    seller_name = serializers.CharField(source='seller.store_name', read_only=True)
+
     categories = serializers.SlugRelatedField(
         many=True,
         slug_field='name',
@@ -270,7 +272,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials', 'review_sum', 'review_count'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials', 'review_sum', 'review_count', 'seller_name'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
