@@ -68,6 +68,14 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 import cohere
 from .models import Product
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from sentence_transformers import SentenceTransformer
+import numpy as np
+from django.core.cache import cache
+
 
 ####################
 #### AUXILIARES ####
@@ -1841,6 +1849,81 @@ class MercadoPagoSuccessViewPrintRequest(BaseMercadoPagoSuccessView):
 class MercadoPagoSuccessViewDesignRequest(BaseMercadoPagoSuccessView):
     model = DesignRequest
 
+
+from sentence_transformers import SentenceTransformer
+import numpy as np
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from .models import Product, Category
+from django.conf import settings
+
+
+class CositoAI(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            user_input = request.data.get('input')
+
+            selected_category = self.get_best_category(user_input)
+
+            products = Product.objects.filter(categories=selected_category)
+
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            user_embedding = model.encode([user_input])[0]
+
+            product_embeddings = []
+
+            for product in products:
+                product_embedding = product.embedding
+                product_embeddings.append((product.name, product_embedding))
+
+            user_embedding = np.array(user_embedding)
+
+            product_scores = []
+
+            for product_name, product_embedding in product_embeddings:
+                similarity = np.dot(user_embedding, product_embedding) / (
+                            np.linalg.norm(user_embedding) * np.linalg.norm(product_embedding))
+                product_scores.append((product_name, similarity))
+
+            best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
+
+            if best_product:
+                return Response({'response': best_product[0]}, status=status.HTTP_200_OK)
+            else:
+                return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_best_category(self, user_input):
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+
+        user_embedding = model.encode([user_input])[0]
+
+        categories = Category.objects.all()
+        category_embeddings = []
+
+        for category in categories:
+            category_embedding = model.encode([category.name])[0]
+            category_embeddings.append((category, np.array(category_embedding)))
+
+        max_similarity = -1
+        best_category = None
+
+        for category, category_embedding in category_embeddings:
+            similarity = np.dot(user_embedding, category_embedding) / (
+                        np.linalg.norm(user_embedding) * np.linalg.norm(category_embedding))
+            if similarity > max_similarity:
+                max_similarity = similarity
+                best_category = category
+
+        return best_category
+
+
+"""
 class CositoAI(APIView):
     permission_classes = [AllowAny] 
 
@@ -1941,7 +2024,7 @@ class CositoAIID(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-"""
+
 for order in orders:
     order_data = {
         "orderid": order.orderID,

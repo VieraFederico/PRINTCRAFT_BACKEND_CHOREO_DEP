@@ -1,6 +1,8 @@
 import uuid
 from itertools import product
 
+import numpy as np
+from sentence_transformers import SentenceTransformer
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
@@ -309,7 +311,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
         # Crear el producto con los datos restantes
         product = Product.objects.create(seller=seller, stl_file_url=stl_file_url, **validated_data)
-
 
         for material_data in materials_data:
             ProductMaterial.objects.create(product=product, **material_data)

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from pgvector.django import VectorField
 
 class Seller(models.Model):
     userId = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
