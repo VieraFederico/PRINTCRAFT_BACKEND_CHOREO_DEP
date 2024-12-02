@@ -1,77 +1,30 @@
-"""
-/api/seller-orders/
-orderid
-userid (se puede fletar)
-orderdate
-quantity
-productcode
-status
-
-email del usuario
-nombre del producto
-
-"""
 from django.core.mail import send_mail
-
-"""
-/
-cuando acepto reverse auction, cambiar el status
-
-"""
-
-from http.client import responses
-
 import mercadopago
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from mercadopago import sdk
-from pyexpat.errors import messages
-from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
-from django.conf import settings
-from django.http import JsonResponse
 from api.services.supabase_client import *
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid  # Para generar el idempotency key
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
 from rest_framework import generics
-from .models import Product
 from .serializers import ProductSerializer
-from rest_framework.permissions import AllowAny
-# from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid
-import cohere
-from django.conf import settings
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
-import cohere
 from .models import Product
+import cohere
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import numpy as np
+import logging
+from django.core.cache import cache
+from sentence_transformers import SentenceTransformer
+from api.models import Product, Category
 
 ####################
 #### AUXILIARES ####
 ####################
+
 def delete_product_image(product_image):
     try:
         remove_file_from_supabase('images', product_image.image_url.split('/')[-1])
@@ -1840,23 +1793,6 @@ class MercadoPagoSuccessViewPrintRequest(BaseMercadoPagoSuccessView):
 
 class MercadoPagoSuccessViewDesignRequest(BaseMercadoPagoSuccessView):
     model = DesignRequest
-
-
-import cohere
-
-from .general_imports import *
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
-import numpy as np
-import logging
-from django.core.cache import cache
-from sentence_transformers import SentenceTransformer
-
-from api.models import Product, Category
-
 
 class RecommendationEngine:
 
