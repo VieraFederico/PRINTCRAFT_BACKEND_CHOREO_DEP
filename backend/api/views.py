@@ -1859,7 +1859,8 @@ from .models import Product, Category
 from django.conf import settings
 
 
-class CositoAI(APIView):
+
+class CositoAIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -1876,7 +1877,7 @@ class CositoAI(APIView):
             product_embeddings = []
 
             for product in products:
-                product_embedding = product.embedding
+                product_embedding = model.encode([product.name])[0]
                 product_embeddings.append((product.name, product_embedding))
 
             user_embedding = np.array(user_embedding)
@@ -1921,7 +1922,6 @@ class CositoAI(APIView):
                 best_category = category
 
         return best_category
-
 
 """
 class CositoAI(APIView):
