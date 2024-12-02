@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from unittest.mock import patch, MagicMock
 
-from api.models import Category, Product
-from api.views.cosito_views import RecommendationEngine, RecommendationMetrics
+from ..models import Category, Product
+from ..views.cosito_views import RecommendationEngine, RecommendationMetrics
 
 
 class RecommendationEngineTestCase(TestCase):

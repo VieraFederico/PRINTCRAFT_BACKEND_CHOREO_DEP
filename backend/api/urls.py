@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views.cosito_views import CositoAI, CositoAIID
+from .views.cosito_views import CositoAIView
 from .views.inverse_auction_views import DesignReverseAuctionCreateView, PrintReverseAuctionCreateView, QuotizedDesignReverseAuctionResponseListView, QuotizedPrintReverseAuctionResponseListView, UserDesignReverseAuctionListView, UserPrintReverseAuctionListView
 from .views.mp_views import CreatePaymentView, MercadoPagoNotificationViewDesignRequest, MercadoPagoNotificationViewOrder, MercadoPagoNotificationViewPrintRequest
 from .views.orders_views import CompleteOrderView, DeliverOrderView, SellerOrderListView, UserOrderListView, \
@@ -79,8 +79,8 @@ urlpatterns = [
     path("notifications/order/", MercadoPagoNotificationViewOrder.as_view(), name="mercado_pago_notifications"),
     path("notifications/printrequest/", MercadoPagoNotificationViewPrintRequest.as_view(), name="mercado_pago_notifications"),
     path("notifications/designrequest/", MercadoPagoNotificationViewDesignRequest.as_view(), name="mercado_pago_notifications"),
-    path("cosito/", CositoAI.as_view(), name="cosito_ai"),
-    path("cosito-id/", CositoAIID.as_view(), name="cosito_ai"),
+    path("cosito/", CositoAIView.as_view(), name="cosito_ai"),
+    #path("cosito-id/", CositoAIID.as_view(), name="cosito_ai"),
     path("reviews/", ProductReviewListCreateView.as_view(), name="product-review-list-create"),
     path("reviews/<int:pk>/", ProductReviewDetailView.as_view(), name="product-review-detail"),
     path("reviews/product/<int:product_code>/", ProductReviewsByProductCodeView.as_view(), name="product-reviews-by-product-code"),
