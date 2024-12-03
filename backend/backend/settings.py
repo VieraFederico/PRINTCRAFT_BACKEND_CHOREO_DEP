@@ -160,3 +160,14 @@ CORS_ALLOW_CREDENTIALS = True
 MERCADOPAGO_ACCESS_TOKEN = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
 
 COHERE_API_KEY = os.getenv("COSITO_KEY")
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,
+            'CULL_FREQUENCY': 3
+        }
+    }
+}
