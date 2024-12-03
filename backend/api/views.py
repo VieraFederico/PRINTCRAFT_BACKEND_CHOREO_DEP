@@ -92,11 +92,13 @@ class MaterialListView(generics.ListAPIView):
     queryset = Material.objects.all()
     serializer_class = MaterialSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
 # /api/sellers/<int:userId>/materials/
 class SellerMaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         userId = self.kwargs['userId']
@@ -165,6 +167,7 @@ class SellerListView(generics.ListAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
 class UpdateProfilePictureView(APIView):
     permission_classes = [IsSeller]
@@ -243,6 +246,7 @@ class ProductSearchView(generics.ListAPIView):
 class SellerProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         userId = self.kwargs['userId']
@@ -254,6 +258,7 @@ class SellerProductListView(generics.ListAPIView):
 class RecommendedProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         # Obtener los productos más vendidos
@@ -324,6 +329,7 @@ class ProductReviewDetailView(generics.RetrieveAPIView):
 class ProductReviewsByProductCodeView(generics.ListAPIView):
     serializer_class = ProductReviewSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         product_code = self.kwargs['product_code']
