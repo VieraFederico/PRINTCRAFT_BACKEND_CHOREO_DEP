@@ -1,63 +1,24 @@
-"""
-/api/seller-orders/
-orderid
-userid (se puede fletar)
-orderdate
-quantity
-productcode
-status
-
-email del usuario
-nombre del producto
-
-"""
-
-"""
-/
-cuando acepto reverse auction, cambiar el status
-
-"""
-
-from http.client import responses
-
+from django.core.mail import send_mail
 import mercadopago
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from mercadopago import sdk
-from pyexpat.errors import messages
-from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
-from django.conf import settings
-from django.http import JsonResponse
 from api.services.supabase_client import *
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import uuid  # Para generar el idempotency key
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
 from rest_framework import generics
-from .models import Product
 from .serializers import ProductSerializer
-from rest_framework.permissions import AllowAny
-# from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import AllowAny
+from django.conf import settings
+from .models import Product
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from decimal import Decimal
-import uuid
+
 
 ####################
 #### AUXILIARES ####
 ####################
+
 def delete_product_image(product_image):
     try:
         remove_file_from_supabase('images', product_image.image_url.split('/')[-1])
@@ -548,12 +509,11 @@ class UserRespondToPrintRequestView(APIView):
                         }
                     ],
                     "back_urls": {
-                        "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
+                        "success": "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
                         "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
                         "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
                     },
                     "auto_return": "approved",
-                    "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
                     "additional_info": {
                         "marketplace_fee": 10
                     }
@@ -823,12 +783,11 @@ class UserRespondToDesignRequestView(APIView):
                         }
                     ],
                     "back_urls": {
-                        "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
-                        "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                        "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                        "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                        "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                        "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                     },
                     "auto_return": "approved",
-                    "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
                     "additional_info": {
                         "marketplace_fee":10
                     }
@@ -1081,12 +1040,11 @@ class AcceptAuctionResponseView(APIView):
                     }
                 ],
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                    "success": "https://3dcapybara.vercel.app/mpresponse/success_printrequest",
+                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": "https://3dcapybara.vercel.app/api/notifications/printrequest",
                 "additional_info": {
                     "marketplace_fee":10
                 }
@@ -1319,12 +1277,11 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                     }
                 ],
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                    "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": "https://3dcapybara.vercel.app/api/notifications/designrequest",
                 "additional_info": {
                     "marketplace_fee":10
                 }
@@ -1610,9 +1567,8 @@ class FileUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-class CreatePaymentView(APIView):
-    permission_classes = [IsAuthenticated]
+class CreateOrderPaymentView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
 
@@ -1651,9 +1607,9 @@ class CreatePaymentView(APIView):
         preference_data = {
             "items": items,
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
-                "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                "success": "https://3dcapybara.vercel.app/mpresponse/success_order",
+                "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
             },
             "auto_return": "approved",
             "additional_info": {
@@ -1698,193 +1654,142 @@ class MercadoPagoNotificationViewOrder(APIView):
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 """
 
-class MercadoPagoNotificationViewPrintRequest(APIView):
-    def post(self, request):
-        data = request.data
-
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
-
-        try:
-            request = PrintRequest.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        if payment_status == "approved":
-            request.status="Aceptada"
-        request.save()
-
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-class MercadoPagoNotificationViewDesignRequest(APIView):
-    def post(self, request):
-        data = request.data
-
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
-
-        try:
-            request = DesignRequest.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        if payment_status == "approved":
-            request.status="Aceptada"
-        request.save()
-
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-class MercadoPagoSuccessView(APIView):
-    def post(self,request):
-        data = request.data
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
-
-        models_to_check = [Order, PrintRequest, DesignRequest]
-        for model in models_to_check:
-            try:
-                request_or_order  = model.objects.get(preference_id=preference_id)
-                if payment_status == "approved":
-                    request_or_order.status = "Aceptada"
-                request_or_order.save()
-                return Response({"status": "success"}, status=status.HTTP_200_OK)
-            except Order.DoesNotExist:
-                continue
-        return Response({"error": "No matching request or order found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-import cohere
-from django.conf import settings
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from django.conf import settings
-import cohere
-from .models import Product  # Assuming you have a Product model
-
-class CositoAI(APIView):
-    permission_classes = [AllowAny]  # Allow any access to this view
-
-    def post(self, request):
-        try:
-            user_input = request.data.get('input')
-
-            # Step 1: Get all products from the database
-            products = Product.objects.all()
-
-            # Prepare a list to store responses
-            product_scores = []
-
-            # Initialize Cohere client
-            co = cohere.Client(settings.COHERE_API_KEY)
-
-            # Step 2: Iterate through each product and get Cohere's response
-            for product in products:
-                product_name = product.name  # Get product name
-                product_description = product.description  # Get product description
-
-                # Create the prompt using both name and description
-                prompt = (f"Evaluate the product '{product_name}' with description: '{product_description}' "
-                          f"against this user description: '{user_input}'. "
-                          f"Respond with a score (1-10) indicating how well it matches.")
-
-                response = co.generate(
-                    model='command-xlarge-nightly',  # Cohere model to use
-                    prompt=prompt,
-                    max_tokens=10,
-                    temperature=0.5,
-                    stop_sequences=["\n"]
-                )
-
-                # Extract the score from Cohere's response
-                score = float(response.generations[0].text.strip())
-                product_scores.append((product_name, score))  # Store product name and score
-
-            # Step 3: Find the product with the highest score
-            best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
-
-            if best_product:
-                return Response({'response': best_product[0]}, status=status.HTTP_200_OK)  # Return the best product name
-            else:
-                return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class CositoAIID(APIView):
-    permission_classes = [AllowAny]  # Allow any access to this view
-
-    def post(self, request):
-        try:
-            user_input = request.data.get('input')
-
-            # Step 1: Get all products from the database
-            products = Product.objects.all()
-
-            # Prepare a list to store responses
-            product_scores = []
-
-            # Initialize Cohere client
-            co = cohere.Client(settings.COHERE_API_KEY)
-
-            # Step 2: Iterate through each product and get Cohere's response
-            for product in products:
-                product_id = product.code  # Get product ID
-                product_name = product.name  # Get product name
-                product_description = product.description  # Get product description
-
-                # Create the prompt using both name and description
-                prompt = (f"Evaluate the product '{product_name}' with description: '{product_description}' "
-                          f"against this user description: '{user_input}'. "
-                          f"Respond with a score (1-10) indicating how well it matches.")
-
-                response = co.generate(
-                    model='command-xlarge-nightly',
-                    prompt=prompt,
-                    max_tokens=10,
-                    temperature=0.5
-                )
-
-                # Extract the score from Cohere's response
-                score = float(response.generations[0].text.strip())
-                product_scores.append((product_id, score))  # Store product ID and score
-
-            # Step 3: Find the product with the highest score
-            best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
-
-            if best_product:
-                return Response({'response': best_product[0]},
-                                status=status.HTTP_200_OK)  # Return the best product name
-            else:
-                return Response({'response': 'No matching products found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-"""
-for order in orders:
-    order_data = {
-        "orderid": order.orderID,
-        "status": order.status,
-        "orderdate": order.orderDate,
-        "total_price": sum(
-            op.product.price * op.quantity for op in order.order_products.all()
-        ),
-        "products": [
-            {
-                "productcode": op.product.code,
-                "product_name": op.product.name,
-                "quantity": op.quantity,
-                "price_per_unit": op.product.price,
-            }
-            for op in order.order_products.all()
-        ],
+class BaseMercadoPagoSuccessView(APIView):
+    model = None
+    status_mapping = {
+        "approved": "Aceptada",
+        "cancelled": "Cancelada",
+        "rejected": "Cancelada"
     }
-    response_data.append(order_data)
-"""
+
+    def send_notifications(self, request, instance):
+        if not self.model:
+            return Response(
+                {"error": "Model not configured for notification view"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        buyer_email = instance.user.email if hasattr(instance, "user") else None
+        if buyer_email:
+            self.send_email_notification(
+                email=buyer_email,
+                subject="Compra Confirmada" if self.model == Order else "Solicitud Confirmada",
+                message=self.generate_buyer_message(instance),
+            )
+        if self.model == Order:
+            return self.send_order_notifications(instance)
+        elif self.model in [PrintRequest, DesignRequest]:
+            return self.send_request_notifications(instance)
+        else:
+            return Response(
+                {"error": "Unknown model for notification"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def send_order_notifications(self, instance):
+        sellers = set(instance.order_products.values_list("product__seller", flat=True))
+        for seller_id in sellers:
+            seller_message = self.generate_seller_message(instance, seller_id=seller_id)
+            seller_email = Seller.objects.get(id=seller_id).mp_mail
+            self.send_email_notification(
+                email=seller_email,
+                subject="Nueva venta confirmada",
+                message=seller_message,
+            )
+
+        return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
+
+    def send_request_notifications(self, instance):
+        seller_email = instance.seller.mp_mail
+        seller_message = self.generate_seller_message(instance)
+        self.send_email_notification(
+            email=seller_email,
+            subject="Nueva solicitud recibida",
+            message=seller_message,
+        )
+
+        buyer_email = instance.user.email
+        buyer_message = self.generate_buyer_message(instance)
+        self.send_email_notification(
+            email=buyer_email,
+            subject="Solicitud confirmada",
+            message=buyer_message,
+        )
+
+        return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
+
+    def send_email_notification(self, email, subject, message):
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+    def generate_buyer_message(self, instance):
+        if self.model == Order:
+            total_spent = sum(op.product.price * op.quantity for op in instance.order_products.all())
+
+            product_details = "\n".join(
+                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in
+                 instance.order_products.all()]
+            )
+            return f"Gracias por tu compra. Tu orden #{instance.id} ha sido confirmada. Total gastado: ${total_spent}.\n\nProductos comprados:\n{product_details}"
+
+        elif self.model == PrintRequest or self.model == DesignRequest:
+            price = instance.price
+            description = instance.description
+            return f"Tu solicitud #{instance.id} ha sido confirmada. Descripción: {description}\nPrecio: ${price}"
+
+        else:
+            return "No se pudo generar el mensaje para este modelo."
+
+    def generate_seller_message(self, instance, seller_id=None):
+        if self.model == Order:
+            order_products = instance.order_products.filter(product__seller_id=seller_id)
+            total_earned = sum(
+                op.product.price * op.quantity for op in order_products
+            )
+
+            product_details = "\n".join(
+                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in order_products]
+            )
+
+            return f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${total_earned}.\n\nProductos vendidos:\n{product_details}"
+
+        elif self.model == PrintRequest or self.model == DesignRequest:
+            price = instance.price
+            description = instance.description
+            return f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {description}\nPrecio: ${price}"
+
+        else:
+            return "No se pudo generar el mensaje para este modelo."
+
+    def post(self,request):
+        if not self.model:
+            return Response(
+                {"error": "Model not configured for notification view"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        data = request.data
+        payment_status = data.get("data", {}).get("status")
+        preference_id = data.get("data", {}).get("id")
+        try:
+            instance = self.model.objects.get(preference_id=preference_id)
+            instance.status = self.status_mapping.get(
+                payment_status,
+                payment_status
+            )
+            instance.save()
+            self.send_notifications(request, instance)
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
+        except self.model.DoesNotExist:
+            return Response({"error": "No matching request or order found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MercadoPagoSuccessViewOrder(BaseMercadoPagoSuccessView):
+    model = Order
+
+class MercadoPagoSuccessViewPrintRequest(BaseMercadoPagoSuccessView):
+    model = PrintRequest
+
+class MercadoPagoSuccessViewDesignRequest(BaseMercadoPagoSuccessView):
+    model = DesignRequest
