@@ -1803,15 +1803,7 @@ class RecommendationEngine:
 
     def get_cached_embedding(self, item, cache_key_prefix):
         try:
-            cache_key = f"{cache_key_prefix}_{item.code}"
-            cached_embedding = cache.get(cache_key)
-
-            if cached_embedding is None:
-                embedding = np.array(self.model.encode([item.name])[0])
-                cache.set(cache_key, embedding, timeout=86400)
-            else:
-                embedding = np.array(cached_embedding)
-
+            embedding = np.array(self.model.encode([item.name])[0])
             return embedding
 
         except Exception as e:
@@ -1819,8 +1811,7 @@ class RecommendationEngine:
             return None
 
     def calculate_semantic_similarity(self, query_embedding, item_embedding):
-        return np.dot(query_embedding, item_embedding) / (
-                    np.linalg.norm(query_embedding) * np.linalg.norm(item_embedding))
+        return np.dot(query_embedding, item_embedding) / (np.linalg.norm(query_embedding) * np.linalg.norm(item_embedding))
 
     def find_best_category(self, user_input):
         # Check categories exist
