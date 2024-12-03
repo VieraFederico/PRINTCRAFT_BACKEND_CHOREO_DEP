@@ -10,7 +10,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.conf import settings
-from .models import Product
+from .models import Product, Category
 import cohere
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -19,7 +19,6 @@ import numpy as np
 import logging
 from django.core.cache import cache
 from sentence_transformers import SentenceTransformer
-from api.models import Product, Category
 
 ####################
 #### AUXILIARES ####
