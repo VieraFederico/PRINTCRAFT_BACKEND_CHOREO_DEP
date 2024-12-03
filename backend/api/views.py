@@ -782,9 +782,9 @@ class UserRespondToDesignRequestView(APIView):
                         }
                     ],
                     "back_urls": {
-                        "success": "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
-                        "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                        "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                        "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                        "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                        "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                     },
                     "auto_return": "approved",
                     "additional_info": {
@@ -1039,9 +1039,9 @@ class AcceptAuctionResponseView(APIView):
                     }
                 ],
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                    "success": "https://3dcapybara.vercel.app/mpresponse/success_printrequest",
+                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                 },
                 "auto_return": "approved",
                 "additional_info": {
@@ -1276,9 +1276,9 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                     }
                 ],
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                    "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
                 },
                 "auto_return": "approved",
                 "additional_info": {
@@ -1606,9 +1606,9 @@ class CreateOrderPaymentView(APIView):
         preference_data = {
             "items": items,
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/api/mpresponse/success_order",
-                "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
+                "success": "https://3dcapybara.vercel.app/mpresponse/success_order",
+                "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
             },
             "auto_return": "approved",
             "additional_info": {
