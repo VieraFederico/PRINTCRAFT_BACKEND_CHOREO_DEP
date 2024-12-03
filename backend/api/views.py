@@ -1826,11 +1826,7 @@ class RecommendationEngine:
         # Check categories exist
         categories = Category.objects.all()
         products = Product.objects.all()
-        print(f"Total Categories: {categories.count()}")
-        print(f"Total Product: {products.count()}")
-
         if not categories.exists():
-            print("No categories in database!")
             return None
 
         user_embedding = self.model.encode([user_input])[0]
@@ -1861,9 +1857,7 @@ class RecommendationEngine:
             product_scores = []
             for product in products:
                 product_embedding = self.get_cached_embedding(product, 'product')
-                print("ADENTRO")
                 similarity = self.calculate_semantic_similarity(user_embedding, product_embedding)
-                print("SALIO")
                 product_scores.append((product.name, similarity))
 
             best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
