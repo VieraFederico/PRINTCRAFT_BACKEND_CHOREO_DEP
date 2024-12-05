@@ -1804,7 +1804,7 @@ from rest_framework import status
 import numpy as np
 import logging
 from sentence_transformers import SentenceTransformer
-
+from django.core.cache import cache
 from api.models import Product, Category
 
 
