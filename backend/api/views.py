@@ -1933,20 +1933,63 @@ class CositoAIView(APIView):
             if not user_input:
                 return Response({'error': 'No input provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-            recommendations = self.recommendation_engine.recommend_products(user_input)
+            prompt_mode = (
+                f"You are a versatile assistant. Your first task is to determine the user's intent. "
+                f"If the user input is requesting a product recommendation, respond only with the word 'recomend'. "
+                f"If the user input is simply trying to chat or engage in conversation, respond only with the word 'chatbot'. "
+                f"The user has described their query as: '{user_input}'. "
+                f"Determine the intent concisely and respond accordingly."
+            )
 
-            if recommendations:
+            cohere_response = co.generate(
+                model='command-xlarge-nightly',
+                prompt=prompt_mode,
+                max_tokens=100,
+                temperature=0.5
+            )
+
+            cosito_mode = cohere_response.generations[0].text.strip()
+            if cosito_mode=='recomend':
+                recommendations = self.recommendation_engine.recommend_products(user_input)
+
+                if recommendations:
+                    prompt = (
+                        f"You are a product recommendation system. Your task is to identify the most relevant product from the following list: {recommendations}. "
+                        f"The user has described what they are looking for as: '{user_input}'. "
+                        f"Match the user's description to the listed products based solely on their name, description, or material. "
+                        f"Do not recommend products, categories, or options that are not explicitly listed. "
+                        f"If none of the products in the list match the user's description, respond with: 'No suitable match found.' "
+                        f"Do not suggest searching for other categories or products outside this list. "
+                        f"Respond in the same language as the user's input. "
+                        f"Keep your response concise and factual."
+                    )
+
+                    cohere_response = co.generate(
+                        model='command-xlarge-nightly',
+                        prompt=prompt,
+                        max_tokens=100,
+                        temperature=0.5
+                    )
+
+                    generated_text = cohere_response.generations[0].text.strip()
+
+                    return Response(
+                        {'recommendation': generated_text},
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        {'message': 'No matching products found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
                 prompt = (
-                    f"You are a product recommendation system. Your task is to identify the most relevant product from the following list: {recommendations}. "
-                    f"The user has described what they are looking for as: '{user_input}'. "
-                    f"Match the user's description to the listed products based solely on their name, description, or material. "
-                    f"Do not recommend products, categories, or options that are not explicitly listed. "
-                    f"If none of the products in the list match the user's description, respond with: 'No suitable match found.' "
-                    f"Do not suggest searching for other categories or products outside this list. "
-                    f"Respond in the same language as the user's input. "
-                    f"Keep your response concise and factual."
+                    f"You are a friendly and engaging chatbot. Your purpose is to have a natural, free-flowing conversation with the user. "
+                    f"Respond to the user input: '{user_input}' with curiosity, humor, or thoughtful remarks, as appropriate to the tone. "
+                    f"Focus on making the interaction enjoyable and human-like. "
+                    f"Do not recommend products or services unless explicitly asked for. "
+                    f"Keep your responses concise but engaging, and respond in the same language as the user."
                 )
-
                 cohere_response = co.generate(
                     model='command-xlarge-nightly',
                     prompt=prompt,
@@ -1960,12 +2003,6 @@ class CositoAIView(APIView):
                     {'recommendation': generated_text},
                     status=status.HTTP_200_OK
                 )
-            else:
-                return Response(
-                    {'message': 'No matching products found'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
         except Exception as e:
             # Log unexpected errors
             logging.error(f"Recommendation system error: {str(e)}")
