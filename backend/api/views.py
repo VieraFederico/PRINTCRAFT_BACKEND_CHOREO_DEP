@@ -1803,14 +1803,15 @@ from rest_framework import status
 
 import numpy as np
 import logging
-from sentence_transformers import SentenceTransformer
 from django.core.cache import cache
+from sentence_transformers import SentenceTransformer
+
 from api.models import Product, Category
 
 
 class RecommendationEngine:
 
-    def __init__(self, embedding_model='all-MiniLM-L6-v2'):
+    def __init__(self, embedding_model='paraphrase-MiniLM-L3-v2'):
 
         self.model = SentenceTransformer(embedding_model)
         self.logger = logging.getLogger('recommendation_system')
@@ -1844,7 +1845,7 @@ class RecommendationEngine:
         category_similarities = []
         for category in categories:
             try:
-                category_embedding = self.get_cached_embedding(category, 'category')
+                category_embedding = self.get_cached_embedding(category)
                 similarity = self.calculate_semantic_similarity(user_embedding, category_embedding)
                 category_similarities.append((category, similarity))
             except Exception as e:
@@ -1866,7 +1867,7 @@ class RecommendationEngine:
 
             product_scores = []
             for product in products:
-                product_embedding = self.get_cached_embedding(product, 'product')
+                product_embedding = self.get_cached_embedding(product)
                 similarity = self.calculate_semantic_similarity(user_embedding, product_embedding)
                 product_scores.append((product.name, similarity))
 
