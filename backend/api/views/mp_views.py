@@ -29,6 +29,14 @@ class CreatePaymentView(APIView):
             return Response({"error": "Access token must be a valid string."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         sdk = mercadopago.SDK(access_token)
+        seller_data ={
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+                "type": "business"
+            }
+        seller_response = sdk.user().create_seller_payment(seller_data) #Generate data
+        seller_id =  seller_response["body"]["id"]
 
         preference_data = {
             "items": [
@@ -38,6 +46,7 @@ class CreatePaymentView(APIView):
                     "unit_price": float(transaction_amount)
                 }
             ],
+
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/api/mpresponse/sucess",
                 "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -46,7 +55,9 @@ class CreatePaymentView(APIView):
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications/order",
             "additional_info": {
-                "marketplace_fee":10
+                "marketplace": "3D CAPYBARA",
+                "marketplace_fee": 10,
+                "seller_id": seller_id
             }
         }
 
