@@ -1,3 +1,5 @@
+import time
+
 from django.core.mail import send_mail
 import mercadopago
 from .serializers import *
@@ -1803,26 +1805,76 @@ from rest_framework import status
 
 import numpy as np
 import logging
-from django.core.cache import cache
-from sentence_transformers import SentenceTransformer
+import requests
 
 from api.models import Product, Category
 
 
+import logging
+import requests
+import numpy as np
+
+import logging
+import requests
+import numpy as np
+
+
 class RecommendationEngine:
-
-    def __init__(self, embedding_model='paraphrase-MiniLM-L3-v2'):
-
-        self.model = SentenceTransformer(embedding_model)
+    def __init__(self, model_name='sentence-transformers/all-MiniLM-L6-v2'):
+        self.huggingface_token = settings.HUGGINGFACE_API_TOKEN
+        self.headers = {
+            "Authorization": f"Bearer {self.huggingface_token}",
+            "Content-Type": "application/json"
+        }
+        self.model_name = model_name
+        self.api_url = f"https://api-inference.huggingface.co/models/{model_name}"
         self.logger = logging.getLogger('recommendation_system')
         self.metrics = RecommendationMetrics()
+        self._test_model_access()
 
-    def get_cached_embedding(self, item):
+    def _test_model_access(self):
         try:
-            embedding = np.array(self.model.encode([item.name])[0])
-            return embedding
-        except Exception as e:
-            self.logger.error(f"Embedding error: {str(e)}")
+            response = requests.get(self.api_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Hugging Face model or token validation failed: {e}")
+            raise ValueError("Invalid Hugging Face API Token or Model Name.")
+
+    def get_similarity_score(self, key, item):
+        try:
+            payload = {
+                "inputs": {
+                    "source_sentence": key,
+                    "sentences": [item]
+                }
+            }
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                json=payload,
+                timeout=10
+            )
+
+            if response.status_code == 400:
+                self.logger.error(f"Bad Request: {response.text}")
+                return None
+
+            response.raise_for_status()
+            result = response.json()
+
+            print(f"Input: {key} vs {item}")
+            print(f"Result: {result}")
+
+            if isinstance(result, list) and len(result) > 0:
+                similarity_score = result[0]
+                print(f"Similarity score between '{key}' and '{item}': {similarity_score}")
+                return similarity_score
+
+            self.logger.error(f"Unexpected response format: {result}")
+            return None
+
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Request error during similarity calculation: {e}")
             return None
 
     def calculate_semantic_similarity(self, query_embedding, item_embedding):
@@ -1830,22 +1882,20 @@ class RecommendationEngine:
                     np.linalg.norm(query_embedding) * np.linalg.norm(item_embedding))
 
     def find_best_category(self, user_input):
-        # Check categories exist
         categories = Category.objects.all()
         products = Product.objects.all()
         print(f"Total Categories: {categories.count()}")
         print(f"Total Product: {products.count()}")
 
         if not categories.exists():
-            print("No categories in database!")
             return None
 
-        user_embedding = self.model.encode([user_input])[0]
+        user_embedding = self.get_embedding(user_input)
 
         category_similarities = []
         for category in categories:
             try:
-                category_embedding = self.get_cached_embedding(category)
+                category_embedding = self.get_embedding(category)
                 similarity = self.calculate_semantic_similarity(user_embedding, category_embedding)
                 category_similarities.append((category, similarity))
             except Exception as e:
@@ -1859,20 +1909,20 @@ class RecommendationEngine:
 
     def recommend_products(self, user_input, confidence_threshold=0.2):
         try:
+            #selected_category = self.find_best_category(user_input)
 
-            selected_category = self.find_best_category(user_input)
+            products = Product.objects.all()
+            #user_embedding = self.get_embedding(user_input)
 
-            products = Product.objects.filter(categories=selected_category)
-            user_embedding = self.model.encode([user_input])[0]
+            #if user_embedding is None:
+             #   self.logger.error("Failed to generate user input embedding")
+              #  return None
 
             product_scores = []
             for product in products:
-                product_embedding = self.get_cached_embedding(product)
-                similarity = self.calculate_semantic_similarity(user_embedding, product_embedding)
-                product_scores.append((product.name, similarity))
+                similarity = self.get_similarity_score(user_input,product.name)
+                product_scores.append((product, similarity))
 
-            best_product = max(product_scores, key=lambda x: x[1]) if product_scores else None
-            # Filter and rank recommendations
             confident_recommendations = [
                 (product, similarity)
 
@@ -1880,7 +1930,6 @@ class RecommendationEngine:
                 if similarity > confidence_threshold
             ]
 
-            # Sort recommendations
             sorted_recommendations = sorted(
                 confident_recommendations,
                 key=lambda x: x[1],
@@ -1889,9 +1938,11 @@ class RecommendationEngine:
 
             recommendation_result = {
                 'top_recommendation': sorted_recommendations[0][0] if sorted_recommendations else None,
-                'alternatives': [rec[0] for rec in sorted_recommendations[1:10]],
-                'confidence_level': len(confident_recommendations) / len(product_scores) if product_scores else 0
+                'alternatives': [rec[0] for rec in sorted_recommendations[1:10]] if len(sorted_recommendations) > 1 else [],
+                'confidence_level': (len(confident_recommendations) / len(product_scores) if product_scores else 0)
             }
+
+            # Update metrics
             self.metrics.update_metrics(recommendation_result['confidence_level'])
 
             return recommendation_result
@@ -1899,7 +1950,6 @@ class RecommendationEngine:
         except Exception as e:
             self.logger.error(f"Recommendation error: {str(e)}")
             return None
-
 
 class RecommendationMetrics:
     CONFIDENCE_THRESHOLD = 0.2
@@ -1910,8 +1960,14 @@ class RecommendationMetrics:
         self.average_confidence = 0
 
     def update_metrics(self, confidence_score):
+        if not isinstance(confidence_score, (int, float)):
+            self.logger.error(f"Invalid confidence score: {confidence_score}")
         self.total_recommendations += 1
         self.successful_recommendations += 1 if confidence_score > self.CONFIDENCE_THRESHOLD else 0
+
+        # Running average of confidence
+        self.average_confidence = (self.average_confidence * (
+                self.total_recommendations - 1) + confidence_score) / self.total_recommendations
 
         # Running average of confidence
         self.average_confidence = (self.average_confidence * (
@@ -1950,6 +2006,25 @@ class CositoAIView(APIView):
 
             cosito_mode = cohere_response.generations[0].text.strip()
             if cosito_mode=='recomend':
+
+                prompt_filter = (
+                    f"You are an assistant focused on extracting only the most important keywords from the user's query. "
+                    f"The user has described what they are looking for as: '{user_input}'. "
+                    f"Identify key entities such as characters, products, or specific topics, and ignore unnecessary words or details. "
+                    f"Respond only with the relevant keywords or key phrases (e.g., nouns or specific topics). "
+                    f"Additionally, provide **two example answers** that might reflect the user's question based on the extracted keywords, "
+                    f"but without long explanations. All of this should be returned in **one single list**. "
+                    f"For example, if the user says 'the bad guy in Star Wars', the output should be: "
+                    f"['bad guy', 'Star Wars', 'Darth Vader', 'Kylo Ren']. "
+                    f"Please make sure the response contains both keywords and examples in the same list, with no extra context or long explanations."
+                )
+
+                filtered_user_input= co.generate(
+                model='command-xlarge-nightly',
+                prompt=prompt_filter,
+                max_tokens=100,
+                temperature=0.5
+                )
                 recommendations = self.recommendation_engine.recommend_products(user_input)
 
                 if recommendations:
