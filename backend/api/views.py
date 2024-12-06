@@ -2006,25 +2006,6 @@ class CositoAIView(APIView):
 
             cosito_mode = cohere_response.generations[0].text.strip()
             if cosito_mode=='recomend':
-
-                prompt_filter = (
-                    f"You are an assistant focused on extracting only the most important keywords from the user's query. "
-                    f"The user has described what they are looking for as: '{user_input}'. "
-                    f"Identify key entities such as characters, products, or specific topics, and ignore unnecessary words or details. "
-                    f"Respond only with the relevant keywords or key phrases (e.g., nouns or specific topics). "
-                    f"Additionally, provide **two example answers** that might reflect the user's question based on the extracted keywords, "
-                    f"but without long explanations. All of this should be returned in **one single list**. "
-                    f"For example, if the user says 'the bad guy in Star Wars', the output should be: "
-                    f"['bad guy', 'Star Wars', 'Darth Vader', 'Kylo Ren']. "
-                    f"Please make sure the response contains both keywords and examples in the same list, with no extra context or long explanations."
-                )
-
-                filtered_user_input= co.generate(
-                model='command-xlarge-nightly',
-                prompt=prompt_filter,
-                max_tokens=100,
-                temperature=0.5
-                )
                 recommendations = self.recommendation_engine.recommend_products(user_input)
 
                 if recommendations:
@@ -2032,13 +2013,16 @@ class CositoAIView(APIView):
                         f"You are a product recommendation system. Your task is to identify the most relevant product from the following list: {recommendations}. "
                         f"The user has described what they are looking for as: '{user_input}'. "
                         f"Match the user's description to the listed products based solely on their name, description, or material. "
+                        f"If none of the products in the list exactly match the user's description, prioritize products that belong to the same general category as the user's input. "
                         f"Do not recommend products, categories, or options that are not explicitly listed. "
-                        f"If none of the products in the list match the user's description, respond with: 'No suitable match found.' "
+                        f"Avoid selecting irrelevant products or names that do not have any clear connection to the user's request. "
+                        f"If no products match even by category, respond with: 'No suitable match found.' "
                         f"Do not suggest searching for other categories or products outside this list. "
                         f"Respond in the same language as the user's input. "
                         f"Keep your response concise and factual."
+                        f"Additionally, if the user asks for family relationships (like 'son of X'), focus on the most likely individual based on those relationships, not on general descriptors."
                     )
-
+                    print(recommendations)
                     cohere_response = co.generate(
                         model='command-xlarge-nightly',
                         prompt=prompt,
@@ -2048,8 +2032,26 @@ class CositoAIView(APIView):
 
                     generated_text = cohere_response.generations[0].text.strip()
 
+                    prompt_name = (
+                        f"Your Task is to Look at this look of recommendations: {recommendations} and extract the name of the product from '{generated_text}' that is in both things."
+                        f"You will ONLY answer the name of the product, case and space sensitive, nothing else."
+                    )
+
+                    product_name_response = co.generate(
+                        model='command-xlarge-nightly',
+                        prompt=prompt_name,
+                        max_tokens=100,
+                        temperature=0.5
+                    )
+                    product_name = product_name_response.generations[0].text.strip()
+
+                    print(product_name)
+
                     return Response(
-                        {'recommendation': generated_text},
+                    {
+                            'output': generated_text,
+                            'product_id': Product.objects.filter(name=product_name).values_list('code', flat=True).first()
+                        },
                         status=status.HTTP_200_OK
                     )
                 else:
@@ -2075,7 +2077,7 @@ class CositoAIView(APIView):
                 generated_text = cohere_response.generations[0].text.strip()
 
                 return Response(
-                    {'recommendation': generated_text},
+                    {'output': generated_text},
                     status=status.HTTP_200_OK
                 )
         except Exception as e:
