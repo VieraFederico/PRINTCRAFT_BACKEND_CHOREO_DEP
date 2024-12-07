@@ -2,6 +2,8 @@ import time
 
 from django.core.mail import send_mail
 import mercadopago
+from django.db import transaction
+
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import *
@@ -15,6 +17,7 @@ from .models import Product
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from api.services.mercado_pago_service import MercadoPagoPreferenceService
 
 
 ####################
@@ -480,63 +483,68 @@ class AcceptOrRejectPrintRequestView(APIView):
 # TODO!!!
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]  # TOD CAMBIAR
+
     def post(self, request, request_id):
         userID = request.user
-        # userID = User.objects.get(id=8) # TOD CAMBIAR
 
         try:
-            print_request = PrintRequest.objects.get(requestID=request_id, userID=userID) # cambiar lo de userID -> manejarlo con un if
+            # Retrieve the print request
+            print_request = PrintRequest.objects.get(requestID=request_id, userID=userID)
+
+            # Validate the request status
             if print_request.status != "Cotizada":
                 return Response({"error": "Request is not in a quotable state"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Validate the response
             response = request.data.get('response')
             if response not in ["Accept", "Reject"]:
                 return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Handle acceptance of the print request
             if response == "Accept":
-                product_id = request_id
-                quantity = print_request.quantity
-                # quantity = request.get("quantity")
-                transaction_amount = print_request.price
-                # transaction_amount = request.get("price")
-                access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-                sdk = mercadopago.SDK(access_token)
-                preference_data = {
-                    "items": [
-                        {
-                            "product_id": int(product_id),
-                            "quantity": int(quantity),
-                            "unit_price": float(transaction_amount)
-                        }
-                    ],
-                    "back_urls": {
-                        "success": "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
-                        "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                        "pending": "https://www.3dcapybara.vercel.app/api/mpresponse/pending"
-                    },
-                    "auto_return": "approved",
-                    "additional_info": {
-                        "marketplace_fee": 10
-                    }
-                }
                 try:
-                    preference_response = sdk.preference().create(preference_data)
-                    preference_id = preference_response["response"]["id"]
+                    # Prepare items for the preference creation
+                    items = [{
+                        "product_id": int(request_id),
+                        "quantity": int(print_request.quantity),
+                        "unit_price": float(print_request.price)
+                    }]
+
+                    # Get seller information (you'll need to retrieve this from the print request or associated user)
+                    seller_first_name = print_request.userID.first_name
+                    seller_last_name = print_request.userID.last_name
+                    seller_email = print_request.userID.email
+
+                    # Create the product preference using the service
+                    preference_id = MercadoPagoPreferenceService.create_order_preference(
+                        items=items,
+                        transaction_amount=print_request.price * print_request.quantity,
+                        success_endpoint="https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
+                        notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                        seller_first_name=seller_first_name,
+                        seller_last_name=seller_last_name,
+                        email=seller_email
+                    )
 
                     return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
                 except Exception as e:
-                    return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response(
+                        {"error": "An error occurred while creating the payment preference"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+            # Handle rejection of the print request
             else:
                 print_request.status = "Cancelada"
+                print_request.save()
+                return Response({"message": "Request successfully rejected"}, status=status.HTTP_200_OK)
 
-            print_request.save()
-            return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except PrintRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
-
+            return Response(
+                {"error": "Request not found or you do not have permission to modify it"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 class FinalizePrintRequestView(APIView):
     permission_classes = [IsSeller]
 
@@ -751,66 +759,93 @@ class AcceptOrRejectDesignRequestView(APIView):
         except DesignRequest.DoesNotExist:
             return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
+
 class UserRespondToDesignRequestView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]  # TODO CAMBIAR
 
     def post(self, request, request_id):
+        """
+        Handle user response to a design request, including payment preference creation.
+
+        This view allows authenticated users to:
+        1. Accept or reject a design request
+        2. Create a MercadoPago payment preference if accepted
+        3. Update the request status accordingly
+        """
+        # Retrieve the current authenticated user
         userID = request.user
-        # userID = User.objects.get(id=8) # TODO CAMBIAR
 
         try:
+            # Retrieve the specific design request
             design_request = DesignRequest.objects.get(requestID=request_id, userID=userID)
-            if design_request.status != "Cotizada":
-                return Response({"error": "Request is not in a quotable state"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Validate request is in a quotable state
+            if design_request.status != "Cotizada":
+                return Response(
+                    {"error": "Request is not in a quotable state"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate the response type
             response = request.data.get('response')
             if response not in ["Accept", "Reject"]:
-                return Response({"error": "Invalid response"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid response"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+            # Handle acceptance of the design request
             if response == "Accept":
-                product_id = request_id
-                quantity = design_request.quantity
-                # quantity = request.get("quantity")
-                transaction_amount = design_request.price
-                # transaction_amount = request.get("price")
-                access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-                sdk = mercadopago.SDK(access_token)
-                preference_data = {
-                    "items": [
-                        {
-                            "product_id": int(product_id),
-                            "quantity": int(quantity),
-                            "unit_price": float(transaction_amount)
-                        }
-                    ],
-                    "back_urls": {
-                        "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
-                        "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
-                        "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
-                    },
-                    "auto_return": "approved",
-                    "additional_info": {
-                        "marketplace_fee":10
-                    }
-                }
                 try:
-                    preference_response = sdk.preference().create(preference_data)
-                    preference_id = preference_response["response"]["id"]
+                    # Prepare items for the preference creation
+                    items = [{
+                        "product_id": int(request_id),
+                        "quantity": int(design_request.quantity),
+                        "unit_price": float(design_request.price)
+                    }]
 
-                    return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+                    # Get seller information (you'll need to retrieve this from the design request or associated user)
+                    seller_first_name = design_request.userID.first_name
+                    seller_last_name = design_request.userID.last_name
+                    seller_email = design_request.userID.email
+
+                    # Create the product preference using the service
+                    preference_id = MercadoPagoPreferenceService.create_order_preference(
+                        items=items,
+                        transaction_amount=design_request.price * design_request.quantity,
+                        success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                        notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                        seller_first_name=seller_first_name,
+                        seller_last_name=seller_last_name,
+                        email=seller_email
+                    )
+
+                    return Response(
+                        {"preference_id": preference_id},
+                        status=status.HTTP_201_CREATED
+                    )
 
                 except Exception as e:
-                    return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    # Log the error and return a generic error response
+                    return Response(
+                        {"error": "An error occurred while creating the payment preference"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+            # Handle rejection of the design request
             else:
                 design_request.status = "Cancelada"
+                design_request.save()
+                return Response(
+                    {"message": "Request successfully rejected"},
+                    status=status.HTTP_200_OK
+                )
 
-            design_request.save()
-            return Response({"message": f"Request successfully {response.lower()}ed"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
-            return Response({"error": "Request not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
-
+            return Response(
+                {"error": "Request not found or you do not have permission to modify it"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 class FinalizeDesignRequestView(APIView):
     permission_classes = [IsSeller]
@@ -997,76 +1032,113 @@ class PrintReverseAuctionResponseListView(APIView):
 # TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny] # TODO CAMBIAR
 
     def post(self, request, auction_id, response_id):
-        userID = request.user
-        # userID = User.objects.get(id=8) # TODO CAMBIAR
+        """
+        Handle the acceptance of a print reverse auction response.
+
+        This view allows an authenticated user to:
+        1. Accept a specific auction response
+        2. Close the auction
+        3. Reject other responses
+        4. Create a print request
+        5. Generate a MercadoPago payment preference
+
+        Key steps:
+        - Validate the auction and response
+        - Update auction and response statuses
+        - Create a print request
+        - Generate a payment preference
+        """
         try:
-            auction = PrintReverseAuction.objects.get(requestID=auction_id, status="Open", userID=userID)
-            response = PrintReverseAuctionResponse.objects.get(responseID=response_id, auction=auction)
-
-            # Aceptar la respuesta indicada
-            response.status = "Accepted"
-            response.save()
-
-            # Actualizar el accepted_response en la subasta
-            auction.accepted_response = response
-            auction.status = "Closed"
-            auction.save()
-
-            # Rechazar todas las demás respuestas
-            PrintReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
-
-            PrintRequest.objects.create(
-                userID=auction.userID,
-                sellerID=response.seller,
-                stl_url=auction.stl_file_url,
-                description=auction.description,
-                quantity=auction.quantity,
-                material=auction.material,
-                price=response.price,
+            # Retrieve the auction, ensuring it's open and belongs to the current user
+            auction = PrintReverseAuction.objects.get(
+                requestID=auction_id,
+                status="Open",
+                userID=request.user
             )
 
-            product_id = auction.requestID
-            quantity =  auction.quantity
-            transaction_amount = response.price
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-            sdk = mercadopago.SDK(access_token)
-            preference_data = {
-                "items": [
-                    {
-                        "product_id": int(product_id),
-                        "quantity": int(quantity),
-                        "unit_price": float(transaction_amount)
-                    }
-                ],
-                "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/mpresponse/success_printrequest",
-                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
-                },
-                "auto_return": "approved",
-                "additional_info": {
-                    "marketplace_fee":10
-                }
-            }
-            try:
-                preference_response = sdk.preference().create(preference_data)
-                preference_id = preference_response["response"]["id"]
+            # Retrieve the specific auction response
+            response = PrintReverseAuctionResponse.objects.get(
+                responseID=response_id,
+                auction=auction
+            )
 
-                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+            # Transaction to ensure atomic updates
+            with transaction.atomic():
+                # Update the accepted response status
+                response.status = "Accepted"
+                response.save()
+
+                # Update the auction
+                auction.accepted_response = response
+                auction.status = "Closed"
+                auction.save()
+
+                # Reject all other responses for this auction
+                PrintReverseAuctionResponse.objects.filter(
+                    auction=auction
+                ).exclude(
+                    responseID=response_id
+                ).update(status="Rejected")
+
+                # Create a print request based on the accepted response
+                print_request = PrintRequest.objects.create(
+                    userID=auction.userID,
+                    sellerID=response.seller,
+                    stl_url=auction.stl_file_url,
+                    description=auction.description,
+                    quantity=auction.quantity,
+                    material=auction.material,
+                    price=response.price,
+                )
+
+            # Prepare items for MercadoPago preference
+            items = [{
+                "product_id": int(auction.requestID),
+                "quantity": int(auction.quantity),
+                "unit_price": float(response.price)
+            }]
+
+            # Get seller information
+            seller_first_name = response.seller.first_name
+            seller_last_name = response.seller.last_name
+            seller_email = response.seller.email
+
+            try:
+                # Create MercadoPago preference using the service
+                preference_id = MercadoPagoPreferenceService.create_order_preference(
+                    items=items,
+                    transaction_amount=response.price * auction.quantity,
+                    success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_printrequest",
+                    notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                    seller_first_name=seller_first_name,
+                    seller_last_name=seller_last_name,
+                    email=seller_email
+                )
+
+                return Response(
+                    {"preference_id": preference_id},
+                    status=status.HTTP_201_CREATED
+                )
 
             except Exception as e:
-                return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            #return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
+                # Log the error and return a generic error response
+                return Response(
+                    {"error": "An error occurred while creating the payment preference"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
         except PrintReverseAuction.DoesNotExist:
-            return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Auction not found or not open"},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except PrintReverseAuctionResponse.DoesNotExist:
-            return Response({"error": "Auction response not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
+            return Response(
+                {"error": "Auction response not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 # TODO: Cambiar nombre de la vista a CompletePrintReverseAuctionResponseView
 class CompleteAuctionResponseView(APIView):
     permission_classes = [IsSeller]
@@ -1236,74 +1308,115 @@ class DesignReverseAuctionResponseListView(APIView):
 
 class AcceptDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny] # TOD CAMBIAR
 
     def post(self, request, auction_id, response_id):
-        userID = request.user
-        # userID = User.objects.get(id=8) # TOD CAMBIAR
+        """
+        Handle the acceptance of a design reverse auction response.
+
+        This view provides a comprehensive workflow for:
+        1. Validating the auction and response
+        2. Updating auction and response statuses
+        3. Creating a design request
+        4. Generating a MercadoPago payment preference
+
+        Key steps involve:
+        - Ensuring the auction is open and belongs to the current user
+        - Accepting the chosen response
+        - Rejecting other responses
+        - Creating a design request with associated images
+        - Generating a payment preference
+        """
         try:
-            auction = DesignReverseAuction.objects.get(requestID=auction_id, status="Open", userID=userID)
-            response = DesignReverseAuctionResponse.objects.get(responseID=response_id, auction=auction)
-
-            response.status = "Accepted"
-            response.save()
-
-            auction.accepted_response = response
-            auction.status = "Closed"
-            auction.save()
-
-            DesignReverseAuctionResponse.objects.filter(auction=auction).exclude(responseID=response_id).update(status="Rejected")
-
-            design_request = DesignRequest.objects.create(
-                userID=auction.userID,
-                sellerID=response.seller,
-                description=auction.description,
-                quantity=auction.quantity,
-                material=auction.material,
-                price=response.price,
+            # Retrieve the auction, ensuring it's open and belongs to the current user
+            auction = DesignReverseAuction.objects.get(
+                requestID=auction_id,
+                status="Open",
+                userID=request.user
             )
 
-            design_request.design_images.set(auction.design_images.all())
+            # Retrieve the specific auction response
+            response = DesignReverseAuctionResponse.objects.get(
+                responseID=response_id,
+                auction=auction
+            )
 
-            product_id = auction.requestID
-            quantity =  auction.quantity
-            transaction_amount = response.price
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-            sdk = mercadopago.SDK(access_token)
-            preference_data = {
-                "items": [
-                    {
-                        "product_id": int(product_id),
-                        "quantity": int(quantity),
-                        "unit_price": float(transaction_amount)
-                    }
-                ],
-                "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
-                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
-                },
-                "auto_return": "approved",
-                "additional_info": {
-                    "marketplace_fee":10
-                }
-            }
+            # Use atomic transaction to ensure database consistency
+            with transaction.atomic():
+                # Update the accepted response status
+                response.status = "Accepted"
+                response.save()
+
+                # Close the auction and set the accepted response
+                auction.accepted_response = response
+                auction.status = "Closed"
+                auction.save()
+
+                # Reject all other responses for this auction
+                DesignReverseAuctionResponse.objects.filter(
+                    auction=auction
+                ).exclude(
+                    responseID=response_id
+                ).update(status="Rejected")
+
+                # Create a design request based on the accepted response
+                design_request = DesignRequest.objects.create(
+                    userID=auction.userID,
+                    sellerID=response.seller,
+                    description=auction.description,
+                    quantity=auction.quantity,
+                    material=auction.material,
+                    price=response.price,
+                )
+
+                # Copy design images from the auction to the design request
+                design_request.design_images.set(auction.design_images.all())
+
+            # Prepare items for MercadoPago preference
+            items = [{
+                "product_id": int(auction.requestID),
+                "quantity": int(auction.quantity),
+                "unit_price": float(response.price)
+            }]
+
+            # Get seller information
+            seller_first_name = response.seller.first_name
+            seller_last_name = response.seller.last_name
+            seller_email = response.seller.email
+
             try:
-                preference_response = sdk.preference().create(preference_data)
-                preference_id = preference_response["response"]["id"]
+                # Create MercadoPago preference using the service
+                preference_id = MercadoPagoPreferenceService.create_order_preference(
+                    items=items,
+                    transaction_amount=response.price * auction.quantity,
+                    success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
+                    notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                    seller_first_name=seller_first_name,
+                    seller_last_name=seller_last_name,
+                    email=seller_email
+                )
 
-                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+                return Response(
+                    {"preference_id": preference_id},
+                    status=status.HTTP_201_CREATED
+                )
 
             except Exception as e:
-                return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return Response({"message": "Auction response accepted successfully"}, status=status.HTTP_200_OK)
+                # Log the error and return a generic error response
+                return Response(
+                    {"error": "An error occurred while creating the payment preference"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
         except DesignReverseAuction.DoesNotExist:
-            return Response({"error": "Auction not found or not open"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Auction not found or not open"},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except DesignReverseAuctionResponse.DoesNotExist:
-            return Response({"error": "Auction response not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
+            return Response(
+                {"error": "Auction response not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 class CompleteDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny] # TOD CAMBIAR
@@ -1339,33 +1452,6 @@ class DeliverDesignReverseAuctionResponseView(APIView):
         except DesignReverseAuctionResponse.DoesNotExist:
             return Response({"error": "Completed auction response not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND)
 
-"""
-Crear subasta inversa
-/api/print-reverse-auction/create/
-POST
-JSON a enviar
-{
-  description,
-  quantity,
-  material,
-}
-y archivo STL
-"""
-"""
-Mirar las subastas inversas para impresión que inicie
-/api/print-reverse-auction/mine/
-GET
-te da
-{
-  requestID,
-  description (string/text),
-  quantity,
-  material, 
-  stl_url,
-  responses, // cantidad de vendedores que mandaron cotización 
-  userID
-}
-"""
 
 ################
 #### ORDERS ####
@@ -1569,11 +1655,11 @@ class FileUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         order_products = request.data.get("order_products")
         if not order_products:
             return Response({"error": "The order must contain at least one product."},
@@ -1592,36 +1678,39 @@ class CreateOrderPaymentView(APIView):
             try:
                 product = Product.objects.get(code=product_id)
             except Product.DoesNotExist:
-                return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": f"Product with ID {product_id} not found."},
+                                status=status.HTTP_404_NOT_FOUND)
 
             if product.stock < int(quantity):
-                return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": f"Not enough stock for product {product.name}."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
             items.append({
-                "product_id": product.name,
+                "title": product.name,
                 "quantity": int(quantity),
-                "unit_price": float(product.price)
+                "unit_price": float(product.price),
+                "currency_id": "ARS",  # MercadoPago requires a currency
             })
             total_amount += product.price * int(quantity)
-        access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-        if not access_token: return Response({"error": "Access token not configured."},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        sdk = mercadopago.SDK(access_token)
-
-        preference_data = {
-            "items": items,
-            "back_urls": {
-                "success": "https://3dcapybara.vercel.app/mpresponse/success_order",
-                "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
-                "pending": "https://www.3dcapybara.vercel.app/mpresponse/pending"
-            },
-            "auto_return": "approved",
-            "additional_info": {
-                "marketplace_fee":float(total_amount)*0.1
-            }
-        }
 
         try:
-            preference_response = sdk.preference().create(preference_data)
-            preference_id = preference_response["response"]["id"]
+            # Use the MercadoPagoPreferenceService to create the order preference
+            success_endpoint = "https://3dcapybara.vercel.app/mpresponse/success_order"
+            notification_endpoint = "https://3dcapybara.vercel.app/mpresponse/notifications"
+
+
+            seller_first_name = "Pepe"
+            seller_last_name = "Sanchez"
+            email = "Test@gmail.com"
+            preference_id = MercadoPagoPreferenceService.create_order_preference(
+                items=items,
+                transaction_amount=total_amount,
+                success_endpoint=success_endpoint,
+                notification_endpoint=notification_endpoint,
+                seller_first_name=seller_first_name,
+                seller_last_name=seller_last_name,
+                email=email
+            )
 
             order_data = {
                 "order_products": order_products,
@@ -1635,26 +1724,8 @@ class CreateOrderPaymentView(APIView):
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-"""
-class MercadoPagoNotificationViewOrder(APIView):
-    def post(self, request):
-        data = request.data
-
-        payment_status = data.get("data", {}).get("status")
-        preference_id = data.get("data", {}).get("id")
-
-        try:
-            order = Order.objects.get(preference_id=preference_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        order.status = payment_status
-        order.save()
-
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-"""
+            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BaseMercadoPagoSuccessView(APIView):
     model = None
