@@ -1641,69 +1641,49 @@ class CreateOrderPaymentView(APIView):
         try:
             order_products = request.data.get("order_products")
             if not order_products:
-                raise ValidationError("The order must contain at least one product.")
+                raise ValidationError("El pedido debe incluir al menos un producto.")
 
             items = []
-            total_amount = 0
-            sellers = set()
-
             for item in order_products:
                 product_id = item.get("product")
                 quantity = item.get("quantity")
 
-                if not product_id or not quantity:
-                    raise ValidationError("Each product must have an ID and quantity.")
-
+                # Validar y obtener el producto
                 try:
                     product = Product.objects.get(code=product_id)
                 except Product.DoesNotExist:
                     raise ValidationError(f"Product with ID {product_id} not found.")
 
-                if product.stock < int(quantity):
-                    raise ValidationError(f"Not enough stock for product {product.name}.")
-
-                # Add seller to the sellers set
-                sellers.add(product.seller)
-
                 items.append({
                     "title": product.name,
                     "quantity": int(quantity),
                     "unit_price": float(product.price),
-                    "currency_id": "ARS",  # MercadoPago requires a currency
+                    "currency_id": "ARS",
                 })
-                total_amount += product.price * int(quantity)
 
-            if len(sellers) > 1:
-                raise ValidationError("All products in the order must belong to the same seller.")
-
-            # Get the single seller from the set
-            seller = sellers.pop()
-
-            # Create MercadoPago preference
-            preference_id = MercadoPagoPreferenceService.create_order_preference(
-                items=items,
-                transaction_amount=total_amount,
-                success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_order",
-                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",  # Use the seller's MercadoPago email
-            )
-
-            order_data = {
-                "order_products": order_products,
-                "preference_id": preference_id
+            preference_data = {
+                "items": items,
+                "back_urls": {
+                    "success": "https://example.com/success",
+                    "failure": "https://example.com/failure",
+                    "pending": "https://example.com/pending"
+                },
+                "auto_return": "approved",
+                "notification_url": "https://example.com/notifications"
             }
 
-            serializer = OrderSerializer(data=order_data, context={'request': request})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+            logger.info(f"Datos enviados a MercadoPago: {preference_data}")
+            preference_response = sdk.preference().create(preference_data)
+            logger.info(f"Respuesta de MercadoPago: {preference_response}")
 
-            return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+            return Response({"preference_id": preference_response["body"]["id"]}, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
-            logger.error(f"Validation error: {e.detail}")
+            logger.error(f"Error de validación: {e.detail}")
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": f"An internal error occurred: {str(e)}"},
+            logger.error(f"Error inesperado: {e}")
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BaseMercadoPagoSuccessView(APIView):
