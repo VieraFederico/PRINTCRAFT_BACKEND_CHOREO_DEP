@@ -59,6 +59,7 @@ class MercadoPagoPreferenceService:
                 "items": [
                     {
                         "product_id": int(product_id),
+                        "title": "Product",
                         "quantity": int(quantity),
                         "unit_price": float(transaction_amount)
                     }
@@ -69,12 +70,11 @@ class MercadoPagoPreferenceService:
                     "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "additional_info": {
-                    "marketplace": "3D CAPYBARA",
-                    "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
-                }
+                
+                "marketplace": "3D CAPYBARA",
+                "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
+            
             }
-
 
             # Create the preference
             logger.info(f"Creating MercadoPago preference with payload: {preference_data}")
@@ -92,9 +92,7 @@ class MercadoPagoPreferenceService:
             raise RuntimeError("Failed to create MercadoPago preference.")
 
     @staticmethod
-    def create_order_preference(items: List, transaction_amount: float, success_endpoint: str,
-                                notification_endpoint: str, seller_first_name: str,
-                                seller_last_name: str, email: str):
+    def create_order_preference(items: List, transaction_amount: float, success_endpoint: str,notification_endpoint: str):
         try:
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             if not access_token:
@@ -103,7 +101,6 @@ class MercadoPagoPreferenceService:
             logger.info(f"Using access token: {access_token}")
 
             sdk = mercadopago.SDK(access_token)
-            logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
             # Prepare preference data
             preference_data = {
@@ -115,14 +112,10 @@ class MercadoPagoPreferenceService:
                 },
                 "auto_return": "approved",
                 "notification_url": notification_endpoint,
-                "payer": {
-                    "email": email  # Payer email (ensure valid email)
-                },
-                #"seller_id": f"{seller_first_name}-{seller_last_name}",
-                "additional_info": {
-                    "marketplace": "3D CAPYBARA",
-                    "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
-                }
+            
+                "marketplace": "3D CAPYBARA",
+                "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
+    
             }
             # Log the payload
             logger.info(f"Creating MercadoPago order preference with payload: {preference_data}")

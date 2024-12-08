@@ -506,6 +506,7 @@ class UserRespondToPrintRequestView(APIView):
                     # Prepare items for the preference creation
                     items = [{
                         "product_id": int(request_id),
+                        "title" : "ProductList",
                         "quantity": int(print_request.quantity),
                         "unit_price": float(print_request.price)
                     }]
