@@ -57,62 +57,50 @@ class MercadoPagoPreferenceService:
             raise RuntimeError("Failed to create MercadoPago preference.")
 
     @staticmethod
-    def create_order_preference(items: List[Dict[str, object]], transaction_amount: float, success_endpoint: str, notification_endpoint: str) -> str:
+    def create_order_preference(items, transaction_amount, success_endpoint, notification_endpoint):
 
         try:
-            # Fetch and validate access token
+            # Validar token de acceso
             access_token = getattr(settings, "MERCADOPAGO_ACCESS_TOKEN", None)
             if not access_token:
-                logger.error("Access token for MercadoPago is missing.")
-                raise RuntimeError("Access token is not configured or missing.")
-            
-            logger.info(f"Using access token: {access_token}")
+                logger.error("Access token para MercadoPago no está configurado.")
+                raise RuntimeError("Falta el token de acceso.")
+
+            # Inicializar el SDK de MercadoPago
             sdk = mercadopago.SDK(access_token)
 
-            # Validate input items
-            if not items or not all(
-                "title" in item and "quantity" in item and "unit_price" in item for item in items
-            ):
-                raise ValueError("Items must contain 'title', 'quantity', and 'unit_price' for each item.")
-
-            if transaction_amount <= 0:
-                raise ValueError("Transaction amount must be a positive value.")
-
-            # Prepare preference payload
-            marketplace_fee = round(transaction_amount * 0.1, 2)
+            # Construir la carga de la preferencia
             preference_data = {
-                "items": items,
+                "items": items,  # Lista de ítems ya en el formato correcto
                 "back_urls": {
                     "success": success_endpoint,
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending",
+                    "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": notification_endpoint,
+                "notification_url": notification_endpoint,  # URL para notificaciones
                 "marketplace": "3D CAPYBARA",
-                "marketplace_fee": marketplace_fee,
+                "marketplace_fee": round(transaction_amount * 0.1, 2),  # Comisión
             }
 
-            # Log the payload for debugging
-            logger.info(f"Creating MercadoPago order preference with payload: {preference_data}")
+            # Log del payload
+            logger.info(f"Creando preferencia en MercadoPago con datos: {preference_data}")
 
-            # Make the SDK call
+            # Llamar al SDK para crear la preferencia
             preference_response = sdk.preference().create(preference_data)
-            logger.debug(f"MercadoPago API response: {preference_response}")
 
-            # Validate response
-            body = preference_response.get("body", {})
-            preference_id = body.get("id")
+            # Log del resultado
+            logger.info(f"Respuesta de la preferencia: {preference_response}")
+
+            # Validar respuesta
+            response_body = preference_response.get("body", {})
+            preference_id = response_body.get("id")
             if not preference_id:
-                logger.error(f"Invalid preference response body: {body}")
-                raise RuntimeError("Failed to extract preference ID from response.")
+                logger.error(f"Respuesta inválida: {response_body}")
+                raise RuntimeError("No se pudo obtener el ID de la preferencia.")
 
             return preference_id
 
-        except ValueError as ve:
-            logger.error(f"Validation error: {str(ve)}")
-            raise RuntimeError("Invalid input data.") from ve
-
         except Exception as e:
-            logger.error(f"Unexpected error while creating order preference: {str(e)}")
-            raise RuntimeError("Failed to create MercadoPago order preference.") from e
+            logger.error(f"Error al crear la preferencia: {str(e)}")
+            raise RuntimeError("Error interno al crear la preferencia en MercadoPago.") from e
