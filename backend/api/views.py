@@ -1649,13 +1649,8 @@ class CreateOrderPaymentView(APIView):
                 if not product_id or not quantity:
                     raise ValidationError("Each product must have an ID and quantity.")
 
-                try:
-                    product = Product.objects.get(code=product_id)
-                except Product.DoesNotExist:
-                    raise ValidationError(f"Product with ID {product_id} not found.")
-
-                if product.stock < int(quantity):
-                    raise ValidationError(f"Not enough stock for product {product.name}.")
+                # Fetch the product and validate
+                product = self._get_valid_product(product_id, quantity)
 
                 # Add seller to the sellers set
                 sellers.add(product.seller)
@@ -1679,17 +1674,18 @@ class CreateOrderPaymentView(APIView):
                 items=items,
                 transaction_amount=total_amount,
                 success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_order",
-                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",  # Use the seller's MercadoPago email
+                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",
             )
 
-            order_data = {
-                "order_products": order_products,
-                "preference_id": preference_id
-            }
-
-            serializer = OrderSerializer(data=order_data, context={'request': request})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+            # Save the order data
+            with transaction.atomic():
+                order_data = {
+                    "order_products": order_products,
+                    "preference_id": preference_id
+                }
+                serializer = OrderSerializer(data=order_data, context={'request': request})
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
@@ -1698,8 +1694,22 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": f"An internal error occurred: {str(e)}"},
+            return Response({"error": "An internal server error occurred."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _get_valid_product(self, product_id, quantity):
+        """
+        Helper method to fetch and validate product details.
+        """
+        try:
+            product = Product.objects.get(code=product_id)
+        except Product.DoesNotExist:
+            raise ValidationError(f"Product with ID {product_id} not found.")
+
+        if product.stock < int(quantity):
+            raise ValidationError(f"Not enough stock for product {product.name}.")
+        
+        return product
 
 class BaseMercadoPagoSuccessView(APIView):
     model = None
