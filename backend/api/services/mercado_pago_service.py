@@ -52,7 +52,7 @@ class MercadoPagoPreferenceService:
             logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
             # Generate seller ID
-            seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
+          #  seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
 
             # Build the preference payload
             preference_data = {
@@ -72,15 +72,9 @@ class MercadoPagoPreferenceService:
                 "additional_info": {
                     "marketplace": "3D CAPYBARA",
                     "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
-                    "seller_id": seller_id
                 }
             }
 
-            # Validate payload
-            assert isinstance(preference_data["items"], list), "Preference 'items' must be a list."
-            assert len(preference_data["items"]) > 0, "Preference 'items' list cannot be empty."
-            assert preference_data["items"][0]["quantity"] > 0, "Item quantity must be positive."
-            assert preference_data["items"][0]["unit_price"] > 0, "Unit price must be positive."
 
             # Create the preference
             logger.info(f"Creating MercadoPago preference with payload: {preference_data}")
@@ -124,20 +118,12 @@ class MercadoPagoPreferenceService:
                 "payer": {
                     "email": email  # Payer email (ensure valid email)
                 },
+                #"seller_id": f"{seller_first_name}-{seller_last_name}",
                 "additional_info": {
                     "marketplace": "3D CAPYBARA",
                     "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
-                    "seller_id": f"{seller_first_name}-{seller_last_name}"  # Mock seller ID
                 }
             }
-
-            # Validate payload
-            assert isinstance(preference_data["items"], list), "Order 'items' must be a list."
-            assert len(preference_data["items"]) > 0, "Order 'items' list cannot be empty."
-            for item in preference_data["items"]:
-                assert item["quantity"] > 0, "Item quantity must be positive."
-                assert item["unit_price"] > 0, "Item unit price must be positive."
-
             # Log the payload
             logger.info(f"Creating MercadoPago order preference with payload: {preference_data}")
 
