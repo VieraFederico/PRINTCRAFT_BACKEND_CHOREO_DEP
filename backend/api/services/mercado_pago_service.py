@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import mercadopago
 from django.conf import settings
