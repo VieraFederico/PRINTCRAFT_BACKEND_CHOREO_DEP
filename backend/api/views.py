@@ -505,7 +505,7 @@ class UserRespondToPrintRequestView(APIView):
                 try:
                     # Prepare items for the preference creation
                     items = [{
-                        "product_id": int(request_id),
+                        "id": int(request_id),
                         "title" : "ProductList",
                         "quantity": int(print_request.quantity),
                         "unit_price": float(print_request.price)
@@ -797,7 +797,8 @@ class UserRespondToDesignRequestView(APIView):
                 try:
                     # Prepare items for the preference creation
                     items = [{
-                        "product_id": int(request_id),
+                        "id": int(request_id),
+                        "title": "Dummy Title",
                         "quantity": int(design_request.quantity),
                         "unit_price": float(design_request.price)
                     }]
@@ -1074,7 +1075,8 @@ class AcceptAuctionResponseView(APIView):
 
             # Prepare items for MercadoPago preference
             items = [{
-                "product_id": int(auction.requestID),
+                "id": int(auction.requestID),
+                "title": "Dummy Title",
                 "quantity": int(auction.quantity),
                 "unit_price": float(response.price)
             }]
@@ -1349,7 +1351,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
             # Prepare items for MercadoPago preference
             items = [{
-                "product_id": int(auction.requestID),
+                "id": int(auction.requestID),
                 "quantity": int(auction.quantity),
                 "unit_price": float(response.price)
             }]
