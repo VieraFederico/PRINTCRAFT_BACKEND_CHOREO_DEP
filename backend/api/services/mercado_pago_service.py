@@ -80,11 +80,8 @@ class MercadoPagoPreferenceService:
 
     @staticmethod
     def create_order_preference(items: List, transaction_amount: float, success_endpoint: str,
-                                 notification_endpoint: str, seller_first_name: str,
-                                 seller_last_name: str, email: str):
-        """
-        Create a payment preference for an order.
-        """
+                                notification_endpoint: str, seller_first_name: str,
+                                seller_last_name: str, email: str):
         try:
             access_token = settings.MERCADOPAGO_ACCESS_TOKEN
             if not access_token:
@@ -94,10 +91,7 @@ class MercadoPagoPreferenceService:
             sdk = mercadopago.SDK(access_token)
             logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
-            # Remove seller creation, assuming sellers are managed elsewhere
-            seller_id = f"{seller_first_name}-{seller_last_name}-{email}"  # Mock or derive seller ID
-
-            # Create preference payload
+            # Prepare preference data
             preference_data = {
                 "items": items,
                 "back_urls": {
@@ -107,18 +101,28 @@ class MercadoPagoPreferenceService:
                 },
                 "auto_return": "approved",
                 "notification_url": notification_endpoint,
+                "payer": {
+                    "email": email  # Payer email (ensure valid email)
+                },
                 "additional_info": {
                     "marketplace": "3D CAPYBARA",
                     "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
-                    "seller_id": seller_id  # Using a mock or derived seller ID
+                    "seller_id": f"{seller_first_name}-{seller_last_name}"  # Mock seller ID
                 }
             }
 
-            # Call MercadoPago API
+            # Log the payload
+            logger.info(f"Creating MercadoPago preference with payload: {preference_data}")
+
+            # Create the preference
             preference_response = sdk.preference().create(preference_data)
             logger.info(f"Preference created successfully: {preference_response}")
+
             return preference_response["body"]["id"]
 
+        except mercadopago.exceptions.MercadoPagoException as e:
+            logger.error(f"MercadoPago API error: {e.message}")
+            raise RuntimeError("MercadoPago API error occurred.")
         except Exception as e:
-            logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
+            logger.error(f"Unexpected error while creating preference: {str(e)}")
             raise RuntimeError("Failed to create MercadoPago preference.")
