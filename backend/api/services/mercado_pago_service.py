@@ -87,7 +87,9 @@ class MercadoPagoPreferenceService:
             logger.info(f"Creando preferencia en MercadoPago con datos: {preference_data}")
 
             # Llamar al SDK para crear la preferencia
+            logger.info(f"Datos enviados al SDK: {preference_data}")
             preference_response = sdk.preference().create(preference_data)
+            logger.info(f"Respuesta del SDK de MercadoPago: {preference_response}")
 
             # Log del resultado
             logger.info(f"Respuesta de la preferencia: {preference_response}")
