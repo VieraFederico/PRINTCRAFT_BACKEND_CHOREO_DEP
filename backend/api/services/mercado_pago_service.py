@@ -120,9 +120,6 @@ class MercadoPagoPreferenceService:
 
             return preference_response["body"]["id"]
 
-        except mercadopago.exceptions.MercadoPagoException as e:
-            logger.error(f"MercadoPago API error: {e.message}")
-            raise RuntimeError("MercadoPago API error occurred.")
         except Exception as e:
             logger.error(f"Unexpected error while creating preference: {str(e)}")
             raise RuntimeError("Failed to create MercadoPago preference.")
