@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 class MercadoPagoPreferenceService:
 
     @staticmethod
-    def create_seller_id(seller_first_name:str, seller_last_name:str,email:str, sdk: mercadopago.SDK):
-
+    def create_seller_id(seller_first_name: str, seller_last_name: str, email: str, sdk: mercadopago.SDK):
+        """
+        Create a seller ID on Mercado Pago.
+        """
         if not seller_first_name or not seller_last_name or not email:
             logger.error("Invalid seller data provided.")
-            return Response({"error": "Seller data is not valid"}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValueError("Seller data is not valid.")
 
         seller_data = {
             "first_name": seller_first_name,
@@ -28,10 +30,11 @@ class MercadoPagoPreferenceService:
 
         try:
             seller_response = sdk.user().create(seller_data)
+            logger.info(f"Seller created successfully: {seller_response}")
             return seller_response["body"]["id"]
         except Exception as e:
             logger.error(f"Error creating seller ID: {e}")
-            raise
+            raise RuntimeError("Failed to create seller ID.")
 
     @staticmethod
     def create_product_preference(product_id:int, quantity:int, transaction_amount:float, success_endpoint: str, seller_first_name:str, seller_last_name:str, email:str,):
@@ -75,16 +78,26 @@ class MercadoPagoPreferenceService:
             logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
             raise
 
-    def create_order_preference(items: List,transaction_amount:int, success_endpoint: str, notification_endpoint: str, seller_first_name:str, seller_last_name:str,email:str):
+        @staticmethod
+    def create_order_preference(items: List, transaction_amount: float, success_endpoint: str,
+                                 notification_endpoint: str, seller_first_name: str,
+                                 seller_last_name: str, email: str):
+        """
+        Create a payment preference for an order.
+        """
         try:
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-            if not access_token: return Response({"error": "Access token not configured."},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            access_token = settings.MERCADOPAGO_ACCESS_TOKEN
+            if not access_token:
+                logger.error("Access token for MercadoPago is missing.")
+                raise RuntimeError("Access token is not configured.")
 
             sdk = mercadopago.SDK(access_token)
             logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
+            # Create or get seller ID
             seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
 
+            # Create preference payload
             preference_data = {
                 "items": items,
                 "back_urls": {
@@ -96,13 +109,22 @@ class MercadoPagoPreferenceService:
                 "notification_url": notification_endpoint,
                 "additional_info": {
                     "marketplace": "3D CAPYBARA",
-                    "marketplace_fee": round(float(transaction_amount)*0.1,2),
+                    "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
                     "seller_id": seller_id
                 }
             }
-            preference_response = sdk.preference().create(preference_data)
-            return preference_response["response"]["id"]
 
-        except Exception as e:
-            logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
+            # Call MercadoPago API
+            preference_response = sdk.preference().create(preference_data)
+            logger.info(f"Preference created successfully: {preference_response}")
+            return preference_response["body"]["id"]
+
+        except ValueError as ve:
+            logger.error(f"Validation error: {ve}")
             raise
+        except RuntimeError as re:
+            logger.error(f"Runtime error: {re}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected MercadoPago error: {e}")
+            raise RuntimeError("Failed to create MercadoPago preference.")
