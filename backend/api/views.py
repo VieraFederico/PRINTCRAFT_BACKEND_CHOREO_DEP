@@ -1034,22 +1034,6 @@ class AcceptAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, auction_id, response_id):
-        """
-        Handle the acceptance of a print reverse auction response.
-
-        This view allows an authenticated user to:
-        1. Accept a specific auction response
-        2. Close the auction
-        3. Reject other responses
-        4. Create a print request
-        5. Generate a MercadoPago payment preference
-
-        Key steps:
-        - Validate the auction and response
-        - Update auction and response statuses
-        - Create a print request
-        - Generate a payment preference
-        """
         try:
             # Retrieve the auction, ensuring it's open and belongs to the current user
             auction = PrintReverseAuction.objects.get(
@@ -1191,7 +1175,6 @@ class UserDesignReverseAuctionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # user = User.objects.get(id=142)
         return DesignReverseAuction.objects.filter(userID=user, status="Open")
 
 class OpenDesignReverseAuctionListView(generics.ListAPIView):
@@ -1655,35 +1638,47 @@ class FileUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         order_products = request.data.get("order_products")
         if not order_products:
-            return Response({"error": "The order must contain at least one product."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "The order must contain at least one product."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         items = []
         total_amount = 0
+        sellers = set()
+
         for item in order_products:
             product_id = item.get("product")
             quantity = item.get("quantity")
 
             if not product_id or not quantity:
-                return Response({"error": "Each product must have an ID and quantity."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Each product must have an ID and quantity."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             try:
                 product = Product.objects.get(code=product_id)
             except Product.DoesNotExist:
-                return Response({"error": f"Product with ID {product_id} not found."},
-                                status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": f"Product with ID {product_id} not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             if product.stock < int(quantity):
-                return Response({"error": f"Not enough stock for product {product.name}."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": f"Not enough stock for product {product.name}."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Add seller to the sellers set
+            sellers.add(product.seller)
 
             items.append({
                 "title": product.name,
@@ -1693,23 +1688,28 @@ class CreateOrderPaymentView(APIView):
             })
             total_amount += product.price * int(quantity)
 
+        if len(sellers) > 1:
+            return Response(
+                {"error": "All products in the order must belong to the same seller."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get the single seller from the set
+        seller = sellers.pop()
+
         try:
             # Use the MercadoPagoPreferenceService to create the order preference
             success_endpoint = "https://3dcapybara.vercel.app/mpresponse/success_order"
             notification_endpoint = "https://3dcapybara.vercel.app/mpresponse/notifications"
 
-
-            seller_first_name = "Pepe"
-            seller_last_name = "Sanchez"
-            email = "Test@gmail.com"
             preference_id = MercadoPagoPreferenceService.create_order_preference(
                 items=items,
                 transaction_amount=total_amount,
                 success_endpoint=success_endpoint,
                 notification_endpoint=notification_endpoint,
-                seller_first_name=seller_first_name,
-                seller_last_name=seller_last_name,
-                email=email
+                seller_first_name=seller.userId.first_name,
+                seller_last_name=seller.userId.last_name,
+                email=seller.mp_mail  # Use the seller's MercadoPago email
             )
 
             order_data = {
@@ -1724,8 +1724,10 @@ class CreateOrderPaymentView(APIView):
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": f"An error occurred while creating the payment preference: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class BaseMercadoPagoSuccessView(APIView):
     model = None
@@ -1881,15 +1883,6 @@ import requests
 from api.models import Product, Category
 
 
-import logging
-import requests
-import numpy as np
-
-import logging
-import requests
-import numpy as np
-
-
 class RecommendationEngine:
     def __init__(self, model_name='sentence-transformers/all-MiniLM-L6-v2'):
         self.huggingface_token = settings.HUGGINGFACE_API_TOKEN
@@ -1983,11 +1976,6 @@ class RecommendationEngine:
             #selected_category = self.find_best_category(user_input)
 
             products = Product.objects.all()
-            #user_embedding = self.get_embedding(user_input)
-
-            #if user_embedding is None:
-             #   self.logger.error("Failed to generate user input embedding")
-              #  return None
 
             product_scores = []
             for product in products:
