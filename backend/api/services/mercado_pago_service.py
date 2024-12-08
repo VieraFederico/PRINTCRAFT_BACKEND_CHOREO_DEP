@@ -78,7 +78,7 @@ class MercadoPagoPreferenceService:
             logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
             raise
 
-        @staticmethod
+    @staticmethod
     def create_order_preference(items: List, transaction_amount: float, success_endpoint: str,
                                  notification_endpoint: str, seller_first_name: str,
                                  seller_last_name: str, email: str):
@@ -94,8 +94,8 @@ class MercadoPagoPreferenceService:
             sdk = mercadopago.SDK(access_token)
             logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
-            # Create or get seller ID
-            seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
+            # Remove seller creation, assuming sellers are managed elsewhere
+            seller_id = f"{seller_first_name}-{seller_last_name}-{email}"  # Mock or derive seller ID
 
             # Create preference payload
             preference_data = {
@@ -110,7 +110,7 @@ class MercadoPagoPreferenceService:
                 "additional_info": {
                     "marketplace": "3D CAPYBARA",
                     "marketplace_fee": round(float(transaction_amount) * 0.1, 2),
-                    "seller_id": seller_id
+                    "seller_id": seller_id  # Using a mock or derived seller ID
                 }
             }
 
@@ -119,12 +119,6 @@ class MercadoPagoPreferenceService:
             logger.info(f"Preference created successfully: {preference_response}")
             return preference_response["body"]["id"]
 
-        except ValueError as ve:
-            logger.error(f"Validation error: {ve}")
-            raise
-        except RuntimeError as re:
-            logger.error(f"Runtime error: {re}")
-            raise
         except Exception as e:
-            logger.error(f"Unexpected MercadoPago error: {e}")
+            logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
             raise RuntimeError("Failed to create MercadoPago preference.")
