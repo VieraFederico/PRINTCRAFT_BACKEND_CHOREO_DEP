@@ -522,9 +522,6 @@ class UserRespondToPrintRequestView(APIView):
                         transaction_amount=print_request.price * print_request.quantity,
                         success_endpoint="https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
                         notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                        seller_first_name=seller_first_name,
-                        seller_last_name=seller_last_name,
-                        email=seller_email
                     )
 
                     return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
@@ -816,9 +813,6 @@ class UserRespondToDesignRequestView(APIView):
                         transaction_amount=design_request.price * design_request.quantity,
                         success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
                         notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                        seller_first_name=seller_first_name,
-                        seller_last_name=seller_last_name,
-                        email=seller_email
                     )
 
                     return Response(
@@ -1097,9 +1091,7 @@ class AcceptAuctionResponseView(APIView):
                     transaction_amount=response.price * auction.quantity,
                     success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_printrequest",
                     notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                    seller_first_name=seller_first_name,
-                    seller_last_name=seller_last_name,
-                    email=seller_email
+
                 )
 
                 return Response(
@@ -1374,9 +1366,6 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                     transaction_amount=response.price * auction.quantity,
                     success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
                     notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                    seller_first_name=seller_first_name,
-                    seller_last_name=seller_last_name,
-                    email=seller_email
                 )
 
                 return Response(
@@ -1694,10 +1683,7 @@ class CreateOrderPaymentView(APIView):
                 items=items,
                 transaction_amount=total_amount,
                 success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_order",
-                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",
-                seller_first_name=seller.userId.first_name,
-                seller_last_name=seller.userId.last_name,
-                email=seller.mp_mail,  # Use the seller's MercadoPago email
+                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",  # Use the seller's MercadoPago email
             )
 
             order_data = {

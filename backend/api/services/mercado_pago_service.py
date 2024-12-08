@@ -24,7 +24,7 @@ class MercadoPagoPreferenceService:
             sdk = mercadopago.SDK(access_token)
 
             # Generate seller ID
-          #  seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
+            #  seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
 
             # Build the preference payload
             preference_data = {
