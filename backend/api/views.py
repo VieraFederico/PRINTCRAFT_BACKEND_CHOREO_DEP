@@ -511,11 +511,6 @@ class UserRespondToPrintRequestView(APIView):
                         "unit_price": float(print_request.price)
                     }]
 
-                    # Get seller information (you'll need to retrieve this from the print request or associated user)
-                    seller_first_name = print_request.userID.first_name
-                    seller_last_name = print_request.userID.last_name
-                    seller_email = print_request.userID.email
-
                     # Create the product preference using the service
                     preference_id = MercadoPagoPreferenceService.create_order_preference(
                         items=items,
@@ -1118,7 +1113,6 @@ class AcceptAuctionResponseView(APIView):
                 {"error": "Auction response not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-# TODO: Cambiar nombre de la vista a CompletePrintReverseAuctionResponseView
 class CompleteAuctionResponseView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny] # TODO CAMBIAR
