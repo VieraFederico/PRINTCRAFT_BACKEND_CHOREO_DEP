@@ -79,8 +79,8 @@ class MercadoPagoPreferenceService:
                 },
                 "auto_return": "approved",
                 "notification_url": notification_endpoint,  # URL para notificaciones
-                "marketplace": "3D CAPYBARA",
-                "marketplace_fee": round(transaction_amount * 0.1, 2),  # Comisión
+                #"marketplace": "3D CAPYBARA",
+                #"marketplace_fee": round(transaction_amount * 0.1, 2),  # Comisión
             }
 
             # Log del payload
