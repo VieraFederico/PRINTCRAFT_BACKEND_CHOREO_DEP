@@ -1638,78 +1638,65 @@ class FileUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+import logging
+from rest_framework.exceptions import ValidationError
+
+logger = logging.getLogger(__name__)
+
 class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        order_products = request.data.get("order_products")
-        if not order_products:
-            return Response(
-                {"error": "The order must contain at least one product."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        items = []
-        total_amount = 0
-        sellers = set()
-
-        for item in order_products:
-            product_id = item.get("product")
-            quantity = item.get("quantity")
-
-            if not product_id or not quantity:
-                return Response(
-                    {"error": "Each product must have an ID and quantity."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            try:
-                product = Product.objects.get(code=product_id)
-            except Product.DoesNotExist:
-                return Response(
-                    {"error": f"Product with ID {product_id} not found."},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            if product.stock < int(quantity):
-                return Response(
-                    {"error": f"Not enough stock for product {product.name}."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Add seller to the sellers set
-            sellers.add(product.seller)
-
-            items.append({
-                "title": product.name,
-                "quantity": int(quantity),
-                "unit_price": float(product.price),
-                "currency_id": "ARS",  # MercadoPago requires a currency
-            })
-            total_amount += product.price * int(quantity)
-
-        if len(sellers) > 1:
-            return Response(
-                {"error": "All products in the order must belong to the same seller."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Get the single seller from the set
-        seller = sellers.pop()
-
         try:
-            # Use the MercadoPagoPreferenceService to create the order preference
-            success_endpoint = "https://3dcapybara.vercel.app/mpresponse/success_order"
-            notification_endpoint = "https://3dcapybara.vercel.app/mpresponse/notifications"
+            order_products = request.data.get("order_products")
+            if not order_products:
+                raise ValidationError("The order must contain at least one product.")
 
+            items = []
+            total_amount = 0
+            sellers = set()
+
+            for item in order_products:
+                product_id = item.get("product")
+                quantity = item.get("quantity")
+
+                if not product_id or not quantity:
+                    raise ValidationError("Each product must have an ID and quantity.")
+
+                try:
+                    product = Product.objects.get(code=product_id)
+                except Product.DoesNotExist:
+                    raise ValidationError(f"Product with ID {product_id} not found.")
+
+                if product.stock < int(quantity):
+                    raise ValidationError(f"Not enough stock for product {product.name}.")
+
+                # Add seller to the sellers set
+                sellers.add(product.seller)
+
+                items.append({
+                    "title": product.name,
+                    "quantity": int(quantity),
+                    "unit_price": float(product.price),
+                    "currency_id": "ARS",  # MercadoPago requires a currency
+                })
+                total_amount += product.price * int(quantity)
+
+            if len(sellers) > 1:
+                raise ValidationError("All products in the order must belong to the same seller.")
+
+            # Get the single seller from the set
+            seller = sellers.pop()
+
+            # Create MercadoPago preference
             preference_id = MercadoPagoPreferenceService.create_order_preference(
                 items=items,
                 transaction_amount=total_amount,
-                success_endpoint=success_endpoint,
-                notification_endpoint=notification_endpoint,
+                success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_order",
+                notification_endpoint="https://3dcapybara.vercel.app/mpresponse/notifications",
                 seller_first_name=seller.userId.first_name,
                 seller_last_name=seller.userId.last_name,
-                email=seller.mp_mail  # Use the seller's MercadoPago email
+                email=seller.mp_mail,  # Use the seller's MercadoPago email
             )
 
             order_data = {
@@ -1723,11 +1710,13 @@ class CreateOrderPaymentView(APIView):
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
+        except ValidationError as e:
+            logger.error(f"Validation error: {e.detail}")
+            return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"error": f"An error occurred while creating the payment preference: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({"error": f"An internal error occurred: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BaseMercadoPagoSuccessView(APIView):
     model = None
