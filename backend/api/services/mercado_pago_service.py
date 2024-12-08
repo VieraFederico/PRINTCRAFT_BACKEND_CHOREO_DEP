@@ -12,36 +12,9 @@ logger = logging.getLogger(__name__)
 
 class MercadoPagoPreferenceService:
 
-    @staticmethod
-    def create_seller_id(seller_first_name: str, seller_last_name: str, email: str, sdk: mercadopago.SDK):
-        """
-        Create a seller ID on Mercado Pago.
-        """
-        if not seller_first_name or not seller_last_name or not email:
-            logger.error("Invalid seller data provided.")
-            raise ValueError("Seller data is not valid.")
-
-        seller_data = {
-            "first_name": seller_first_name,
-            "last_name": seller_last_name,
-            "email": email,
-            "type": "business"
-        }
-
-        try:
-            seller_response = sdk.user().create(seller_data)
-            if not seller_response.get("body") or "id" not in seller_response["body"]:
-                logger.error(f"Unexpected seller creation response: {seller_response}")
-                raise RuntimeError("Failed to extract seller ID from response.")
-            logger.info(f"Seller created successfully: {seller_response}")
-            return seller_response["body"]["id"]
-        except Exception as e:
-            logger.error(f"Error creating seller ID: {e}")
-            raise RuntimeError("Failed to create seller ID.")
 
     @staticmethod
-    def create_product_preference(product_id: int, quantity: int, transaction_amount: float, success_endpoint: str, 
-                                  seller_first_name: str, seller_last_name: str, email: str):
+    def create_product_preference(product_id: int, quantity: int, transaction_amount: float, success_endpoint: str):
         try:
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             if not access_token:
@@ -49,7 +22,6 @@ class MercadoPagoPreferenceService:
                 raise RuntimeError("Access token is not configured.")
 
             sdk = mercadopago.SDK(access_token)
-            logger.info(f"Initializing MercadoPago SDK for seller {email}")
 
             # Generate seller ID
           #  seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
