@@ -106,6 +106,7 @@ class MercadoPagoPreferenceService:
             if not access_token:
                 logger.error("Access token for MercadoPago is missing.")
                 raise RuntimeError("Access token is not configured.")
+            logger.info(f"Using access token: {access_token}")
 
             sdk = mercadopago.SDK(access_token)
             logger.info(f"Initializing MercadoPago SDK for seller {email}")
