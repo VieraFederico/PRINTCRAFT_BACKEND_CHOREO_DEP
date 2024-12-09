@@ -1704,6 +1704,7 @@ class CreateOrderPaymentView(APIView):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 class BaseMercadoPagoSuccessView(APIView):
     model = None
     status_mapping = {
