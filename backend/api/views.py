@@ -1660,7 +1660,6 @@ class CreateOrderPaymentView(APIView):
             },
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications",
-            "marketplace": "Capybara3d",
             "marketplace_fee": 5
         }
 
