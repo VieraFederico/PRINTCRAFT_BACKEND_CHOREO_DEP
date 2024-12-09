@@ -1667,12 +1667,12 @@ class CreateOrderPaymentView(APIView):
 
             # Construct preference payload
             preference_data = {
-                    "items": [
+                "items": [
                     {
-                        "title": "Test Product",
-                        "quantity": "1",
-                        "unit_price": "100.0",
-                        "currency_id": "USD"
+                        "id": int(product_id),
+                        "title": "My Product",
+                        "quantity": int(quantity),
+                        "unit_price": float(product.price)
                     }
                 ],
                 "back_urls": {
@@ -1702,12 +1702,12 @@ class CreateOrderPaymentView(APIView):
 
             return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
-        except ValidationError as e:
+        except ValidationError as e:    
             logger.error(f"Validation error: {e.detail}")
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 4"},
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 6"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
