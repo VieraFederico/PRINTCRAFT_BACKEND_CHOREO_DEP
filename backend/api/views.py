@@ -1667,7 +1667,14 @@ class CreateOrderPaymentView(APIView):
 
             # Construct preference payload
             preference_data = {
-                "items": items,
+                    "items": [
+                    {
+                        "title": "Test Product",
+                        "quantity": 1,
+                        "unit_price": 100.0,
+                        "currency_id": "USD"
+                    }
+                ],
                 "back_urls": {
                     "success": "https://3dcapybara.vercel.app/api/mpresponse/success",
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
@@ -1700,7 +1707,7 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 1"},
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 2"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
