@@ -1660,7 +1660,7 @@ class CreateOrderPaymentView(APIView):
                 except Product.DoesNotExist:
                     raise ValidationError(f"Producto con ID {product_id} no encontrado.")
 
-            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
+            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
 
             # Initialize Mercado Pago SDK
             sdk = mercadopago.SDK(access_token)
@@ -1669,46 +1669,31 @@ class CreateOrderPaymentView(APIView):
             preference_data = {
                 "items": [
                     {
-                        "id": int(product_id),
-                        "title": "My Product",
+                        "product_id": int(product_id),
                         "quantity": int(quantity),
                         "unit_price": float(product.price)
                     }
                 ],
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/success",
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
+                    "success": "https://3dcapybara.vercel.app/api/sucess",
+                    "failure": "https://3dcapybara.vercel.app/api/failure",
+                    "pending": "https://www.3dcapybara.vercel.app/api/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": "https://example.com/notifications"
+                "notification_url": "https://3dcapybara.vercel.app/api/notifications"
             }
+            try:
+                preference_response = sdk.preference().create(preference_data)
+                preference_id = preference_response["response"]["id"]
 
-            logger.info(f"Creating MercadoPago preference with data: {preference_data}")
+                order = Order.objects.get(orderID=order_id)
+                order.preference_id = preference_id
+                order.save()
 
-            # Call MercadoPago SDK to create the preference
-            preference_response = sdk.preference().create(preference_data)
-            logger.info(f"MercadoPago response: {preference_response}")
+                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                  return Response({"error": "An error occurred while creating the payment preference. 1"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # Validate SDK response
-            if preference_response.get("status") != 201:
-                error_message = preference_response.get("body", {}).get("message", "Unknown error")
-                logger.error(f"MercadoPago API error: {error_message}")
-                raise RuntimeError(f"Failed to create preference: {error_message}")
-
-            preference_id = preference_response["body"].get("id")
-            if not preference_id:
-                raise RuntimeError("Preference ID not found in MercadoPago response.")
-
-            return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
-
-        except ValidationError as e:    
-            logger.error(f"Validation error: {e.detail}")
-            return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 6"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
