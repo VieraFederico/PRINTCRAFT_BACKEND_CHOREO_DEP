@@ -10,8 +10,10 @@ class Seller(models.Model):
     materials = models.ManyToManyField('Material', related_name='sellers')  # Nueva relación muchos a muchos
 
     # TODO AGREGAR!!!
-    # HOLA
     mp_mail = models.EmailField(max_length=255, null=False)
+    mp_access_token = models.CharField(max_length=255, null=True, blank=True)
+    mp_refresh_token = models.CharField(max_length=255, null=True, blank=True)
+    mp_token_expires_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.userId.username
