@@ -1638,27 +1638,7 @@ class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        try:
-            order_products = request.data.get("order_products")
-            if not order_products:
-                raise ValidationError("El pedido debe incluir al menos un producto.")
 
-            # Build items dynamically
-            items = []
-            for item in order_products:
-                product_id = item.get("product")
-                quantity = item.get("quantity")
-
-                try:
-                    product = Product.objects.get(code=product_id)
-                    items.append({
-                        "title": product.name,
-                        "quantity": quantity,
-                        "unit_price": float(product.price),
-                        "currency_id": "USD"
-                    })
-                except Product.DoesNotExist:
-                    raise ValidationError(f"Producto con ID {product_id} no encontrado.")
 
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
 
@@ -1669,8 +1649,8 @@ class CreateOrderPaymentView(APIView):
             preference_data = {
                 "items": [
                     {
-                        "product_id": int(product_id),
-                        "quantity": int(quantity),
+                        "product_id":  80,
+                        "quantity": 1,
                         "unit_price": float(product.price)
                     }
                 ],
