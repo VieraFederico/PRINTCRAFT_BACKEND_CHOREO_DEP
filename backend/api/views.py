@@ -1638,41 +1638,48 @@ class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Retrieve MercadoPago access token from settings
+        access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+        sdk = mercadopago.SDK(access_token)
 
-
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-
-            # Initialize Mercado Pago SDK
-            sdk = mercadopago.SDK(access_token)
-
-            # Construct preference payload
-            preference_data = {
-                "items": [
+        # Define preference data
+        preference_data = {
+            "items": [
                 {
                     "title": "Mi producto",
                     "quantity": 1,
                     "unit_price": 75.76,
                 }
             ],
-                "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/sucess",
-                    "failure": "https://3dcapybara.vercel.app/api/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/pending"
-                },
-                "auto_return": "approved",
-                "notification_url": "https://3dcapybara.vercel.app/api/notifications"
-            }
-            try:
-                preference_response = sdk.preference().create(preference_data)
-                preference_id = preference_response["response"]["id"]
+            "back_urls": {
+                "success": "https://3dcapybara.vercel.app/api/sucess",
+                "failure": "https://3dcapybara.vercel.app/api/failure",
+                "pending": "https://www.3dcapybara.vercel.app/api/pending"
+            },
+            "auto_return": "approved",
+            "notification_url": "https://3dcapybara.vercel.app/api/notifications"
+        }
 
-                if not preference_id:
-                    raise RuntimeError("Preference ID not found in MercadoPago response.")
+        try:
+            # Create preference via SDK
+            preference_response = sdk.preference().create(preference_data)
+            preference = preference_response["response"]
 
-                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+            if not preference:
+                logging.error("Preference ID not found in MercadoPago response: %s", preference)
+                return Response(
+                    {"error": "Failed to create payment preference. No preference ID."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-            except Exception as e:
-                  return Response({"error": "An error occurred while creating the payment preference. 1"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"preference_id": preference}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logging.error("Error creating payment preference: %s", str(e))
+            return Response(
+                {"error": "An error occurred while creating the payment preference."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 
