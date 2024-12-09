@@ -1660,7 +1660,7 @@ class CreateOrderPaymentView(APIView):
                 except Product.DoesNotExist:
                     raise ValidationError(f"Producto con ID {product_id} no encontrado.")
 
-            access_token = "YOUR_ACCESS_TOKEN"
+            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
 
             # Initialize Mercado Pago SDK
             sdk = mercadopago.SDK(access_token)
@@ -1707,7 +1707,7 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 2"},
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 3"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
