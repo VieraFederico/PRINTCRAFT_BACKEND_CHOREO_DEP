@@ -1661,7 +1661,14 @@ class CreateOrderPaymentView(APIView):
 
             # Construct preference payload
             preference_data = {
-                "items": items,
+                    "items": [
+                    {
+                        "title": "Test Product",
+                        "quantity": 1,
+                        "unit_price": 100.0,
+                        "currency_id": "USD"
+                    }
+                ],
                 "back_urls": {
                     "success": "https://3dcapybara.vercel.app/api/mpresponse/failure",
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
