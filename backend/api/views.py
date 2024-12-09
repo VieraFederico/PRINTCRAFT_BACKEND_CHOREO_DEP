@@ -1670,8 +1670,8 @@ class CreateOrderPaymentView(APIView):
                     "items": [
                     {
                         "title": "Test Product",
-                        "quantity": 1,
-                        "unit_price": 100.0,
+                        "quantity": "1",
+                        "unit_price": "100.0",
                         "currency_id": "USD"
                     }
                 ],
@@ -1707,7 +1707,7 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 3"},
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 4"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
