@@ -1643,8 +1643,7 @@ class CreateOrderPaymentView(APIView):
         
         # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-        sdk = mercadopago.SDK(access_token)
-
+        sdk = mercadopago.SDK(access_token) 
         # Define preference data
         preference_data = {
             "items": [
@@ -1661,7 +1660,7 @@ class CreateOrderPaymentView(APIView):
             },
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications",
-            "marketplace_fee": 0.15
+            "marketplace_fee": 5
         }
 
         try:
