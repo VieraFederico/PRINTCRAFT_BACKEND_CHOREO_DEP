@@ -71,7 +71,15 @@ class MercadoPagoPreferenceService:
 
             # Construir la carga de la preferencia
             preference_data = {
-                "items": items,  # Lista de ítems ya en el formato correcto
+                "items": [
+                    {
+                        "title": "Test Product",
+                        "description": "Test Description",
+                        "quantity": 1,
+                        "currency_id": "USD",
+                        "unit_price": 100.0
+                    }
+                ],
                 "back_urls": {
                     "success": success_endpoint,
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
