@@ -1645,34 +1645,7 @@ class CreateOrderPaymentView(APIView):
             # Initialize Mercado Pago SDK
             sdk = mercadopago.SDK(access_token)
 
-            # Construct preference payload
-            preference_data = {
-                "items": [
-                    {
-                        "product_id":  80,
-                        "quantity": 1,
-                        "unit_price": 100.0
-                    }
-                ],
-                "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/sucess",
-                    "failure": "https://3dcapybara.vercel.app/api/failure",
-                    "pending": "https://www.3dcapybara.vercel.app/api/pending"
-                },
-                "auto_return": "approved",
-                "notification_url": "https://3dcapybara.vercel.app/api/notifications"
-            }
-            try:
-                preference_response = sdk.preference().create(preference_data)
-                preference_id = preference_response["response"]["id"]
-
-                order = Order.objects.get(orderID=)
-                order.preference_id = preference_id
-                order.save()
-
-                return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                  return Response({"error": "An error occurred while creating the payment preference. 1"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"accesstoken": access_token}, status=status.HTTP_201_CREATED)
 
 
 
