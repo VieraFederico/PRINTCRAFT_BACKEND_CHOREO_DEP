@@ -798,11 +798,6 @@ class UserRespondToDesignRequestView(APIView):
                         "unit_price": float(design_request.price)
                     }]
 
-                    # Get seller information (you'll need to retrieve this from the design request or associated user)
-                    seller_first_name = design_request.userID.first_name
-                    seller_last_name = design_request.userID.last_name
-                    seller_email = design_request.userID.email
-
                     # Create the product preference using the service
                     preference_id = MercadoPagoPreferenceService.create_order_preference(
                         items=items,
@@ -1076,10 +1071,6 @@ class AcceptAuctionResponseView(APIView):
                 "unit_price": float(response.price)
             }]
 
-            # Get seller information
-            seller_first_name = response.seller.first_name
-            seller_last_name = response.seller.last_name
-            seller_email = response.seller.email
 
             try:
                 # Create MercadoPago preference using the service
@@ -1638,6 +1629,18 @@ class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+         # Identificar al vendedor
+        seller_id = request.data.get("seller_id")
+        if not seller_id:
+            return Response({"error": "Falta el ID del vendedor"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Obtener el access_token del vendedor
+        try:
+            seller = Seller.objects.get(id=seller_id)
+            access_token = seller.access_token
+        except Seller.DoesNotExist:
+            return Response({"error": "El vendedor no existe"}, status=status.HTTP_404_NOT_FOUND)
+        
         # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         sdk = mercadopago.SDK(access_token)
@@ -1657,7 +1660,8 @@ class CreateOrderPaymentView(APIView):
                 "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
-            "notification_url": "https://3dcapybara.vercel.app/api/notifications"
+            "notification_url": "https://3dcapybara.vercel.app/api/notifications",
+            "marketplace_fee": 0.15
         }
 
         try:
