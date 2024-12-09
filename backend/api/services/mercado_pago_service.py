@@ -58,59 +58,46 @@ class MercadoPagoPreferenceService:
 
     @staticmethod
     def create_order_preference(items, transaction_amount, success_endpoint, notification_endpoint):
-
         try:
-            # Validar token de acceso
-            access_token = getattr(settings, "MERCADOPAGO_ACCESS_TOKEN", None)
-            if not access_token:
-                logger.error("Access token para MercadoPago no está configurado.")
-                raise RuntimeError("Falta el token de acceso.")
+            # Retrieve access token
+            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
 
-            # Inicializar el SDK de MercadoPago
+            # Initialize MercadoPago SDK
             sdk = mercadopago.SDK(access_token)
 
-            # Construir la carga de la preferencia
+            # Construct preference payload
             preference_data = {
-                "items": [
-                    {
-                        "title": "Test Product",
-                        "description": "Test Description",
-                        "quantity": 1,
-                        "currency_id": "USD",
-                        "unit_price": 100.0
-                    }
-                ],
+                "items": items,
                 "back_urls": {
                     "success": success_endpoint,
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
                     "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": notification_endpoint,  # URL para notificaciones
-                #"marketplace": "3D CAPYBARA",
-                #"marketplace_fee": round(transaction_amount * 0.1, 2),  # Comisión
+                "notification_url": notification_endpoint,
             }
 
-            # Log del payload
-            logger.info(f"Creando preferencia en MercadoPago con datos: {preference_data}")
+            logger.info(f"Creating MercadoPago preference with data: {preference_data}")
 
-            # Llamar al SDK para crear la preferencia
-            logger.info(f"Datos enviados al SDK: {preference_data}")
+            # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
-            logger.info(f"Respuesta del SDK de MercadoPago: {preference_response}")
+            logger.debug(f"Full SDK response: {preference_response}")
 
-            # Log del resultado
-            logger.info(f"Respuesta de la preferencia: {preference_response}")
-
-            # Validar respuesta
+            # Validate response
+            status = preference_response.get("status")
             response_body = preference_response.get("body", {})
+            if status != 201:
+                error_detail = response_body.get("message", "Unknown error")
+                logger.error(f"MercadoPago API error: {status}, {error_detail}")
+                raise RuntimeError(f"Failed to create preference: {error_detail}")
+
             preference_id = response_body.get("id")
             if not preference_id:
-                logger.error(f"Respuesta inválida: {response_body}")
-                raise RuntimeError("No se pudo obtener el ID de la preferencia.")
+                logger.error(f"Invalid response body: {response_body}")
+                raise RuntimeError("Could not retrieve preference ID.")
 
             return preference_id
 
         except Exception as e:
-            logger.error(f"Error al crear la preferencia: {str(e)}")
-            raise RuntimeError("Error interno al crear la preferencia en MercadoPago.") from e
+            logger.error(f"Error creating MercadoPago preference: {str(e)}")
+            
