@@ -1643,59 +1643,66 @@ class CreateOrderPaymentView(APIView):
             if not order_products:
                 raise ValidationError("El pedido debe incluir al menos un producto.")
 
+            # Build items dynamically
             items = []
             for item in order_products:
                 product_id = item.get("product")
                 quantity = item.get("quantity")
 
-                # Validar y obtener el producto
                 try:
                     product = Product.objects.get(code=product_id)
+                    items.append({
+                        "title": product.name,
+                        "quantity": quantity,
+                        "unit_price": float(product.price),
+                        "currency_id": "USD"
+                    })
                 except Product.DoesNotExist:
-                    raise ValidationError(f"Product with ID {product_id} not found.")
+                    raise ValidationError(f"Producto con ID {product_id} no encontrado.")
 
-            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
+            access_token = "YOUR_ACCESS_TOKEN"
 
-            # Initialize MercadoPago SDK
+            # Initialize Mercado Pago SDK
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload
             preference_data = {
-                    "items": [
-                    {
-                        "title": "Test Product",
-                        "quantity": 1,
-                        "unit_price": 100.0,
-                        "currency_id": "USD"
-                    }
-                ],
+                "items": items,
                 "back_urls": {
-                    "success": "https://3dcapybara.vercel.app/api/mpresponse/failure",
+                    "success": "https://3dcapybara.vercel.app/api/mpresponse/success",
                     "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
                     "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": "https://3dcapybara.vercel.app/api/mpresponse/failure",
+                "notification_url": "https://example.com/notifications"
             }
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
 
             # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
-            logger.debug(f"Full SDK response: {preference_response}")
-            logger.info(f"Datos enviados a MercadoPago: {preference_data}")
-            preference_response = sdk.preference().create(preference_data)
-            logger.info(f"Respuesta de MercadoPago: {preference_response}")
+            logger.info(f"MercadoPago response: {preference_response}")
 
-            return Response({"preference_id": preference_response["body"]["id"]}, status=status.HTTP_201_CREATED)
+            # Validate SDK response
+            if preference_response.get("status") != 201:
+                error_message = preference_response.get("body", {}).get("message", "Unknown error")
+                logger.error(f"MercadoPago API error: {error_message}")
+                raise RuntimeError(f"Failed to create preference: {error_message}")
+
+            preference_id = preference_response["body"].get("id")
+            if not preference_id:
+                raise RuntimeError("Preference ID not found in MercadoPago response.")
+
+            return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
-            logger.error(f"Error de validación: {e.detail}")
+            logger.error(f"Validation error: {e.detail}")
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Error inesperado: {e}")
+            logger.error(f"Unexpected error: {str(e)}")
             return Response({"error": "Error interno al crear la preferencia en MercadoPago."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class BaseMercadoPagoSuccessView(APIView):
     model = None
