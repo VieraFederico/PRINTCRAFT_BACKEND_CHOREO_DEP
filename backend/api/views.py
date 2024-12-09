@@ -1654,24 +1654,28 @@ class CreateOrderPaymentView(APIView):
                 except Product.DoesNotExist:
                     raise ValidationError(f"Product with ID {product_id} not found.")
 
-                items.append({
-                    "title": product.name,
-                    "quantity": int(quantity),
-                    "unit_price": float(product.price),
-                    "currency_id": "ARS",
-                })
+            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
 
+            # Initialize MercadoPago SDK
+            sdk = mercadopago.SDK(access_token)
+
+            # Construct preference payload
             preference_data = {
                 "items": items,
                 "back_urls": {
-                    "success": "https://example.com/success",
-                    "failure": "https://example.com/failure",
-                    "pending": "https://example.com/pending"
+                    "success": "https://3dcapybara.vercel.app/api/mpresponse/failure",
+                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
+                    "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": "https://example.com/notifications"
+                "notification_url": "https://3dcapybara.vercel.app/api/mpresponse/failure",
             }
 
+            logger.info(f"Creating MercadoPago preference with data: {preference_data}")
+
+            # Call MercadoPago SDK to create the preference
+            preference_response = sdk.preference().create(preference_data)
+            logger.debug(f"Full SDK response: {preference_response}")
             logger.info(f"Datos enviados a MercadoPago: {preference_data}")
             preference_response = sdk.preference().create(preference_data)
             logger.info(f"Respuesta de MercadoPago: {preference_response}")
