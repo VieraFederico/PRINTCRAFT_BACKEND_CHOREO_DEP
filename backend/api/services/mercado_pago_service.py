@@ -57,12 +57,9 @@ class MercadoPagoPreferenceService:
             raise RuntimeError("Failed to create MercadoPago preference.")
 
     @staticmethod
-    def create_order_preference(items, transaction_amount, success_endpoint, notification_endpoint):
+    def create_order_preference(items, success_endpoint, notification_endpoint):
         try:
-            # Retrieve access token
-            access_token = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
-
-            # Initialize MercadoPago SDK
+            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload
