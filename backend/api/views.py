@@ -1666,7 +1666,7 @@ class CreateOrderPaymentView(APIView):
                 preference_response = sdk.preference().create(preference_data)
                 preference_id = preference_response["response"]["id"]
 
-                order = Order.objects.get(orderID=order_id)
+                order = Order.objects.get(orderID=80)
                 order.preference_id = preference_id
                 order.save()
 
