@@ -11,9 +11,6 @@ class Seller(models.Model):
 
     # TODO AGREGAR!!!
     mp_mail = models.EmailField(max_length=255, null=False)
-    mp_access_token = models.CharField(max_length=255, null=True, blank=True)
-    mp_refresh_token = models.CharField(max_length=255, null=True, blank=True)
-    mp_token_expires_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.userId.username
