@@ -1700,7 +1700,7 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            return Response({"error": "Error interno al crear la preferencia en MercadoPago."},
+            return Response({"error": "Error interno al crear la preferencia en MercadoPago. 1"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
