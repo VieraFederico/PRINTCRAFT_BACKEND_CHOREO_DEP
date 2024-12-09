@@ -1629,17 +1629,6 @@ class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-         # Identificar al vendedor
-        seller_id = request.data.get("seller_id")
-        if not seller_id:
-            return Response({"error": "Falta el ID del vendedor"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Obtener el access_token del vendedor
-        try:
-            seller = Seller.objects.get(id=seller_id)
-            access_token = seller.access_token
-        except Seller.DoesNotExist:
-            return Response({"error": "El vendedor no existe"}, status=status.HTTP_404_NOT_FOUND)
         
         # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
