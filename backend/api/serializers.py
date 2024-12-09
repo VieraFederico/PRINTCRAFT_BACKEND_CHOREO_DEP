@@ -50,37 +50,71 @@ class MaterialSerializer(serializers.ModelSerializer):
 class SellerSerializer(serializers.ModelSerializer):
     profile_picture_file = serializers.FileField(write_only=True, required=False, allow_null=True)
     materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True, required=False)
-    # materials = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), many=True, required=False)
 
     class Meta:
         model = Seller
-        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials'] # TODO agregar 'mp_mail'
-        extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
+        fields = [
+            'userId', 'address', 'store_name', 'description',
+            'profile_picture', 'profile_picture_file', 'mp_mail',
+            'materials', 'mp_access_token', 'mp_refresh_token', 'mp_token_expires_at'
+        ]
+        extra_kwargs = {
+            'userId': {'read_only': True},
+            'profile_picture': {'read_only': True},
+            'mp_access_token': {'read_only': True},
+            'mp_refresh_token': {'read_only': True},
+            'mp_token_expires_at': {'read_only': True},
+        }
 
     def create(self, validated_data):
-
+        # Extraer campos específicos
         profile_picture_file = validated_data.pop('profile_picture_file', None)
         materials = validated_data.pop('materials', [])
         user = self.context['request'].user
-        # user = User.objects.get(id=5)
 
-
+        # Manejar subida de imagen de perfil
         if profile_picture_file:
             try:
                 file_content = profile_picture_file.read()
-                # file_name = f"{validated_data.get('store_name', 'default_store_name')}_profile_picture"
                 file_name = f"{user.id}_profile_picture"
                 bucket_name = 'seller-pictures'
                 profile_picture_url = upload_file_to_supabase(file_content, bucket_name, file_name)
                 validated_data['profile_picture'] = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/{bucket_name}/{profile_picture_url}"
             except Exception as e:
-                raise serializers.ValidationError(f"Error al subir la imagen: {str(e)}")
+                raise serializers.ValidationError({"profile_picture_file": f"Error al subir la imagen: {str(e)}"})
         else:
             validated_data['profile_picture'] = None
+
+        # Crear la instancia del Seller
         seller = Seller.objects.create(userId=user, **validated_data)
         seller.materials.set(materials)
         return seller
-        # return Seller.objects.create(userId=4, **validated_data)
+
+    def update(self, instance, validated_data):
+        # Actualizar la imagen de perfil si se proporciona un archivo nuevo
+        profile_picture_file = validated_data.pop('profile_picture_file', None)
+        materials = validated_data.pop('materials', [])
+
+        if profile_picture_file:
+            try:
+                file_content = profile_picture_file.read()
+                file_name = f"{instance.userId.id}_profile_picture"
+                bucket_name = 'seller-pictures'
+                profile_picture_url = upload_file_to_supabase(file_content, bucket_name, file_name)
+                instance.profile_picture = f"https://vvvlpyyvmavjdmfrkqvw.supabase.co/storage/v1/object/public/{bucket_name}/{profile_picture_url}"
+            except Exception as e:
+                raise serializers.ValidationError({"profile_picture_file": f"Error al subir la imagen: {str(e)}"})
+
+        # Actualizar otros campos del vendedor
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Actualizar relación muchos a muchos
+        instance.materials.set(materials)
+
+        # Guardar cambios
+        instance.save()
+        return instance
 
 class OrderProductSerializer(serializers.ModelSerializer):
     class Meta:
