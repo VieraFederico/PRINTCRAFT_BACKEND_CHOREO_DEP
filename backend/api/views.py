@@ -1630,7 +1630,6 @@ class CreateOrderPaymentView(APIView):
 
     def post(self, request):
         
-        
         # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         sdk = mercadopago.SDK(access_token) 
@@ -1650,7 +1649,6 @@ class CreateOrderPaymentView(APIView):
             },
             "auto_return": "approved",
             "notification_url": "https://3dcapybara.vercel.app/api/notifications",
-            "marketplace_fee": 5
         }
 
         try:
