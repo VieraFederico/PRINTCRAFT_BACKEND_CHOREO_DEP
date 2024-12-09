@@ -1651,7 +1651,7 @@ class CreateOrderPaymentView(APIView):
                     {
                         "product_id":  80,
                         "quantity": 1,
-                        "unit_price": float(product.price)
+                        "unit_price": 100.0
                     }
                 ],
                 "back_urls": {
@@ -1666,7 +1666,7 @@ class CreateOrderPaymentView(APIView):
                 preference_response = sdk.preference().create(preference_data)
                 preference_id = preference_response["response"]["id"]
 
-                order = Order.objects.get(orderID=80)
+                order = Order.objects.get(orderID=)
                 order.preference_id = preference_id
                 order.save()
 
