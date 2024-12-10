@@ -43,6 +43,7 @@ class MercadoPagoPreferenceService:
             access_token = str(settings.MP_KEY)
 
             sdk = mercadopago.SDK(access_token)
+
             preference_data = {
                 "items": [
                     {
@@ -60,13 +61,11 @@ class MercadoPagoPreferenceService:
                 "auto_return": "approved",
                 "marketplace": "3D CAPYBARA",
                 "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
-                "collector": {
-                    "access_token": MP_KEY_FEDE
-                }
+                "marketplace_seller_id": str(settings.MP_US_ID),
+
             }
 
-            sdk_seller = mercadopago.SDK(MP_KEY_FEDE)
-            preference_response = sdk_seller.preference().create(preference_data)
+            preference_response = sdk.preference().create(preference_data)
             
             if "response" not in preference_response or "id" not in preference_response["response"]:
                 logger.error(f"Unexpected preference creation response: {preference_response}")
