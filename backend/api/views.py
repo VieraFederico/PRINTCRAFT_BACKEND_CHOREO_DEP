@@ -1639,18 +1639,18 @@ class CreateOrderPaymentView(APIView):
         preference_data = {
             "items": [
                 {
+                    "id":"1234",
                     "title": "Mi producto",
                     "quantity": 1,
                     "unit_price": 75.76,
                 }
             ],
             "back_urls": {
-                "success": "https://3dcapybara.vercel.app/api/sucess",
+                "success": "https://3dcapybara.vercel.app/api/mpresponse/success/order/",
                 "failure": "https://3dcapybara.vercel.app/api/failure",
                 "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
-            "notification_url": "https://3dcapybara.vercel.app/api/notifications",
         }
 
         try:
