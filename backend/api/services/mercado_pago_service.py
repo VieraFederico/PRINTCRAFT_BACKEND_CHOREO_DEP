@@ -38,7 +38,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_product_preference(product_id: int, quantity: int, transaction_amount: float, success_endpoint: str):
         try:
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+            access_token = str(settings.MP_KEY_LULO)
 
             sdk = mercadopago.SDK(access_token)
 
@@ -83,7 +83,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_order_preference(items,total_amount, success_endpoint):
         try:
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+            access_token = str(settings.MP_KEY_LULO)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload

@@ -2090,3 +2090,97 @@ class CositoAIView(APIView):
                 {'error': 'Internal recommendation error'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny  # or adjust permissions as needed
+import requests
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MercadoPagoTokenTestView(APIView):
+    """
+    A view specifically designed for testing Mercado Pago token retrieval.
+    This should ONLY be used in development/testing environments.
+    """
+    permission_classes = [AllowAny]  # Be cautious with this in production
+
+    def post(self, request):
+        """
+        Exchange an authorization code for Mercado Pago tokens.
+
+        Expected JSON payload:
+        {
+            "authorization_code": "AUTHORIZATION_CODE_FROM_MERCADO_PAGO"
+        }
+        """
+        # Extract authorization code from request
+        authorization_code = request.data.get('authorization_code')
+
+        # Validate input
+        if not authorization_code:
+            return Response({
+                'error': 'Authorization code is required',
+                'message': 'Please provide the authorization code obtained from Mercado Pago'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Prepare token exchange request data
+            token_data = {
+                'grant_type': 'authorization_code',
+                'client_id': "5696619348847657",  # Ensure these are set in settings
+                'client_secret': "GM0hcyNt26r2v6Lt52S0ZKgs3jzmYg5Y",
+                'code': authorization_code,
+                'redirect_uri': "https://3dcapybara.vercel.app/login"
+            }
+
+            # Make request to Mercado Pago token endpoint
+            response = requests.post(
+                'https://api.mercadopago.com/oauth/token',
+                data=token_data
+            )
+
+            # Check response status
+            if response.status_code == 200:
+                # Successfully retrieved tokens
+                token_info = response.json()
+
+                # Log sensitive information carefully
+                logger.info(f"Successfully retrieved Mercado Pago tokens for user ID: {token_info.get('user_id')}")
+
+                # Return token information (be careful with production logging)
+                return Response({
+                    'access_token': token_info.get('access_token'),
+                    'refresh_token': token_info.get('refresh_token'),
+                    'user_id': token_info.get('user_id'),
+                    'expires_in': token_info.get('expires_in')
+                }, status=status.HTTP_200_OK)
+
+            else:
+                # Token retrieval failed
+                error_details = response.json()
+                logger.error(f"Mercado Pago token retrieval failed: {error_details}")
+
+                return Response({
+                    'error': 'Token retrieval failed',
+                    'details': error_details
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except requests.RequestException as e:
+            # Network or request-related errors
+            logger.error(f"Request to Mercado Pago failed: {str(e)}")
+            return Response({
+                'error': 'Network error',
+                'message': 'Could not connect to Mercado Pago servers'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f"Unexpected error in token retrieval: {str(e)}")
+            return Response({
+                'error': 'Unexpected error',
+                'message': 'An unexpected error occurred during token retrieval'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
