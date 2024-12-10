@@ -1633,16 +1633,26 @@ class CreateOrderPaymentView(APIView):
         # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         sdk = mercadopago.SDK(access_token)
-        
+
         quantity = request.data.get('quantity')
+        id = request.data.get('product_id')
+        
+        try:
+            product = Product.objects.get(code=id)
+        except Product.DoesNotExist:
+            return Response({"error": f"Product with ID {id} not found."},status=status.HTTP_404_NOT_FOUND)
+
+        if product.stock < int(quantity):
+            return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+        
         # Define preference data
         preference_data = {
             "items": [
                 {
-                    "id":"1234",
+                    "id":str(id),
                     "title": "Mi producto",
                     "quantity": quantity,
-                    "unit_price": 75.76,
+                    "unit_price": float(product.price),
                 }
             ],
             "back_urls": {
@@ -1651,12 +1661,15 @@ class CreateOrderPaymentView(APIView):
                 "pending": "https://www.3dcapybara.vercel.app/api/pending"
             },
             "auto_return": "approved",
+            "marketplace": "3D Capybara",
+            "marketplace_fee": 10,
+
         }
 
         try:
             # Create preference via SDK
             preference_response = sdk.preference().create(preference_data)
-            preference = preference_response["response"]
+            preference = preference_response["response"]["id"]
 
             if not preference:
                 logging.error("Preference ID not found in MercadoPago response: %s", preference)
