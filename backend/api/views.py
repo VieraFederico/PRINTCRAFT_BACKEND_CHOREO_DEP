@@ -1630,31 +1630,43 @@ class CreateOrderPaymentView(APIView):
 
     def post(self, request):
         
-        # Retrieve MercadoPago access token from settings
+
+
+        order_products = request.data.get("order_products")
+        if not order_products:
+            return Response({"error": "The order must contain at least one product."},status=status.HTTP_400_BAD_REQUEST)
+        items = []
+        total_amount = 0
+        
+        for item in order_products:
+            quantity = item.get('quantity')
+            id = item.get('product_id')
+            
+            if not quantity or not id:
+                return Response({"error": "The order must contain at least one product with quantity and id."},status=status.HTTP_400_BAD_REQUEST)
+            try:
+                product = Product.objects.get(code=id)
+            except Product.DoesNotExist:
+                return Response({"error": f"Product with ID {id} not found."},status=status.HTTP_404_NOT_FOUND)
+
+            if product.stock < int(quantity):
+                return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+            items.append(
+                {
+                    "title": product.name,
+                    "quantity": quantity,
+                    "currency_id": "ARS",
+                    "unit_price": float(product.price),
+                }
+            )
+            total_amount += product.price * quantity
+                # Retrieve MercadoPago access token from settings
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         sdk = mercadopago.SDK(access_token)
-
-        quantity = request.data.get('quantity')
-        id = request.data.get('product_id')
-        
-        try:
-            product = Product.objects.get(code=id)
-        except Product.DoesNotExist:
-            return Response({"error": f"Product with ID {id} not found."},status=status.HTTP_404_NOT_FOUND)
-
-        if product.stock < int(quantity):
-            return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
         
         # Define preference data
         preference_data = {
-            "items": [
-                {
-                    "id":str(id),
-                    "title": "Mi producto",
-                    "quantity": quantity,
-                    "unit_price": float(product.price),
-                }
-            ],
+            "items": items,
             "back_urls": {
                 "success": "https://3dcapybara.vercel.app/api/mpresponse/success/order/",
                 "failure": "https://3dcapybara.vercel.app/api/failure",
@@ -1662,7 +1674,7 @@ class CreateOrderPaymentView(APIView):
             },
             "auto_return": "approved",
             "marketplace": "3D Capybara",
-            "marketplace_fee": 10,
+            "marketplace_fee": round(float(total_amount) * 0.1),
 
         }
 
