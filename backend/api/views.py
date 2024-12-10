@@ -1642,7 +1642,7 @@ class CreateOrderPaymentView(APIView):
                 {
                     "title": "Mi producto",
                    # "product_id": int(product_id),
-                    "quantity": int(quantity),
+                    "quantity": 1,
                     "unit_price": 75.76,
                 }
             ],
