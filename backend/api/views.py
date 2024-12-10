@@ -1640,7 +1640,7 @@ class CreateOrderPaymentView(APIView):
         
         for item in order_products:
             quantity = item.get('quantity')
-            id = item.get('product_id')
+            id = item.get('product')
             
             if not quantity or not id:
                 return Response({"error": "The order must contain at least one product with quantity and id."},status=status.HTTP_400_BAD_REQUEST)
