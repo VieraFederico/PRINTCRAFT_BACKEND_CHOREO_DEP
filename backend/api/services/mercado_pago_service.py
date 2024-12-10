@@ -76,7 +76,7 @@ class MercadoPagoPreferenceService:
             }
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
-
+            
             # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
             return preference_response["response"]["id"]

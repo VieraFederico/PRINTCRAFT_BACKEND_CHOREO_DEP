@@ -1660,12 +1660,18 @@ class CreateOrderPaymentView(APIView):
                 }
             )
             total_amount += product.price * quantity
-                # Retrieve MercadoPago access token from settings
-        access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
-        sdk = mercadopago.SDK(access_token)
-        
+
+
         # Define preference data
         preference_id = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/")
+        order_data = {
+                "order_products": order_products,
+                "preference_id": preference_id
+            }
+        serializer = OrderSerializer(data=order_data, context={'request': request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
         return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
 
