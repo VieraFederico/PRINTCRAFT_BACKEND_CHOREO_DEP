@@ -57,7 +57,7 @@ class MercadoPagoPreferenceService:
             raise RuntimeError("Failed to create MercadoPago preference.")
 
     @staticmethod
-    def create_order_preference(items, success_endpoint, notification_endpoint):
+    def create_order_preference(items,total_amount, success_endpoint):
         try:
             access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
             sdk = mercadopago.SDK(access_token)
@@ -71,30 +71,15 @@ class MercadoPagoPreferenceService:
                     "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                "notification_url": notification_endpoint,
+                "marketplace": "3D Capybara",
+                "marketplace_fee": round(float(total_amount) * 0.1),
             }
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
 
             # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
-            logger.debug(f"Full SDK response: {preference_response}")
-
-            # Validate response
-            status = preference_response.get("status")
-            response_body = preference_response.get("body", {})
-            if status != 201:
-                error_detail = response_body.get("message", "Unknown error")
-                logger.error(f"MercadoPago API error: {status}, {error_detail}")
-                raise RuntimeError(f"Failed to create preference: {error_detail}")
-
-            preference_id = response_body.get("id")
-            if not preference_id:
-                logger.error(f"Invalid response body: {response_body}")
-                raise RuntimeError("Could not retrieve preference ID.")
-
-            return preference_id
-
+            return preference_response["response"]["id"]
         except Exception as e:
             logger.error(f"Error creating MercadoPago preference: {str(e)}")
             

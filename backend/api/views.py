@@ -1665,41 +1665,8 @@ class CreateOrderPaymentView(APIView):
         sdk = mercadopago.SDK(access_token)
         
         # Define preference data
-        preference_data = {
-            "items": items,
-            "back_urls": {
-                "success": "https://3dcapybara.vercel.app/api/mpresponse/success/order/",
-                "failure": "https://3dcapybara.vercel.app/api/failure",
-                "pending": "https://www.3dcapybara.vercel.app/api/pending"
-            },
-            "auto_return": "approved",
-            "marketplace": "3D Capybara",
-            "marketplace_fee": round(float(total_amount) * 0.1),
-
-        }
-
-        try:
-            # Create preference via SDK
-            preference_response = sdk.preference().create(preference_data)
-            preference = preference_response["response"]["id"]
-
-            if not preference:
-                logging.error("Preference ID not found in MercadoPago response: %s", preference)
-                return Response(
-                    {"error": "Failed to create payment preference. No preference ID."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            return Response({"preference_id": preference}, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            logging.error("Error creating payment preference: %s", str(e))
-            return Response(
-                {"error": "An error occurred while creating the payment preference."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
+        preference_id = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/")
+        return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
 
 
 class BaseMercadoPagoSuccessView(APIView):
