@@ -7,6 +7,8 @@ import logging
 from h11 import Response
 from rest_framework import status
 
+from backend.settings import MP_KEY_FEDE
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +27,7 @@ class MercadoPagoPreferenceService:
 
         try:
             # Mercado Pago SDK call (requires an instance of Mercado Pago SDK)
-            access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
+            access_token = str(settings.MP_KEY)
             sdk = mercadopago.SDK(access_token)  # Replace with your actual token
             seller_response = sdk.user().create(seller_data)
             return seller_response
@@ -41,11 +43,6 @@ class MercadoPagoPreferenceService:
             access_token = str(settings.MP_KEY)
 
             sdk = mercadopago.SDK(access_token)
-
-            # Generate seller ID
-            #  seller_id = MercadoPagoPreferenceService.create_seller_id(seller_first_name, seller_last_name, email, sdk)
-
-            # Build the preference payload
             preference_data = {
                 "items": [
                     {
@@ -61,9 +58,11 @@ class MercadoPagoPreferenceService:
                     "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
                 },
                 "auto_return": "approved",
-                
                 "marketplace": "3D CAPYBARA",
                 "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
+                "collector": {
+                    "access_token": MP_KEY_FEDE  # This ensures payment goes to the seller
+                }
             }
 
             preference_response = sdk.preference().create(preference_data)
@@ -97,6 +96,9 @@ class MercadoPagoPreferenceService:
                 "auto_return": "approved",
                 "marketplace": "3D Capybara",
                 "marketplace_fee": round(float(total_amount) * 0.1),
+                "collector": {
+                    "access_token": MP_KEY_FEDE  # This ensures payment goes to the seller
+                }
             }
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
