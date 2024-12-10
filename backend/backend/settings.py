@@ -164,3 +164,5 @@ COHERE_API_KEY = os.getenv("COSITO_KEY")
 HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
 
 MP_KEY_LULO = os.getenv("MP_KEY_LULO")
+
+MP_KEY = os.getenv("MP_KEY")
