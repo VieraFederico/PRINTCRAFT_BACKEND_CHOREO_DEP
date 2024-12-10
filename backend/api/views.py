@@ -1630,8 +1630,6 @@ class CreateOrderPaymentView(APIView):
 
     def post(self, request):
         
-
-
         order_products = request.data.get("order_products")
         if not order_products:
             return Response({"error": "The order must contain at least one product."},status=status.HTTP_400_BAD_REQUEST)
