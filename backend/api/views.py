@@ -1634,14 +1634,14 @@ class CreateOrderPaymentView(APIView):
         access_token = str(settings.MERCADOPAGO_ACCESS_TOKEN)
         sdk = mercadopago.SDK(access_token)
         
-
+        quantity = request.data.get('quantity')
         # Define preference data
         preference_data = {
             "items": [
                 {
                     "id":"1234",
                     "title": "Mi producto",
-                    "quantity": 1,
+                    "quantity": int(quantity),
                     "unit_price": 75.76,
                 }
             ],
