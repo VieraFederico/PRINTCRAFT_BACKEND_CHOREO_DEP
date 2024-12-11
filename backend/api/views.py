@@ -623,6 +623,19 @@ class DesignRequestCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny]
 
+
+class DeleteDesignRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, request_id):
+        try:
+            design_request = DesignRequest.objects.get(requestID=request_id, userID=request.user)
+            design_request.delete()
+            return Response({"message": "Design request deleted successfully"}, status=status.HTTP_200_OK)
+        except DesignRequest.DoesNotExist:
+            return Response({"error": "Design request not found or you do not have permission to delete it"}, status=status.HTTP_404_NOT_FOUND)
+
+
 """
 class UserDesignRequestListView(generics.ListAPIView):
     serializer_class = DesignRequestSerializer

@@ -35,6 +35,7 @@ urlpatterns = [
     path('products/<int:product_id>/is_owner/', IsProductOwnerView.as_view(), name='is_product_owner'),
     path('products/<int:product_id>/update_stock/', UpdateProductStockView.as_view(), name='update_product_stock'),
     path('design-requests/create/', DesignRequestCreateView.as_view(), name='design-request-create'),
+    path('design-requests/delete/<int:request_id>/', DeleteDesignRequestView.as_view(), name='delete-design-request'),
     path('design-requests/mine/', UserDesignRequestListView.as_view(), name='user-design-requests'),
     path('design-requests/seller/', SellerDesignRequestListView.as_view(), name='seller-design-requests'),
     path('design-requests/<int:request_id>/accept-or-reject/', AcceptOrRejectDesignRequestView.as_view(), name='accept-or-reject-design-request'),
