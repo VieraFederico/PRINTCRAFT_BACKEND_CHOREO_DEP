@@ -1211,6 +1211,17 @@ class DesignReverseAuctionCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TODO CAMBIAR
 
+class DeleteDesignReverseAuctionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, auction_id):
+        try:
+            auction = DesignReverseAuction.objects.get(requestID=auction_id, userID=request.user)
+            auction.delete()
+            return Response({"message": "Design reverse auction deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except DesignReverseAuction.DoesNotExist:
+            return Response({"error": "Design reverse auction not found or you do not have permission to delete it"}, status=status.HTTP_404_NOT_FOUND)
+
 class UserDesignReverseAuctionListView(generics.ListAPIView):
     serializer_class = DesignReverseAuctionSerializer
     permission_classes = [IsAuthenticated]
