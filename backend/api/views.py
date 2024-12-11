@@ -629,7 +629,7 @@ class DeleteDesignRequestView(APIView):
 
     def delete(self, request, request_id):
         try:
-            design_request = DesignRequest.objects.get(requestID=request_id, userID=request.user)
+            design_request = DesignRequest.objects.get(requestID=request_id, userID=self.request.user)
             design_request.delete()
             return Response({"message": "Design request deleted successfully"}, status=status.HTTP_200_OK)
         except DesignRequest.DoesNotExist:
