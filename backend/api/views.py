@@ -114,6 +114,28 @@ class DeleteUserView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class UpdateUserView(APIView):
+    # permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = self.request.user
+        # user = User.objects.get(id=144)
+        data = request.data
+
+        if 'username' in data:
+            user.username = data['username']
+        if 'email' in data:
+            user.email = data['email']
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+
+        user.save()
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 #################
 #### SELLERS ####
 #################
