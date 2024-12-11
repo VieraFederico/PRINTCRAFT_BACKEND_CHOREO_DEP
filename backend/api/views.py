@@ -962,6 +962,18 @@ class CreatePrintReverseAuctionResponseView(APIView):
         response = PrintReverseAuctionResponse.objects.create(auction=auction, seller=sellerID, price=price)
         return Response({'message': 'Response created successfully', 'response_id': response.responseID}, status=status.HTTP_201_CREATED)
 
+class DeletePrintReverseAuctionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, auction_id):
+        try:
+            auction = PrintReverseAuction.objects.get(requestID=auction_id, userID=self.request.user)
+            auction.delete()
+            return Response({"message": "Print reverse auction deleted successfully"}, status=status.HTTP_200_OK)
+        except PrintReverseAuction.DoesNotExist:
+            return Response({"error": "Print reverse auction not found or you do not have permission to delete it"},
+                            status=status.HTTP_404_NOT_FOUND)
+
 """
 class QuotizedPrintReverseAuctionResponseListView(generics.ListAPIView):
     serializer_class = PrintReverseAuctionResponseCombinedSerializer
