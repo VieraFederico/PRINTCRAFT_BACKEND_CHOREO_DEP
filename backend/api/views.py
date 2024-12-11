@@ -401,6 +401,23 @@ class CreatePrintRequestView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # TOD CAMBIAR !!
 
+class DeletePrintRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, request_id):
+        try:
+            print_request = PrintRequest.objects.get(requestID=request_id)
+            if print_request.userID != self.request.user:
+                return Response({"error": "You do not have permission to delete this print request"}, status=status.HTTP_403_FORBIDDEN)
+
+            print_request.delete()
+            return Response({"message": "Print request deleted successfully"}, status=status.HTTP_200_OK)
+
+        except PrintRequest.DoesNotExist:
+            return Response({"error": "Print request not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 """
 class UserPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer

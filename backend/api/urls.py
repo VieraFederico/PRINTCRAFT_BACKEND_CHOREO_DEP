@@ -25,6 +25,7 @@ urlpatterns = [
     path('seller/update-profile-picture/', UpdateProfilePictureView.as_view(), name='update-profile-picture'),
     path('products/<int:product_id>/delete/', DeleteProductView.as_view(), name='delete-product'),
     path('print-requests/create/', CreatePrintRequestView.as_view(), name='create-print-request'),
+    path('print-requests/delete/<int:request_id>/', DeletePrintRequestView.as_view(), name='delete-print-request'),
     path('print-requests/mine/', UserPrintRequestListView.as_view(), name='user-print-requests'),
     path('print-requests/seller/', SellerPrintRequestListView.as_view(), name='seller-print-requests'),
     path('print-requests/<int:request_id>/accept-or-reject/', AcceptOrRejectPrintRequestView.as_view(), name='accept-or-reject-print-request'),
