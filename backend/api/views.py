@@ -1216,7 +1216,7 @@ class DeleteDesignReverseAuctionView(APIView):
 
     def delete(self, request, auction_id):
         try:
-            auction = DesignReverseAuction.objects.get(requestID=auction_id, userID=request.user)
+            auction = DesignReverseAuction.objects.get(requestID=auction_id, userID=self.request.user)
             auction.delete()
             return Response({"message": "Design reverse auction deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except DesignReverseAuction.DoesNotExist:
