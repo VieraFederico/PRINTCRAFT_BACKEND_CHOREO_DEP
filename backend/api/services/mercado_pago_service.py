@@ -78,7 +78,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_order_preference(items,total_amount, success_endpoint):
         try:
-            access_token = str(settings.MP_KEY)
+            access_token = str(settings.MP_TEST)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload
@@ -98,7 +98,8 @@ class MercadoPagoPreferenceService:
             
             # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
-            return preference_response["response"]["id"]
+            return preference_response["response"]["init_point"]
         except Exception as e:
             logger.error(f"Error creating MercadoPago preference: {str(e)}")
             
+from django.http import JsonResponse

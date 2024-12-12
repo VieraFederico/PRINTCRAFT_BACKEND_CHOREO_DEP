@@ -1736,16 +1736,16 @@ class CreateOrderPaymentView(APIView):
 
 
         # Define preference data
-        preference_id = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/")
-        order_data = {
-                "order_products": order_products,
-                "preference_id": preference_id
-            }
-        serializer = OrderSerializer(data=order_data, context={'request': request})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
+        payment_link = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/")
+        #order_data = {
+        #        "order_products": order_products,
+        #        "preference_id": preference_id
+        #}
+        #serializer = OrderSerializer(data=order_data, context={'request': request})
+        #if serializer.is_valid(raise_exception=True):
+        #    serializer.save()
 
-        return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+        return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
 
 class BaseMercadoPagoSuccessView(APIView):
@@ -2208,7 +2208,7 @@ class MercadoPagoTokenTestView(APIView):
                 'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
                 'client_secret': str(settings.SECRET_CLIENT),
                 'code': authorization_code,
-                'redirect_uri': "https://3dcapybara.vercel.app/register_seller"
+                'redirect_uri': "https://3dcapybara.vercel.app/register_seller",
             }
 
             # Make request to Mercado Pago token endpoint
@@ -2258,24 +2258,3 @@ class MercadoPagoTokenTestView(APIView):
                 'error': 'Unexpected error',
                 'message': 'An unexpected error occurred during token retrieval'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-import mercadopago
-from django.conf import settings
-
-class MercadoPagoCheckView(APIView):
-    # Inicializar el SDK de Mercado Pago con el access_token
-    sdk = mercadopago.SDK(settings.MP_KEY_FEDE)
-
-    # Obtener información del usuario asociado al access_token
-    user_info = sdk.user().get()
-
-    # Verificar si el usuario es un vendedor
-    if 'response' in user_info and 'user_type' in user_info['response']:
-        user_type = user_info['response']['user_type']  # Puede ser 'buyer' o 'seller'
-
-        if user_type == 'seller':
-            print("Este access_token es de un vendedor.")
-        else:
-            print("Este access_token es de un comprador.")
-    else:
-        print("No se pudo obtener información del usuario.")
