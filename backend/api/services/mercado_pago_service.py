@@ -67,7 +67,7 @@ class MercadoPagoPreferenceService:
                 logger.error(f"Unexpected preference creation response: {preference_response}")
                 raise RuntimeError("Failed to extract preference ID from response.")
                 
-            return preference_response["response"]["id"]
+            return preference_response["response"]["init_point"]
 
         except Exception as e:
             logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
@@ -76,9 +76,9 @@ class MercadoPagoPreferenceService:
 
     
     @staticmethod
-    def create_order_preference(items,total_amount, success_endpoint):
+    def create_order_preference(items,total_amount, success_endpoint, access_token):
         try:
-            access_token = str(settings.MP_TEST)
+            #access_token = str(settings.MP_TEST)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload

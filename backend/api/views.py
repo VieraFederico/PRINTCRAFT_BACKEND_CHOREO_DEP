@@ -1703,6 +1703,29 @@ logger = logging.getLogger(__name__)
 class CreateOrderPaymentView(APIView):
     permission_classes = [AllowAny]
 
+    def refresh_mp_access_token(self,refresh_token):
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+            'client_secret': str(settings.SECRET_CLIENT),
+            "refresh_token": refresh_token
+        }
+        response = requests.post(url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            access_token = tokens.get("access_token")
+            refresh_token = tokens.get("refresh_token", refresh_token)  # Use new refresh token if available
+
+            return access_token, refresh_token
+        else:
+            print("Error refreshing access token:", response.text)
+            return None, None
+
     def post(self, request):
         
         order_products = request.data.get("order_products")
@@ -1710,6 +1733,7 @@ class CreateOrderPaymentView(APIView):
             return Response({"error": "The order must contain at least one product."},status=status.HTTP_400_BAD_REQUEST)
         items = []
         total_amount = 0
+        seller = None
         
         for item in order_products:
             quantity = item.get('quantity')
@@ -1724,6 +1748,10 @@ class CreateOrderPaymentView(APIView):
 
             if product.stock < int(quantity):
                 return Response({"error": f"Not enough stock for product {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+
+            if seller is None:
+                seller = product.seller
+
             items.append(
                 {
                     "title": product.name,
@@ -1734,9 +1762,15 @@ class CreateOrderPaymentView(APIView):
             )
             total_amount += product.price * quantity
 
+        access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
+        if not access_token:
+            return Response({"error": "Error refreshing access token."},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        seller.mp_refresh_token=refresh_token
+        seller.mp_access_token=access_token
+        seller.save()
         # Define preference data
-        payment_link = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/")
+        payment_link = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/",access_token)
         #order_data = {
         #        "order_products": order_products,
         #        "preference_id": preference_id
@@ -2216,6 +2250,73 @@ class MercadoPagoTokenTestView(APIView):
                 'https://api.mercadopago.com/oauth/token',
                 data=token_data
             )
+
+            # Check response status
+            if response.status_code == 200:
+                # Successfully retrieved tokens
+                token_info = response.json()
+
+                # Log sensitive information carefully
+                logger.info(f"Successfully retrieved Mercado Pago tokens for user ID: {token_info.get('user_id')}")
+
+                # Return token information (be careful with production logging)
+                return Response({
+                    'access_token': token_info.get('access_token'),
+                    'refresh_token': token_info.get('refresh_token'),
+                    'user_id': token_info.get('user_id'),
+                    'expires_in': token_info.get('expires_in')
+                }, status=status.HTTP_200_OK)
+
+            else:
+                # Token retrieval failed
+                error_details = response.json()
+                logger.error(f"Mercado Pago token retrieval failed: {error_details}")
+
+                return Response({
+                    'error': 'Token retrieval failed',
+                    'details': error_details
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except requests.RequestException as e:
+            # Network or request-related errors
+            logger.error(f"Request to Mercado Pago failed: {str(e)}")
+            return Response({
+                'error': 'Network error',
+                'message': 'Could not connect to Mercado Pago servers'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f"Unexpected error in token retrieval: {str(e)}")
+            return Response({
+                'error': 'Unexpected error',
+                'message': 'An unexpected error occurred during token retrieval'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class MercadoPagRefresh(APIView):
+    """
+    A view specifically designed for testing Mercado Pago token retrieval.
+    This should ONLY be used in development/testing environments.
+    """
+    permission_classes = [AllowAny]  # Be cautious with this in production
+
+    def post(self, request):
+
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        try:
+            # Prepare token exchange request data
+            data = {
+                "grant_type": "refresh_token",
+                'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+                'client_secret': str(settings.SECRET_CLIENT),
+                "refresh_token": "TG-675a7e09262be70001eee047-457342417"
+            }
+
+            # Make request to Mercado Pago token endpoint
+            response = requests.post(url, headers=headers, data=data)
 
             # Check response status
             if response.status_code == 200:

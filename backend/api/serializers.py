@@ -1,9 +1,17 @@
 import uuid
 from itertools import product
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny  # or adjust permissions as needed
+import requests
+import logging
 
+logger = logging.getLogger(__name__)
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
+from backend import settings
 from .models import Seller, Material, Order, ProductReview, PrintRequest, DesignRequestImage, DesignRequest, \
     ProductImage, ProductMaterial, Category, Product, PrintReverseAuction, PrintReverseAuctionResponse, \
     DesignReverseAuction, DesignReverseAuctionResponse, OrderProduct
@@ -54,16 +62,64 @@ class SellerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Seller
-        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials'] # TODO agregar 'mp_mail'
+        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials','mp_access_token', 'mp_refresh_token'] # TODO agregar 'mp_mail'
         extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
+
+    def auth_info_getter(self, request, authorization_code):
+        try:
+            token_data = {
+                'grant_type': 'authorization_code',
+                'client_id': str(settings.CLIENT_ID),
+                'client_secret': str(settings.SECRET_CLIENT),
+                'code': authorization_code,
+                'redirect_uri': "https://3dcapybara.vercel.app/register_seller",
+            }
+
+            response = requests.post(
+                'https://api.mercadopago.com/oauth/token',
+                data=token_data
+            )
+
+            if response.status_code == 200:
+                token_info = response.json()
+
+                logger.info(f"Successfully retrieved Mercado Pago tokens for user ID: {token_info.get('user_id')}")
+
+                return {
+                    'access_token': token_info.get('access_token'),
+                    'refresh_token': token_info.get('refresh_token'),
+                    'user_id': token_info.get('user_id'),
+                    'expires_in': token_info.get('expires_in')
+                }
+
+            else:
+                error_details = response.json()
+                logger.error(f"Mercado Pago token retrieval failed: {error_details}")
+                raise Exception("Token retrieval failed", error_details)
+
+        except requests.RequestException as e:
+            logger.error(f"Request to Mercado Pago failed: {str(e)}")
+            raise Exception("Network error", 'Could not connect to Mercado Pago servers')
+
+        except Exception as e:
+            logger.error(f"Unexpected error in token retrieval: {str(e)}")
+            raise Exception("Unexpected error", 'An unexpected error occurred during token retrieval')
 
     def create(self, validated_data):
 
         profile_picture_file = validated_data.pop('profile_picture_file', None)
         materials = validated_data.pop('materials', [])
+        authorization_code = validated_data.pop('code', None)
+        print(authorization_code)
         user = self.context['request'].user
         # user = User.objects.get(id=5)
-
+        if authorization_code:
+            try:
+                auth_info = self.auth_info_getter(authorization_code)
+                validated_data['mp_access_token'] = auth_info['access_token']
+                validated_data['mp_refresh_token'] = auth_info['refresh_token']
+            except Exception as e:
+                raise serializers.ValidationError(f"Error during Mercado Pago token retrieval: {str(e)}")
 
         if profile_picture_file:
             try:
