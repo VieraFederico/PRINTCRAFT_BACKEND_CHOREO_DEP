@@ -142,7 +142,7 @@ class UpdateUserView(APIView):
 class SellerCreateView(generics.CreateAPIView):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     # permission_classes = [AllowAny] # todo CAMBIAR
 
 class SellerDetailView(generics.RetrieveAPIView):
