@@ -7,7 +7,7 @@ import logging
 from h11 import Response
 from rest_framework import status
 
-from backend.settings import MP_KEY_FEDE
+from backend.settings import MP_TEST
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_product_preference(product_id: int, quantity: int, transaction_amount: float, success_endpoint: str):
         try:
-            access_token = str(settings.MP_KEY)
+            access_token = str(settings.MP_TEST)
 
             sdk = mercadopago.SDK(access_token)
 
@@ -61,8 +61,6 @@ class MercadoPagoPreferenceService:
                 "auto_return": "approved",
                 "marketplace": "3D CAPYBARA",
                 "marketplace_fee": round(int(quantity) * float(transaction_amount) * 0.1, 2),
-                "marketplace_seller_id": str(settings.MP_US_ID),
-
             }
 
             preference_response = sdk.preference().create(preference_data)
@@ -82,7 +80,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_order_preference(items,total_amount, success_endpoint):
         try:
-            access_token = str(settings.MP_KEY)
+            access_token = str(settings.MP_TEST)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload
@@ -96,9 +94,6 @@ class MercadoPagoPreferenceService:
                 "auto_return": "approved",
                 "marketplace": "3D Capybara",
                 "marketplace_fee": round(float(total_amount) * 0.1),
-                "collector": {
-                    "access_token": MP_KEY_FEDE  # This ensures payment goes to the seller
-                }
             }
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
