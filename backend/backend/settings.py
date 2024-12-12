@@ -157,8 +157,6 @@ CORS_ALLOW_CREDENTIALS = True
 # SUPABASE_URL = "https://vvvlpyyvmavjdmfrkqvw.supabase.co"
 # SUPABASE_SERVICE_KEY = "your-service-key"  # Podés cargarla de una variable de entorno para mayor seguridad
 
-MERCADOPAGO_ACCESS_TOKEN = "APP_USR-5696619348847657-093015-519582c5ec0017042c24e8ee7a8d5b85-357594412"
-
 COHERE_API_KEY = os.getenv("COSITO_KEY")
 
 HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")

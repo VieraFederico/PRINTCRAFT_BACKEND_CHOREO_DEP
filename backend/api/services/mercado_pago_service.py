@@ -7,8 +7,6 @@ import logging
 from h11 import Response
 from rest_framework import status
 
-from backend.settings import MP_TEST
-
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +25,7 @@ class MercadoPagoPreferenceService:
 
         try:
             # Mercado Pago SDK call (requires an instance of Mercado Pago SDK)
-            access_token = str(settings.MP_KEY)
+            access_token = str(settings.MP_TEST)
             sdk = mercadopago.SDK(access_token)  # Replace with your actual token
             seller_response = sdk.user().create(seller_data)
             return seller_response
@@ -40,7 +38,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_product_preference(product_id: int, quantity: int, transaction_amount: float, success_endpoint: str):
         try:
-            access_token = str(settings.MP_TEST)
+            access_token = str(settings.MP_KEY)
 
             sdk = mercadopago.SDK(access_token)
 
@@ -80,7 +78,7 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_order_preference(items,total_amount, success_endpoint):
         try:
-            access_token = str(settings.MP_TEST)
+            access_token = str(settings.MP_KEY)
             sdk = mercadopago.SDK(access_token)
 
             # Construct preference payload
