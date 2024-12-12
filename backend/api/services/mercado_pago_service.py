@@ -66,8 +66,11 @@ class MercadoPagoPreferenceService:
             if "response" not in preference_response or "id" not in preference_response["response"]:
                 logger.error(f"Unexpected preference creation response: {preference_response}")
                 raise RuntimeError("Failed to extract preference ID from response.")
-                
-            return preference_response["response"]["init_point"]
+
+            return {
+                "init_point": preference_response["response"]["init_point"],
+                "preference_id": preference_response["response"]["id"]
+            }
 
         except Exception as e:
             logger.error(f"MercadoPago Preference Creation Error: {str(e)}")
@@ -78,10 +81,8 @@ class MercadoPagoPreferenceService:
     @staticmethod
     def create_order_preference(items,total_amount, success_endpoint, access_token):
         try:
-            #access_token = str(settings.MP_TEST)
             sdk = mercadopago.SDK(access_token)
 
-            # Construct preference payload
             preference_data = {
                 "items": items,
                 "back_urls": {
@@ -96,9 +97,11 @@ class MercadoPagoPreferenceService:
 
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
             
-            # Call MercadoPago SDK to create the preference
             preference_response = sdk.preference().create(preference_data)
-            return preference_response["response"]["init_point"]
+            return {
+                "init_point": preference_response["response"]["init_point"],
+                "preference_id": preference_response["response"]["id"]
+            }
         except Exception as e:
             logger.error(f"Error creating MercadoPago preference: {str(e)}")
             

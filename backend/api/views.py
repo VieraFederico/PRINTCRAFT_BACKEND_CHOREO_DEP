@@ -523,6 +523,29 @@ class AcceptOrRejectPrintRequestView(APIView):
 class UserRespondToPrintRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def refresh_mp_access_token(self,refresh_token):
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+            'client_secret': str(settings.SECRET_CLIENT),
+            "refresh_token": refresh_token
+        }
+        response = requests.post(url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            access_token = tokens.get("access_token")
+            refresh_token = tokens.get("refresh_token", refresh_token)  # Use new refresh token if available
+
+            return access_token, refresh_token
+        else:
+            print("Error refreshing access token:", response.text)
+            return None, None
+
     def post(self, request, request_id):
         userID = request.user
 
@@ -542,23 +565,36 @@ class UserRespondToPrintRequestView(APIView):
             # Handle acceptance of the print request
             if response == "Accept":
                 try:
-                    # Prepare items for the preference creation
                     items = [{
-                        "title" : "ProductList",
+                        "title" : "Print Request",
                         "id": int(request_id),
                         "quantity": int(print_request.quantity),
                         "unit_price": float(print_request.price)
                     }]
 
-                    # Create the product preference using the service
-                    preference_id = MercadoPagoPreferenceService.create_order_preference(
-                        items=items,
-                        transaction_amount=print_request.price * print_request.quantity,
-                        success_endpoint="https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
-                        notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                    )
+                    seller = Seller.objects.filter(userId=print_request.sellerID)
 
-                    return Response({"preference_id": preference_id}, status=status.HTTP_201_CREATED)
+                    access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
+                    if not access_token:
+                        return Response({"error": "Error refreshing access token."},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                    seller.mp_refresh_token = refresh_token
+                    seller.mp_access_token = access_token
+                    seller.save()
+                    total_amount = print_request.price * print_request.quantity
+
+                    result = MercadoPagoPreferenceService.create_order_preference(
+                        items,
+                        total_amount,
+                        "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
+                        access_token
+                    )
+                    if result:
+                        payment_link = result['init_point']
+                        preference_id = result['preference_id']
+
+                    return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
                 except Exception as e:
                     return Response(
@@ -566,7 +602,6 @@ class UserRespondToPrintRequestView(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
 
-            # Handle rejection of the print request
             else:
                 print_request.status = "Cancelada"
                 print_request.save()
@@ -808,6 +843,29 @@ class AcceptOrRejectDesignRequestView(APIView):
 class UserRespondToDesignRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def refresh_mp_access_token(self,refresh_token):
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+            'client_secret': str(settings.SECRET_CLIENT),
+            "refresh_token": refresh_token
+        }
+        response = requests.post(url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            access_token = tokens.get("access_token")
+            refresh_token = tokens.get("refresh_token", refresh_token)  # Use new refresh token if available
+
+            return access_token, refresh_token
+        else:
+            print("Error refreshing access token:", response.text)
+            return None, None
+
     def post(self, request, request_id):
         """
         Handle user response to a design request, including payment preference creation.
@@ -842,26 +900,35 @@ class UserRespondToDesignRequestView(APIView):
             # Handle acceptance of the design request
             if response == "Accept":
                 try:
-                    # Prepare items for the preference creation
                     items = [{
-                        "title": "Dummy Title",
+                        "title": "Design Request",
                         "id": int(request_id),
                         "quantity": int(design_request.quantity),
                         "unit_price": float(design_request.price)
                     }]
+                    seller = Seller.objects.filter(userId=design_request.sellerID)
 
-                    # Create the product preference using the service
-                    preference_id = MercadoPagoPreferenceService.create_order_preference(
-                        items=items,
-                        transaction_amount=design_request.price * design_request.quantity,
-                        success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
-                        notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
-                    )
+                    access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
+                    if not access_token:
+                        return Response({"error": "Error refreshing access token."},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                    return Response(
-                        {"preference_id": preference_id},
-                        status=status.HTTP_201_CREATED
+                    seller.mp_refresh_token = refresh_token
+                    seller.mp_access_token = access_token
+                    seller.save()
+                    total_amount = design_request.price * design_request.quantity
+
+                    result = MercadoPagoPreferenceService.create_order_preference(
+                        items,
+                        total_amount,
+                        "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
+                        access_token
                     )
+                    if result:
+                        payment_link = result['init_point']
+                        preference_id = result['preference_id']
+
+                    return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
                 except Exception as e:
                     # Log the error and return a generic error response
@@ -1082,6 +1149,28 @@ class PrintReverseAuctionResponseListView(APIView):
 # TODO: Cambiar nombre de la vista a AcceptPrintReverseAuctionResponseView
 class AcceptAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
+    def refresh_mp_access_token(self,refresh_token):
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+            'client_secret': str(settings.SECRET_CLIENT),
+            "refresh_token": refresh_token
+        }
+        response = requests.post(url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            access_token = tokens.get("access_token")
+            refresh_token = tokens.get("refresh_token", refresh_token)  # Use new refresh token if available
+
+            return access_token, refresh_token
+        else:
+            print("Error refreshing access token:", response.text)
+            return None, None
 
     def post(self, request, auction_id, response_id):
         try:
@@ -1137,19 +1226,30 @@ class AcceptAuctionResponseView(APIView):
 
 
             try:
-                # Create MercadoPago preference using the service
-                preference_id = MercadoPagoPreferenceService.create_order_preference(
-                    items=items,
-                    transaction_amount=response.price * auction.quantity,
-                    success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_printrequest",
-                    notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                request = PrintRequest.objects.filter(requestID=auction.requestID)
+                seller = Seller.objects.filter(userId=request.sellerID)
 
-                )
+                access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
+                if not access_token:
+                    return Response({"error": "Error refreshing access token."},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                return Response(
-                    {"preference_id": preference_id},
-                    status=status.HTTP_201_CREATED
+                seller.mp_refresh_token = refresh_token
+                seller.mp_access_token = access_token
+                seller.save()
+                total_amount = auction.price * auction.quantity
+
+                result = MercadoPagoPreferenceService.create_order_preference(
+                    items,
+                    total_amount,
+                    "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
+                    access_token
                 )
+                if result:
+                    payment_link = result['init_point']
+                    preference_id = result['preference_id']
+
+                return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
                 # Log the error and return a generic error response
@@ -1346,6 +1446,28 @@ class DesignReverseAuctionResponseListView(APIView):
 
 class AcceptDesignReverseAuctionResponseView(APIView):
     permission_classes = [IsAuthenticated]
+    def refresh_mp_access_token(self,refresh_token):
+        url = "https://api.mercadopago.com/oauth/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
+            'client_secret': str(settings.SECRET_CLIENT),
+            "refresh_token": refresh_token
+        }
+        response = requests.post(url, headers=headers, data=data)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            access_token = tokens.get("access_token")
+            refresh_token = tokens.get("refresh_token", refresh_token)  # Use new refresh token if available
+
+            return access_token, refresh_token
+        else:
+            print("Error refreshing access token:", response.text)
+            return None, None
 
     def post(self, request, auction_id, response_id):
         """
@@ -1421,24 +1543,32 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             }
             ]
 
-            # Get seller information
-            seller_first_name = response.seller.first_name
-            seller_last_name = response.seller.last_name
-            seller_email = response.seller.email
-
             try:
-                # Create MercadoPago preference using the service
-                preference_id = MercadoPagoPreferenceService.create_order_preference(
-                    items=items,
-                    transaction_amount=response.price * auction.quantity,
-                    success_endpoint="https://3dcapybara.vercel.app/mpresponse/success_designrequest",
-                    notification_endpoint="https://3dcapybara.vercel.app/api/mpresponse/notification",
+                request = DesignRequest.objects.filter(requestID=auction.requestID)
+                seller = Seller.objects.filter(userId=request.sellerID)
+
+                access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
+                if not access_token:
+                    return Response({"error": "Error refreshing access token."},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                seller.mp_refresh_token = refresh_token
+                seller.mp_access_token = access_token
+                seller.save()
+                total_amount = auction.price * auction.quantity
+
+                result = MercadoPagoPreferenceService.create_order_preference(
+                    items,
+                    total_amount,
+                    "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
+                    access_token
                 )
 
-                return Response(
-                    {"preference_id": preference_id},
-                    status=status.HTTP_201_CREATED
-                )
+                if result:
+                    payment_link = result['init_point']
+                    preference_id = result['preference_id']
+
+                return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
                 # Log the error and return a generic error response
@@ -1727,7 +1857,6 @@ class CreateOrderPaymentView(APIView):
             return None, None
 
     def post(self, request):
-        
         order_products = request.data.get("order_products")
         if not order_products:
             return Response({"error": "The order must contain at least one product."},status=status.HTTP_400_BAD_REQUEST)
@@ -1769,17 +1898,20 @@ class CreateOrderPaymentView(APIView):
         seller.mp_refresh_token=refresh_token
         seller.mp_access_token=access_token
         seller.save()
-        # Define preference data
-        payment_link = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success/order/",access_token)
-        #order_data = {
-        #        "order_products": order_products,
-        #        "preference_id": preference_id
-        #}
-        #serializer = OrderSerializer(data=order_data, context={'request': request})
-        #if serializer.is_valid(raise_exception=True):
-        #    serializer.save()
 
-        return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
+        result  = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success_order/",access_token)
+        if result:
+            payment_link = result['init_point']
+            preference_id = result['preference_id']
+        order_data = {
+                "order_products": order_products,
+                "preference_id": preference_id
+        }
+        serializer = OrderSerializer(data=order_data, context={'request': request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
+        return Response({"payment_link": payment_link, 'preference_id': preference_id}, status=status.HTTP_201_CREATED)
 
 
 class BaseMercadoPagoSuccessView(APIView):
@@ -2312,7 +2444,7 @@ class MercadoPagRefresh(APIView):
                 "grant_type": "refresh_token",
                 'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
                 'client_secret': str(settings.SECRET_CLIENT),
-                "refresh_token": "TG-675a7e09262be70001eee047-457342417"
+                "refresh_token": str(settings.MP_REFRESH_TEST)
             }
 
             # Make request to Mercado Pago token endpoint
