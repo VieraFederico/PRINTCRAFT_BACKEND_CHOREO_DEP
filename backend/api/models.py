@@ -8,8 +8,7 @@ class Seller(models.Model):
     description = models.TextField()
     profile_picture = models.URLField(max_length=200, null=True, blank=True)
     materials = models.ManyToManyField('Material', related_name='sellers')  # Nueva relación muchos a muchos
-
-
+    code = models.CharField(max_length=255, null=True, blank=True)
     mp_mail = models.EmailField(max_length=255, null=False)
     mp_access_token = models.CharField(max_length=255, null=True, blank=True)
     mp_refresh_token = models.CharField(max_length=255, null=True, blank=True)

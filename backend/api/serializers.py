@@ -62,7 +62,7 @@ class SellerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Seller
-        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials','mp_access_token', 'mp_refresh_token'] # TODO agregar 'mp_mail'
+        fields = ['userId', 'address', 'store_name', 'description', 'profile_picture', 'profile_picture_file', 'mp_mail', 'materials', 'code','mp_access_token', 'mp_refresh_token'] # TODO agregar 'mp_mail'
         extra_kwargs = {'userId': {'read_only': True}, 'profile_picture':{'read_only': True}}  # El userId no se puede modificar
 
     def auth_info_getter(self, request, authorization_code):
