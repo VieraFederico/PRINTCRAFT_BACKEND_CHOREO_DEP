@@ -79,7 +79,7 @@ class MercadoPagoPreferenceService:
 
     
     @staticmethod
-    def create_order_preference(items,total_amount, success_endpoint, access_token):
+    def create_order_preference(items,total_amount, success_endpoint, access_token = settings.MP_KEY):
         try:
             sdk = mercadopago.SDK(access_token)
 
@@ -87,14 +87,13 @@ class MercadoPagoPreferenceService:
                 "items": items,
                 "back_urls": {
                     "success": success_endpoint,
-                    "failure": "https://3dcapybara.vercel.app/api/mpresponse/failure",
-                    "pending": "https://3dcapybara.vercel.app/api/mpresponse/pending"
+                    "failure": "https://3dcapybara.vercel.app/mpresponse/failure",
+                    "pending": "https://3dcapybara.vercel.app/mpresponse/pending"
                 },
                 "auto_return": "approved",
                 "marketplace": "3D Capybara",
                 "marketplace_fee": round(float(total_amount) * 0.1),
             }
-
             logger.info(f"Creating MercadoPago preference with data: {preference_data}")
             
             preference_response = sdk.preference().create(preference_data)

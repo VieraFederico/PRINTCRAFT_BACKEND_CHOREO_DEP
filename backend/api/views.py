@@ -587,7 +587,7 @@ class UserRespondToPrintRequestView(APIView):
                     result = MercadoPagoPreferenceService.create_order_preference(
                         items,
                         total_amount,
-                        "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
+                        "https://3dcapybara.vercel.app/mpresponse/success_printrequest",
                         access_token
                     )
                     if result:
@@ -921,7 +921,7 @@ class UserRespondToDesignRequestView(APIView):
                     result = MercadoPagoPreferenceService.create_order_preference(
                         items,
                         total_amount,
-                        "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
+                        "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
                         access_token
                     )
                     if result:
@@ -1242,7 +1242,7 @@ class AcceptAuctionResponseView(APIView):
                 result = MercadoPagoPreferenceService.create_order_preference(
                     items,
                     total_amount,
-                    "https://3dcapybara.vercel.app/api/mpresponse/success_printrequest",
+                    "https://3dcapybara.vercel.app/mpresponse/success_printrequest",
                     access_token
                 )
                 if result:
@@ -1560,7 +1560,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                 result = MercadoPagoPreferenceService.create_order_preference(
                     items,
                     total_amount,
-                    "https://3dcapybara.vercel.app/api/mpresponse/success_designrequest",
+                    "https://3dcapybara.vercel.app/mpresponse/success_designrequest",
                     access_token
                 )
 
@@ -1899,7 +1899,7 @@ class CreateOrderPaymentView(APIView):
         seller.mp_access_token=access_token
         seller.save()
 
-        result  = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/api/mpresponse/success_order/",access_token)
+        result  = MercadoPagoPreferenceService.create_order_preference(items,total_amount,"https://3dcapybara.vercel.app/mpresponse/success_order/",access_token)
         if result:
             payment_link = result['init_point']
             preference_id = result['preference_id']
