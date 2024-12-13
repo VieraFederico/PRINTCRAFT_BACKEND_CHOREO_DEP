@@ -147,7 +147,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['orderID', 'userID', 'orderDate', 'status', 'order_products']
+        fields = ['orderID', 'userID', 'orderDate', 'status', 'order_products','preference_id']
         extra_kwargs = {
             'userID': {'read_only': True},
             'orderID': {'read_only': True},
@@ -176,12 +176,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        user = User.objects.get(id=160)
-        #validated_data['userID'] = user
+        #user = User.objects.get(id=160)
+        validated_data['userID'] = user
         products_data = validated_data.pop('order_products')
-        order = Order.objects.create(**validated_data)
+        preference_id = validated_data.pop('preference_id', None)
 
-        # Crear los objetos OrderProduct y actualizar el stock
+        order = Order.objects.create(
+            userID=user,
+            preference_id=preference_id,
+            **validated_data
+        )
+
         for prod_data in products_data:
             product = prod_data['product']
             quantity = prod_data['quantity']
