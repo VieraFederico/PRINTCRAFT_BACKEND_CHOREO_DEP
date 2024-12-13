@@ -567,8 +567,8 @@ class UserRespondToPrintRequestView(APIView):
                 try:
                     items = [{
                         "title" : "Print Request",
-                        "id": int(request_id),
-                        "quantity": int(print_request.quantity),
+                        "id": request_id,
+                        "quantity": print_request.quantity,
                         "unit_price": float(print_request.price)
                     }]
 
@@ -902,8 +902,8 @@ class UserRespondToDesignRequestView(APIView):
                 try:
                     items = [{
                         "title": "Design Request",
-                        "id": int(request_id),
-                        "quantity": int(design_request.quantity),
+                        "id": request_id,
+                        "quantity": design_request.quantity,
                         "unit_price": float(design_request.price)
                     }]
                     seller = Seller.objects.filter(userId=design_request.sellerID)
@@ -1219,8 +1219,8 @@ class AcceptAuctionResponseView(APIView):
             # Prepare items for MercadoPago preference
             items = [{
                 "title": "Dummy Title",
-                "id": int(auction.requestID),
-                "quantity": int(auction.quantity),
+                "id": auction.requestID,
+                "quantity": auction.quantity,
                 "unit_price": float(response.price)
             }]
 
@@ -1536,8 +1536,8 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             items = [
             {
                 "title": "Nombre del producto",
-                "id": int(auction.requestID),
-                "quantity": int(auction.quantity),  # Cantidad del producto
+                "id": auction.requestID,
+                "quantity": auction.quantity,  # Cantidad del producto
                 "unit_price": float(response.price),  # Precio unitario
                 "currency_id": "ARS"  # Moneda
             }
