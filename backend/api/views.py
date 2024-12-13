@@ -267,7 +267,7 @@ class ProductDetailWithSellerView(generics.RetrieveAPIView):
 class ProductSellerDetailView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, product_id):
+    def get(self, product_id):
         try:
             product = Product.objects.get(code=product_id)
             seller = product.seller
