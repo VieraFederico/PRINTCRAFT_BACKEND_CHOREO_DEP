@@ -191,6 +191,27 @@ class UpdateProfilePictureView(APIView):
         except Exception as e:
             return Response({"error": f"Error uploading new profile picture: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class SellerReviewsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        try:
+            seller = Seller.objects.get(userId=user_id)
+            reviews = ProductReview.objects.filter(product__seller=seller)
+            review_data = [
+                {
+                    "product": review.product.name,
+                    "rating": review.rating,
+                    "comment": review.comment,
+                    "user": review.user.username,
+                    "created_at": review.created_at
+                }
+                for review in reviews
+            ]
+            return Response(review_data, status=status.HTTP_200_OK)
+        except Seller.DoesNotExist:
+            return Response({"error": "Seller not found"}, status=status.HTTP_404_NOT_FOUND)
+
 # {"error":"Error uploading new profile picture: expected str, bytes or os.PathLike object, not InMemoryUploadedFile"}
 ##################
 #### PRODUCTS ####

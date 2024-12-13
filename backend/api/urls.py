@@ -8,6 +8,7 @@ urlpatterns = [
     path('user/update/', UpdateUserView.as_view(), name='update-user'),
     path('seller/<int:userId>/', SellerDetailView.as_view(), name='seller-detail'),
     path('sellers/', SellerListView.as_view(), name='seller-list'),  # Nueva URL para listar todos los vendedores
+    path('sellers/<int:user_id>/reviews/', SellerReviewsView.as_view(), name='seller-reviews'),
     path('products/create/', ProductCreateView.as_view(), name='product-create'),
     path('products/delete/<int:product_id>/', DeleteProductView.as_view(), name='delete-product'),
     path('products/', ProductListView.as_view(), name='product-list'),  # Nueva URL para listar todos los productos
