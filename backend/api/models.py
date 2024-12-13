@@ -10,6 +10,8 @@ class Seller(models.Model):
     materials = models.ManyToManyField('Material', related_name='sellers')  # Nueva relación muchos a muchos
     code = models.CharField(max_length=255, null=True, blank=True)
     mp_mail = models.EmailField(max_length=255, null=False)
+    review_count = models.IntegerField(default=0)
+    review_sum = models.IntegerField(default=0)
     mp_access_token = models.CharField(max_length=255, null=True, blank=True)
     mp_refresh_token = models.CharField(max_length=255, null=True, blank=True)
    # mp_token_expires_at = models.DateTimeField(null=True, blank=True)
