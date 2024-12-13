@@ -48,6 +48,7 @@ class Product(models.Model):
     categories = models.ManyToManyField('Category')  # Relación muchos a muchos con Category
     review_count = models.IntegerField(default=0)
     review_sum = models.IntegerField(default=0)
+    size = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.name
