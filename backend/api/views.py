@@ -327,6 +327,11 @@ class ProductReviewListCreateView(generics.ListCreateAPIView):
         product.review_count += 1
         product.review_sum += rating
         product.save()
+
+        seller = product.seller
+        seller.review_count += 1
+        seller.review_sum += rating
+        seller.save()
         serializer.save(user=user)
 
 
