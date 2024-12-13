@@ -285,8 +285,7 @@ class RecommendedProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         # Obtener los productos más vendidos
-        return Product.objects.order_by('-stock')[:4]
-
+        return Product.objects.order_by('?')[:4]
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
