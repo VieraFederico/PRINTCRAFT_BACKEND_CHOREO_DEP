@@ -212,6 +212,20 @@ class SellerReviewsView(APIView):
         except Seller.DoesNotExist:
             return Response({"error": "Seller not found"}, status=status.HTTP_404_NOT_FOUND)
 
+class SellerRatingView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        try:
+            seller = Seller.objects.get(userId=user_id)
+            if seller.review_count > 0:
+                rating = round(seller.review_sum / seller.review_count, 1)
+            else:
+                rating = 0.0
+            return Response({"rating": rating}, status=status.HTTP_200_OK)
+        except Seller.DoesNotExist:
+            return Response({"error": "Seller not found"}, status=status.HTTP_404_NOT_FOUND)
+
 # {"error":"Error uploading new profile picture: expected str, bytes or os.PathLike object, not InMemoryUploadedFile"}
 ##################
 #### PRODUCTS ####
