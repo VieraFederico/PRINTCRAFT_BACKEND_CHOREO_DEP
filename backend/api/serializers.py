@@ -332,7 +332,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'code', 'name', 'material', 'stock', 'description',
-            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials', 'review_sum', 'review_count', 'seller_name'
+            'stl_file_url', 'seller', 'price', 'image_files', 'images', 'stl_file', 'categories', 'materials', 'review_sum', 'review_count', 'seller_name', 'size'
         ]
         extra_kwargs = {
             'code': {'read_only': True},  # Solo lectura
