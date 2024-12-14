@@ -1793,6 +1793,7 @@ class SellerOrderListView(generics.ListAPIView):
 
         return Order.objects.filter(productCode__seller=seller)
 """
+"""
 class SellerOrderListView(APIView):
     permission_classes = [IsSeller]
     # permission_classes = [AllowAny]
@@ -1816,6 +1817,48 @@ class SellerOrderListView(APIView):
             }
             for order in orders
         ]
+        return Response(response_data, status=status.HTTP_200_OK)
+"""
+class SellerOrderListView(APIView):
+    permission_classes = [IsSeller]
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Obtener el vendedor del usuario autenticado
+        seller = request.user.seller
+        # seller = Seller.objects.get(userId=156)  # TODO CAMBIAR
+
+        # Filtrar las órdenes que contienen productos del vendedor
+        orders = Order.objects.filter(order_products__product__seller=seller).distinct().select_related("userID")
+
+        # Crear la respuesta
+        response_data = []
+        for order in orders:
+            # Obtener los productos asociados a esta orden
+            products = order.order_products.select_related("product").all()
+
+            # Crear la lista de productos
+            product_list = [
+                {
+                    "productcode": product.product.code,
+                    "product_name": product.product.name,
+                    "quantity": product.quantity,
+                    "price": product.product.price,
+                    "total_price": product.product.price * product.quantity,
+                }
+                for product in products
+            ]
+
+            # Agregar los datos de la orden con la lista de productos
+            response_data.append({
+                "orderid": order.orderID,
+                "orderdate": order.orderDate,
+                "status": order.status,
+                "userid": order.userID.id if order.userID else None,
+                "user_email": order.userID.email if order.userID else None,
+                "products": product_list,
+            })
+
         return Response(response_data, status=status.HTTP_200_OK)
 
 
