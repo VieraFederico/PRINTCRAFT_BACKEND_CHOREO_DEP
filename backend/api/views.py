@@ -508,22 +508,7 @@ class UserPrintRequestListView(APIView):
             for print_request in print_requests
         ]
         return Response(response_data, status=status.HTTP_200_OK)
-"""
-    requestID = models.AutoField(primary_key=True)
-    userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
-    stl_url = models.URLField(max_length=200, null=False)
-    description = models.TextField()
-    quantity = models.IntegerField(null=False)
-    material = models.CharField(max_length=255, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    status = models.CharField(max_length=255, null=False, default="Pendiente",
-                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
-                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
-                                       ("En proceso", "En proceso"), ("Realizada", "Realizada")]
-                              )
-    preference_id
-"""
+
 
 class SellerPrintRequestListView(generics.ListAPIView):
     serializer_class = PrintRequestSerializer
@@ -819,25 +804,7 @@ descripción
 cantidad
 material
 """
-"""
-necesito que cambies está vista para que a la respuesta se le unan las DesignReverseAuctionResponse x DesignReverseAuction que el seller haya cotizado
 
-campo       | -> |  donde lo consigo
-requestID   | -> |  DesignRequest
-userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
-    description = models.TextField()
-    design_images = models.ManyToManyField('DesignRequestImage')
-    quantity = models.IntegerField(null=False)
-    material = models.CharField(max_length=255, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    status = models.CharField(max_length=255, null=False, default="Pendiente",
-                              choices=[("Pendiente", "Pendiente"), ("Rechazada", "Rechazada"),
-                                       ("Cotizada", "Cotizada"), ("Cancelada", "Cancelada"),
-                                       ("En proceso", "En proceso"), ("Realizada", "Realizada"),
-                                       ("Aceptada", "Aceptada"), ("Entregada", "Entregada")]
-                              )
-"""
 
 """
 class SellerDesignOrdersListView(generics.ListAPIView)
@@ -1855,7 +1822,7 @@ class SellerOrderListView(APIView):
         # seller = Seller.objects.get(userId=156)  # TODO CAMBIAR
 
         # Filtrar las órdenes que contienen productos del vendedor
-        orders = Order.objects.filter(order_products__product__seller=seller).distinct().select_related("userID")
+        orders = Order.objects.filter(order_products__product__seller=seller).exclude(status="En proceso").distinct().select_related("userID")
 
         # Crear la respuesta
         response_data = []
