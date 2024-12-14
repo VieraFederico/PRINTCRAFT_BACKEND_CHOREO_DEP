@@ -317,6 +317,16 @@ class ProductSellerDetailView(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
+class CanReviewProductView(APIView):
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny] # todo CAMBIAR
+
+    def get(self, request, product_code):
+        user = self.request.user
+        # user = User.objects.get(id=142) # TODO CAMBIAR
+        has_purchased = OrderProduct.objects.filter(order__userID=user, product__code=product_code).exists()
+        return Response({"can_review": has_purchased}, status=status.HTTP_200_OK)
+
 class ProductReviewListCreateView(generics.ListCreateAPIView):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer

@@ -21,6 +21,7 @@ urlpatterns = [
     path('seller-orders/', SellerOrderListView.as_view(), name='seller-orders'),
     path('products/recommended/', RecommendedProductListView.as_view(), name='recommended-product-list'),
     path('products/<int:code>/', ProductDetailView.as_view(), name='product-detail'),
+    path('can-review/<int:product_code>/', CanReviewProductView.as_view(), name='can-review-product'),
     path('products/search/', ProductSearchView.as_view(), name='product-search'),
     path('payment/', CreateOrderPaymentView.as_view(), name='create-payment'),  # Ruta para crear un pago
     path('products/<int:product_id>/seller/', ProductSellerDetailView.as_view(), name='product-seller-detail'),
