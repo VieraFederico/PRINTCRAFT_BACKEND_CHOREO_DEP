@@ -1306,8 +1306,8 @@ class AcceptAuctionResponseView(APIView):
                     payment_link = result['init_point']
                     preference_id = result['preference_id']
 
-                auction.preference_id = preference_id
-                auction.save()
+                print_request.preference_id = preference_id
+                print_request.save()
                 return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
