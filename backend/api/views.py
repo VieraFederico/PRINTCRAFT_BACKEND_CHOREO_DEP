@@ -623,8 +623,7 @@ class UserRespondToPrintRequestView(APIView):
                         "unit_price": float(print_request.price)
                     }]
 
-                    seller = Seller.objects.filter(userId=print_request.sellerID)
-
+                    seller = print_request.sellerID
                     access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                     if not access_token:
                         return Response({"error": "Error refreshing access token."},
@@ -644,6 +643,9 @@ class UserRespondToPrintRequestView(APIView):
                     if result:
                         payment_link = result['init_point']
                         preference_id = result['preference_id']
+
+                    print_request.preference_id = preference_id
+                    print_request.save()
 
                     return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
@@ -957,7 +959,8 @@ class UserRespondToDesignRequestView(APIView):
                         "quantity": design_request.quantity,
                         "unit_price": float(design_request.price)
                     }]
-                    seller = Seller.objects.filter(userId=design_request.sellerID)
+
+                    seller = design_request.sellerID
 
                     access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                     if not access_token:
@@ -978,6 +981,9 @@ class UserRespondToDesignRequestView(APIView):
                     if result:
                         payment_link = result['init_point']
                         preference_id = result['preference_id']
+
+                    design_request.preference_id = preference_id
+                    design_request.save()
 
                     return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
@@ -1278,7 +1284,7 @@ class AcceptAuctionResponseView(APIView):
 
             try:
                 request = PrintRequest.objects.filter(requestID=auction.requestID)
-                seller = Seller.objects.filter(userId=request.sellerID)
+                seller = request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                 if not access_token:
@@ -1300,6 +1306,8 @@ class AcceptAuctionResponseView(APIView):
                     payment_link = result['init_point']
                     preference_id = result['preference_id']
 
+                auction.preference_id = preference_id
+                auction.save()
                 return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
@@ -1596,7 +1604,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
 
             try:
                 request = DesignRequest.objects.filter(requestID=auction.requestID)
-                seller = Seller.objects.filter(userId=request.sellerID)
+                seller = request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                 if not access_token:
@@ -1618,6 +1626,9 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                 if result:
                     payment_link = result['init_point']
                     preference_id = result['preference_id']
+
+                auction.preference_id = preference_id
+                auction.save()
 
                 return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
