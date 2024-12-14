@@ -1770,6 +1770,7 @@ class UserOrderListView(APIView):
                 "orderid": order.orderID,
                 "status": order.status,
                 "orderdate": order.orderDate,
+                "store_name": order.order_products.first().product.seller.store_name if order.order_products.exists() else None,
                 "total_price": sum(
                     op.product.price * op.quantity for op in order.order_products.all()
                 ),
