@@ -176,8 +176,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        #user = User.objects.get(id=160)
-        validated_data['userID'] = user
         products_data = validated_data.pop('order_products')
         preference_id = validated_data.pop('preference_id', None)
 
