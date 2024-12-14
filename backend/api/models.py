@@ -204,7 +204,7 @@ class PrintReverseAuction(models.Model):
                               choices=[("Open", "Open"), ("Closed", "Closed")])
     response_count = models.IntegerField(null=False, default=0)
     accepted_response = models.OneToOneField('PrintReverseAuctionResponse', on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_auction')
-
+    preference_id = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Reverse Auction {self.requestID} by {self.userID.username}"
@@ -234,6 +234,7 @@ class DesignReverseAuction(models.Model):
     response_count = models.IntegerField(null=False, default=0)
     accepted_response = models.OneToOneField('DesignReverseAuctionResponse', on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_auction')
     design_images = models.ManyToManyField('DesignRequestImage')
+    preference_id = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Reverse Auction {self.requestID} by {self.userID.username}"

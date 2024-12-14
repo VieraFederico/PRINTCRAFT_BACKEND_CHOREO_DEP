@@ -221,14 +221,14 @@ class PrintRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrintRequest
-        fields = ['requestID', 'userID', 'quantity', 'sellerID', 'stl_url', 'description', 'material', 'status', 'stl_file', 'price']
+        fields = ['requestID', 'userID', 'quantity', 'sellerID', 'stl_url', 'description', 'material', 'status', 'stl_file', 'price','preference_id']
         extra_kwargs = {'requestID':{'read_only':True}, 'userID': {'read_only': True}, 'status': {'read_only': True}, 'stl_url': {'read_only': True}, 'price':{'read_only':True}}
 
     def create(self, validated_data):
         stl_file = validated_data.pop('stl_file', None)
         user = self.context['request'].user
         # user = User.objects.get(id=7)  # TODO CAMBIARRRR
-
+        preference_id = validated_data.pop('preference_id', None)
         """
         try:
             user = User.objects.get(id=4)  # TODO CAMBIARRRR
@@ -250,7 +250,7 @@ class PrintRequestSerializer(serializers.ModelSerializer):
 
         # validated_data['userID'] = user
         # return PrintRequest.objects.create(**validated_data)
-        return PrintRequest.objects.create(userID=user, stl_url=stl_file_url, **validated_data)
+        return PrintRequest.objects.create(userID=user, stl_url=stl_file_url, preference_id=preference_id, **validated_data)
 
 
 class DesignRequestImageSerializer(serializers.ModelSerializer):
@@ -267,7 +267,7 @@ class DesignRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DesignRequest
         fields = ['requestID', 'userID', 'sellerID', 'description', 'design_images', 'design_images_files', 'quantity', 'material', 'price',
-                  'status']
+                  'status', 'preference_id']
         extra_kwargs = {
             'requestID': {'read_only': True},
             'userID': {'read_only': True},
@@ -281,7 +281,9 @@ class DesignRequestSerializer(serializers.ModelSerializer):
         design_images_files = validated_data.pop('design_images_files', [])
         user = self.context['request'].user
         # user = User.objects.get(id=5)
-        design_request = DesignRequest.objects.create(userID=user, **validated_data)
+        preference_id = validated_data.pop('preference_id', None)
+
+        design_request = DesignRequest.objects.create(userID=user, preference_id=preference_id,**validated_data)
 
         for index, image_file in enumerate(design_images_files, start=1):
             try:
