@@ -1269,6 +1269,7 @@ class AcceptAuctionResponseView(APIView):
                     stl_url=auction.stl_file_url,
                     description=auction.description,
                     quantity=auction.quantity,
+                    status="Cotizada",
                     material=auction.material,
                     price=response.price,
                 )
@@ -1276,14 +1277,14 @@ class AcceptAuctionResponseView(APIView):
             # Prepare items for MercadoPago preference
             items = [{
                 "title": "Dummy Title",
-                "id": auction.requestID,
+                "id": print_request.requestID,
                 "quantity": auction.quantity,
                 "unit_price": float(response.price)
             }]
 
 
             try:
-                request = PrintRequest.objects.filter(requestID=auction.requestID)
+                request = print_request.requestID
                 seller = request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
