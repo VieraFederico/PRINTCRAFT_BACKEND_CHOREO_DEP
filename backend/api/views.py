@@ -1721,7 +1721,9 @@ class DeliverOrderView(APIView):
         seller = request.user.seller
         # seller = Seller.objects.get(userId=142)
         try:
-            order = Order.objects.get(orderID=order_id, productCode__seller=seller)
+            order = Order.objects.get(orderID=order_id)
+            if not OrderProduct.objects.filter(order=order, product__seller=seller).exists():
+                return Response( {"error": "Order not found or you do not have permission to modify it"}, status=status.HTTP_404_NOT_FOUND )
             order.status = "Entregada"
             order.save()
             return Response({"message": "Order marked as delivered successfully"}, status=status.HTTP_200_OK)
