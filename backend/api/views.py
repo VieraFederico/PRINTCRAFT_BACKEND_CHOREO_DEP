@@ -1284,8 +1284,7 @@ class AcceptAuctionResponseView(APIView):
 
 
             try:
-                request = print_request.requestID
-                seller = request.sellerID
+                seller = print_request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                 if not access_token:
