@@ -1231,7 +1231,7 @@ class AcceptAuctionResponseView(APIView):
 
     def post(self, request, auction_id, response_id):
         try:
-            # Retrieve the auction, ensuring it's open and belongs to the current user
+
             auction = PrintReverseAuction.objects.get(
                 requestID=auction_id,
                 status="Open",
@@ -1284,6 +1284,7 @@ class AcceptAuctionResponseView(APIView):
 
 
             try:
+                print_request = auction.print_request
                 seller = print_request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
@@ -1308,6 +1309,7 @@ class AcceptAuctionResponseView(APIView):
 
                 print_request.preference_id = preference_id
                 print_request.save()
+
                 return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
@@ -1604,6 +1606,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             ]
 
             try:
+                design_request = auction.design_request
                 seller = design_request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
