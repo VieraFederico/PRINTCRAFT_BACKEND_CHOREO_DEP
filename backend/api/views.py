@@ -1584,6 +1584,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                     description=auction.description,
                     quantity=auction.quantity,
                     material=auction.material,
+                    status="Cotizada",
                     price=response.price,
                 )
 
@@ -1603,8 +1604,7 @@ class AcceptDesignReverseAuctionResponseView(APIView):
             ]
 
             try:
-                request = DesignRequest.objects.filter(requestID=auction.requestID)
-                seller = request.sellerID
+                seller = design_request.sellerID
 
                 access_token, refresh_token = self.refresh_mp_access_token(seller.mp_refresh_token)
                 if not access_token:
@@ -1627,8 +1627,8 @@ class AcceptDesignReverseAuctionResponseView(APIView):
                     payment_link = result['init_point']
                     preference_id = result['preference_id']
 
-                auction.preference_id = preference_id
-                auction.save()
+                design_request.preference_id = preference_id
+                design_request.save()
 
                 return Response({"payment_link": payment_link}, status=status.HTTP_201_CREATED)
 
