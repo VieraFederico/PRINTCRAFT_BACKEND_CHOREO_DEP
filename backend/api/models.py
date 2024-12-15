@@ -157,7 +157,7 @@ class Order(models.Model):
     orderDate = models.DateTimeField(auto_now_add=True, null=False)
     status = models.CharField(max_length=255, null=False, default="En proceso")
     preference_id = models.CharField(max_length=255, null=True, blank=True)
-
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     def __str__(self):
         return f"Order {self.orderID}"
 

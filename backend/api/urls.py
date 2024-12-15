@@ -76,4 +76,5 @@ urlpatterns = [
     path('reviews/', ProductReviewListCreateView.as_view(), name='product-review-list-create'),
     path('reviews/<int:pk>/', ProductReviewDetailView.as_view(), name='product-review-detail'),
     path('reviews/product/<int:product_code>/', ProductReviewsByProductCodeView.as_view(), name='product-reviews-by-product-code'),
+    path('test-email/', TestEmailView.as_view(), name='test_email'),
 ]

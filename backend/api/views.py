@@ -2003,7 +2003,8 @@ class CreateOrderPaymentView(APIView):
             preference_id = result['preference_id']
         order_data = {
                 "order_products": order_products,
-                "preference_id": preference_id
+                "preference_id": preference_id,
+                "price": total_amount,
         }
         serializer = OrderSerializer(data=order_data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
@@ -2021,106 +2022,38 @@ class BaseMercadoPagoSuccessView(APIView):
     }
 
     def send_notifications(self, request, instance):
-        if not self.model:
-            return Response(
-                {"error": "Model not configured for notification view"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        buyer_email = instance.user.email if hasattr(instance, "user") else None
-        if buyer_email:
-            self.send_email_notification(
-                email=buyer_email,
-                subject="Compra Confirmada" if self.model == Order else "Solicitud Confirmada",
-                message=self.generate_buyer_message(instance),
-            )
+        seller = instance.sellerID
+        seller_email = seller.mp_mail
         if self.model == Order:
-            return self.send_order_notifications(instance)
+            return self.send_order_notifications(instance,seller_email)
         elif self.model in [PrintRequest, DesignRequest]:
-            return self.send_request_notifications(instance)
+            return self.send_request_notifications(instance, seller_email)
         else:
             return Response(
                 {"error": "Unknown model for notification"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def send_order_notifications(self, instance):
-        sellers = set(instance.order_products.values_list("product__seller", flat=True))
-        for seller_id in sellers:
-            seller_message = self.generate_seller_message(instance, seller_id=seller_id)
-            seller_email = Seller.objects.get(id=seller_id).mp_mail
-            self.send_email_notification(
-                email=seller_email,
-                subject="Nueva venta confirmada",
-                message=seller_message,
-            )
-
-        return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
-
-    def send_request_notifications(self, instance):
-        seller_email = instance.seller.mp_mail
-        seller_message = self.generate_seller_message(instance)
-        self.send_email_notification(
-            email=seller_email,
-            subject="Nueva solicitud recibida",
-            message=seller_message,
-        )
-
-        buyer_email = instance.user.email
-        buyer_message = self.generate_buyer_message(instance)
-        self.send_email_notification(
-            email=buyer_email,
-            subject="Solicitud confirmada",
-            message=buyer_message,
-        )
-
-        return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
+    )
 
     def send_email_notification(self, email, subject, message):
         send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email='3dcapybararesponse@gmail.com',
             recipient_list=[email],
             fail_silently=False,
-        )
+    )
 
-    def generate_buyer_message(self, instance):
-        if self.model == Order:
-            total_spent = sum(op.product.price * op.quantity for op in instance.order_products.all())
+    def send_order_notifications(self, instance, seller_email):
+        seller_message = f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${instance.price}.\n"
+        self.send_email_notification(seller_message, "Nueva venta confirmada", seller_email)
+        return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
 
-            product_details = "\n".join(
-                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in
-                 instance.order_products.all()]
-            )
-            return f"Gracias por tu compra. Tu orden #{instance.id} ha sido confirmada. Total gastado: ${total_spent}.\n\nProductos comprados:\n{product_details}"
-
-        elif self.model == PrintRequest or self.model == DesignRequest:
-            price = instance.price
-            description = instance.description
-            return f"Tu solicitud #{instance.id} ha sido confirmada. Descripción: {description}\nPrecio: ${price}"
-
+    def send_request_notifications(self, instance, seller_email):
+        seller_message = f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {instance.description}\nPrecio: ${instance.price}"
+        if instance is PrintRequest:
+            self.send_email_notification(seller_message, "Nueva solicitud de impresion", seller_email)
         else:
-            return "No se pudo generar el mensaje para este modelo."
-
-    def generate_seller_message(self, instance, seller_id=None):
-        if self.model == Order:
-            order_products = instance.order_products.filter(product__seller_id=seller_id)
-            total_earned = sum(
-                op.product.price * op.quantity for op in order_products
-            )
-
-            product_details = "\n".join(
-                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in order_products]
-            )
-
-            return f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${total_earned}.\n\nProductos vendidos:\n{product_details}"
-
-        elif self.model == PrintRequest or self.model == DesignRequest:
-            price = instance.price
-            description = instance.description
-            return f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {description}\nPrecio: ${price}"
-
-        else:
-            return "No se pudo generar el mensaje para este modelo."
+            self.send_email_notification(seller_message, "Nueva solicitud de diseño", seller_email)
+        return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
 
     def post(self,request):
         if not self.model:
@@ -2430,3 +2363,24 @@ class CositoAIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+from django.views import View
+from django.http import HttpResponse
+from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
+
+class TestEmailView(View):
+    def get(self, request):
+        try:
+            send_mail(
+                'Test Email Subject',
+                'This is a test email from Django.',
+                '3dcapybararesponse@gmail.com',  # Use the email from settings
+                ['estebanthequito@gmail.com'],  # Replace with an email you can check
+                fail_silently=False
+            )
+            return HttpResponse("Email sent successfully!")
+        except Exception as e:
+            logger.error(f"Email sending error: {str(e)}")
+            return HttpResponse(f"Error sending email: {str(e)}")
