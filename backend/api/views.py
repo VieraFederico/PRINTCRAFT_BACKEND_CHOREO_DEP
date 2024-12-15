@@ -1761,16 +1761,19 @@ class UserOrderListView(APIView):
 
     def get(self, request):
         user = self.request.user
-        # user = User.objects.get(id=142)
         orders = Order.objects.filter(userID=user)
 
         response_data = []
         for order in orders:
+            first_order_product = order.order_products.first()
+            seller = first_order_product.product.seller if first_order_product else None
+
             order_data = {
                 "orderid": order.orderID,
                 "status": order.status,
                 "orderdate": order.orderDate,
-                "store_name": order.order_products.first().product.seller.store_name if order.order_products.exists() else None,
+                "store_name": seller.store_name if seller else None,
+                "address": seller.address if seller else None,
                 "total_price": sum(
                     op.product.price * op.quantity for op in order.order_products.all()
                 ),
