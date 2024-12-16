@@ -147,7 +147,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['orderID', 'userID', 'orderDate', 'status', 'order_products','preference_id','price']
+        fields = ['orderID', 'userID', 'orderDate', 'status', 'order_products','preference_id','price','sellerID']
         extra_kwargs = {
             'userID': {'read_only': True},
             'orderID': {'read_only': True},
@@ -179,6 +179,7 @@ class OrderSerializer(serializers.ModelSerializer):
         products_data = validated_data.pop('order_products')
         preference_id = validated_data.pop('preference_id', None)
         price = validated_data.pop('price', None)
+        sellerID = validated_data.pop('sellerID', None)
         order = Order.objects.create(
             userID=user,
             preference_id=preference_id,

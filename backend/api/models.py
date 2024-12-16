@@ -154,6 +154,7 @@ class Order(models.Model):
 class Order(models.Model):
     orderID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sellerID = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
     orderDate = models.DateTimeField(auto_now_add=True, null=False)
     status = models.CharField(max_length=255, null=False, default="En proceso")
     preference_id = models.CharField(max_length=255, null=True, blank=True)

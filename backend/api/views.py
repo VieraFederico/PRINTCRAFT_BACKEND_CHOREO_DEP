@@ -2005,6 +2005,7 @@ class CreateOrderPaymentView(APIView):
                 "order_products": order_products,
                 "preference_id": preference_id,
                 "price": total_amount,
+                "sellerID":seller
         }
         serializer = OrderSerializer(data=order_data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
@@ -2014,6 +2015,7 @@ class CreateOrderPaymentView(APIView):
 
 
 class BaseMercadoPagoSuccessView(APIView):
+    permission_classes = [AllowAny]
     model = None
     status_mapping = {
         "approved": "Aceptada",
@@ -2046,15 +2048,15 @@ class BaseMercadoPagoSuccessView(APIView):
 
     def send_order_notifications(self, instance, seller_email):
         print("Entre al order notification!")
-        seller_message = f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${instance.price}.\n"
+        seller_message = f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.orderID}. Total ganado: ${instance.price}.\n"
         print(seller_message)
         self.send_email_notification(seller_email, "Nueva venta confirmada", seller_message)
         return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
 
     def send_request_notifications(self, instance, seller_email):
         seller_message = f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {instance.description}\nPrecio: ${instance.price}"
-        if instance is PrintRequest:
-            self.send_email_notification(seller_email, "Nueva solicitud de impresion", seller_message)
+        if self.model == PrintRequest:
+            self.send_email_notification(seller_email, "Nueva solicitud de impresión", seller_message)
         else:
             self.send_email_notification(seller_email, "Nueva solicitud de diseño", seller_message)
 
