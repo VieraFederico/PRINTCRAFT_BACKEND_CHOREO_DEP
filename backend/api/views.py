@@ -342,8 +342,8 @@ class ProductReviewListCreateView(generics.ListCreateAPIView):
         rating = serializer.validated_data['rating']
 
         # Check if the user has bought the product
-        if not OrderProduct.objects.filter(order__userID=user, product=product).exists():
-            raise serializers.ValidationError("You can only review products you have purchased.")
+        # if not OrderProduct.objects.filter(order__userID=user, product=product).exists():
+        #     raise serializers.ValidationError("You can only review products you have purchased.")
 
         # check that the user has not already reviewed the product
         # if ProductReview.objects.filter(user=user, product=product).exists():
