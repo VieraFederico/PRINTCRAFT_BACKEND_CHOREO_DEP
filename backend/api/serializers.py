@@ -184,6 +184,7 @@ class OrderSerializer(serializers.ModelSerializer):
             userID=user,
             preference_id=preference_id,
             price = price,
+            sellerID = sellerID,
             **validated_data
         )
 

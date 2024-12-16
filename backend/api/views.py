@@ -2005,7 +2005,7 @@ class CreateOrderPaymentView(APIView):
                 "order_products": order_products,
                 "preference_id": preference_id,
                 "price": total_amount,
-                "sellerID":seller
+                "sellerID": seller,
         }
         serializer = OrderSerializer(data=order_data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
