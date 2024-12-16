@@ -2023,7 +2023,9 @@ class BaseMercadoPagoSuccessView(APIView):
 
     def send_notifications(self, request, instance):
         seller = instance.sellerID
+        print(seller)
         seller_email = seller.mp_mail
+        print(seller_email)
         if self.model == Order:
             return self.send_order_notifications(instance,seller_email)
         elif self.model in [PrintRequest, DesignRequest]:
@@ -2043,16 +2045,19 @@ class BaseMercadoPagoSuccessView(APIView):
     )
 
     def send_order_notifications(self, instance, seller_email):
+        print("Entre al order notification!")
         seller_message = f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${instance.price}.\n"
-        self.send_email_notification(seller_message, "Nueva venta confirmada", seller_email)
+        print(seller_message)
+        self.send_email_notification(seller_email, "Nueva venta confirmada", seller_message)
         return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
 
     def send_request_notifications(self, instance, seller_email):
         seller_message = f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {instance.description}\nPrecio: ${instance.price}"
         if instance is PrintRequest:
-            self.send_email_notification(seller_message, "Nueva solicitud de impresion", seller_email)
+            self.send_email_notification(seller_email, "Nueva solicitud de impresion", seller_message)
         else:
-            self.send_email_notification(seller_message, "Nueva solicitud de diseño", seller_email)
+            self.send_email_notification(seller_email, "Nueva solicitud de diseño", seller_message)
+
         return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
 
     def post(self,request):
