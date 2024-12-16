@@ -167,7 +167,13 @@ MP_KEY = os.getenv("MP_KEY")
 
 CLIENT_ID = os.getenv("CLIENT_ID")
 SECRET_CLIENT = os.getenv("SECRET_CLIENT")
-MP_US_ID= os.getenv("MP_US_ID")
-MP_TEST= os.getenv("MP_TEST")
-MP_SELLER_MAIL_TEST= os.getenv("MP_SELLER_MAIL_TEST")
-MP_REFRESH_TEST= os.getenv("MP_REFRESH_TEST")
+GMAIL_PASS = os.getenv("GMAIL_PASS")
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = '3dcapybararesponse@gmail.com'
+EMAIL_HOST_PASSWORD = GMAIL_PASS
+DEFAULT_FROM_EMAIL = '3dcapybararesponse@gmail.com'
+

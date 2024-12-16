@@ -2003,7 +2003,9 @@ class CreateOrderPaymentView(APIView):
             preference_id = result['preference_id']
         order_data = {
                 "order_products": order_products,
-                "preference_id": preference_id
+                "preference_id": preference_id,
+                "price": total_amount,
+                "sellerID": seller,
         }
         serializer = OrderSerializer(data=order_data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
@@ -2013,6 +2015,7 @@ class CreateOrderPaymentView(APIView):
 
 
 class BaseMercadoPagoSuccessView(APIView):
+    permission_classes = [AllowAny]
     model = None
     status_mapping = {
         "approved": "Aceptada",
@@ -2021,106 +2024,43 @@ class BaseMercadoPagoSuccessView(APIView):
     }
 
     def send_notifications(self, request, instance):
-        if not self.model:
-            return Response(
-                {"error": "Model not configured for notification view"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        buyer_email = instance.user.email if hasattr(instance, "user") else None
-        if buyer_email:
-            self.send_email_notification(
-                email=buyer_email,
-                subject="Compra Confirmada" if self.model == Order else "Solicitud Confirmada",
-                message=self.generate_buyer_message(instance),
-            )
+        seller = instance.sellerID
+        print(seller)
+        seller_email = seller.mp_mail
+        print(seller_email)
         if self.model == Order:
-            return self.send_order_notifications(instance)
+            return self.send_order_notifications(instance,seller_email)
         elif self.model in [PrintRequest, DesignRequest]:
-            return self.send_request_notifications(instance)
+            return self.send_request_notifications(instance, seller_email)
         else:
             return Response(
                 {"error": "Unknown model for notification"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def send_order_notifications(self, instance):
-        sellers = set(instance.order_products.values_list("product__seller", flat=True))
-        for seller_id in sellers:
-            seller_message = self.generate_seller_message(instance, seller_id=seller_id)
-            seller_email = Seller.objects.get(id=seller_id).mp_mail
-            self.send_email_notification(
-                email=seller_email,
-                subject="Nueva venta confirmada",
-                message=seller_message,
-            )
-
-        return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
-
-    def send_request_notifications(self, instance):
-        seller_email = instance.seller.mp_mail
-        seller_message = self.generate_seller_message(instance)
-        self.send_email_notification(
-            email=seller_email,
-            subject="Nueva solicitud recibida",
-            message=seller_message,
-        )
-
-        buyer_email = instance.user.email
-        buyer_message = self.generate_buyer_message(instance)
-        self.send_email_notification(
-            email=buyer_email,
-            subject="Solicitud confirmada",
-            message=buyer_message,
-        )
-
-        return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
+    )
 
     def send_email_notification(self, email, subject, message):
         send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email='3dcapybararesponse@gmail.com',
             recipient_list=[email],
             fail_silently=False,
-        )
+    )
 
-    def generate_buyer_message(self, instance):
-        if self.model == Order:
-            total_spent = sum(op.product.price * op.quantity for op in instance.order_products.all())
+    def send_order_notifications(self, instance, seller_email):
+        print("Entre al order notification!")
+        seller_message = f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.orderID}. Total ganado: ${instance.price}.\n"
+        print(seller_message)
+        self.send_email_notification(seller_email, "Nueva venta confirmada", seller_message)
+        return Response({"message": "Order notifications sent successfully"}, status=status.HTTP_200_OK)
 
-            product_details = "\n".join(
-                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in
-                 instance.order_products.all()]
-            )
-            return f"Gracias por tu compra. Tu orden #{instance.id} ha sido confirmada. Total gastado: ${total_spent}.\n\nProductos comprados:\n{product_details}"
-
-        elif self.model == PrintRequest or self.model == DesignRequest:
-            price = instance.price
-            description = instance.description
-            return f"Tu solicitud #{instance.id} ha sido confirmada. Descripción: {description}\nPrecio: ${price}"
-
+    def send_request_notifications(self, instance, seller_email):
+        seller_message = f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {instance.description}\nPrecio: ${instance.price}"
+        if self.model == PrintRequest:
+            self.send_email_notification(seller_email, "Nueva solicitud de impresión", seller_message)
         else:
-            return "No se pudo generar el mensaje para este modelo."
+            self.send_email_notification(seller_email, "Nueva solicitud de diseño", seller_message)
 
-    def generate_seller_message(self, instance, seller_id=None):
-        if self.model == Order:
-            order_products = instance.order_products.filter(product__seller_id=seller_id)
-            total_earned = sum(
-                op.product.price * op.quantity for op in order_products
-            )
-
-            product_details = "\n".join(
-                [f"{op.product.name} (Cantidad: {op.quantity}) - ${op.product.price} cada uno" for op in order_products]
-            )
-
-            return f"¡Felicidades! Uno o más productos tuyos han sido vendidos. ID de orden: {instance.id}. Total ganado: ${total_earned}.\n\nProductos vendidos:\n{product_details}"
-
-        elif self.model == PrintRequest or self.model == DesignRequest:
-            price = instance.price
-            description = instance.description
-            return f"Tienes una nueva solicitud. ID: {instance.id}.\n\nDescripción: {description}\nPrecio: ${price}"
-
-        else:
-            return "No se pudo generar el mensaje para este modelo."
+        return Response({"message": "Request notifications sent successfully"}, status=status.HTTP_200_OK)
 
     def post(self,request):
         if not self.model:
@@ -2430,162 +2370,24 @@ class CositoAIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny  # or adjust permissions as needed
-import requests
+from django.views import View
+from django.http import HttpResponse
+from django.core.mail import send_mail
 import logging
 
 logger = logging.getLogger(__name__)
 
-class MercadoPagoTokenTestView(APIView):
-    """
-    A view specifically designed for testing Mercado Pago token retrieval.
-    This should ONLY be used in development/testing environments.
-    """
-    permission_classes = [AllowAny]  # Be cautious with this in production
-
-    def post(self, request):
-        """
-        Exchange an authorization code for Mercado Pago tokens.
-
-        Expected JSON payload:
-        {
-            "authorization_code": "AUTHORIZATION_CODE_FROM_MERCADO_PAGO"
-        }
-        """
-        # Extract authorization code from request
-        authorization_code = request.data.get('authorization_code')
-
-        # Validate input
-        if not authorization_code:
-            return Response({
-                'error': 'Authorization code is required',
-                'message': 'Please provide the authorization code obtained from Mercado Pago'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+class TestEmailView(View):
+    def get(self, request):
         try:
-            # Prepare token exchange request data
-            token_data = {
-                'grant_type': 'authorization_code',
-                'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
-                'client_secret': str(settings.SECRET_CLIENT),
-                'code': authorization_code,
-                'redirect_uri': "https://3dcapybara.vercel.app/register_seller",
-            }
-
-            # Make request to Mercado Pago token endpoint
-            response = requests.post(
-                'https://api.mercadopago.com/oauth/token',
-                data=token_data
+            send_mail(
+                'Test Email Subject',
+                'This is a test email from Django.',
+                '3dcapybararesponse@gmail.com',  # Use the email from settings
+                ['estebanthequito@gmail.com'],  # Replace with an email you can check
+                fail_silently=False
             )
-
-            # Check response status
-            if response.status_code == 200:
-                # Successfully retrieved tokens
-                token_info = response.json()
-
-                # Log sensitive information carefully
-                logger.info(f"Successfully retrieved Mercado Pago tokens for user ID: {token_info.get('user_id')}")
-
-                # Return token information (be careful with production logging)
-                return Response({
-                    'access_token': token_info.get('access_token'),
-                    'refresh_token': token_info.get('refresh_token'),
-                    'user_id': token_info.get('user_id'),
-                    'expires_in': token_info.get('expires_in')
-                }, status=status.HTTP_200_OK)
-
-            else:
-                # Token retrieval failed
-                error_details = response.json()
-                logger.error(f"Mercado Pago token retrieval failed: {error_details}")
-
-                return Response({
-                    'error': 'Token retrieval failed',
-                    'details': error_details
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        except requests.RequestException as e:
-            # Network or request-related errors
-            logger.error(f"Request to Mercado Pago failed: {str(e)}")
-            return Response({
-                'error': 'Network error',
-                'message': 'Could not connect to Mercado Pago servers'
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
+            return HttpResponse("Email sent successfully!")
         except Exception as e:
-            # Catch-all for unexpected errors
-            logger.error(f"Unexpected error in token retrieval: {str(e)}")
-            return Response({
-                'error': 'Unexpected error',
-                'message': 'An unexpected error occurred during token retrieval'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class MercadoPagRefresh(APIView):
-    """
-    A view specifically designed for testing Mercado Pago token retrieval.
-    This should ONLY be used in development/testing environments.
-    """
-    permission_classes = [AllowAny]  # Be cautious with this in production
-
-    def post(self, request):
-
-        url = "https://api.mercadopago.com/oauth/token"
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-        try:
-            # Prepare token exchange request data
-            data = {
-                "grant_type": "refresh_token",
-                'client_id': str(settings.CLIENT_ID),  # Ensure these are set in settings
-                'client_secret': str(settings.SECRET_CLIENT),
-                "refresh_token": str(settings.MP_REFRESH_TEST)
-            }
-
-            # Make request to Mercado Pago token endpoint
-            response = requests.post(url, headers=headers, data=data)
-
-            # Check response status
-            if response.status_code == 200:
-                # Successfully retrieved tokens
-                token_info = response.json()
-
-                # Log sensitive information carefully
-                logger.info(f"Successfully retrieved Mercado Pago tokens for user ID: {token_info.get('user_id')}")
-
-                # Return token information (be careful with production logging)
-                return Response({
-                    'access_token': token_info.get('access_token'),
-                    'refresh_token': token_info.get('refresh_token'),
-                    'user_id': token_info.get('user_id'),
-                    'expires_in': token_info.get('expires_in')
-                }, status=status.HTTP_200_OK)
-
-            else:
-                # Token retrieval failed
-                error_details = response.json()
-                logger.error(f"Mercado Pago token retrieval failed: {error_details}")
-
-                return Response({
-                    'error': 'Token retrieval failed',
-                    'details': error_details
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        except requests.RequestException as e:
-            # Network or request-related errors
-            logger.error(f"Request to Mercado Pago failed: {str(e)}")
-            return Response({
-                'error': 'Network error',
-                'message': 'Could not connect to Mercado Pago servers'
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        except Exception as e:
-            # Catch-all for unexpected errors
-            logger.error(f"Unexpected error in token retrieval: {str(e)}")
-            return Response({
-                'error': 'Unexpected error',
-                'message': 'An unexpected error occurred during token retrieval'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Email sending error: {str(e)}")
+            return HttpResponse(f"Error sending email: {str(e)}")

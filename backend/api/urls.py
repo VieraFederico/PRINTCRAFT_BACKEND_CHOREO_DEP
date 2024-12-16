@@ -76,7 +76,5 @@ urlpatterns = [
     path('reviews/', ProductReviewListCreateView.as_view(), name='product-review-list-create'),
     path('reviews/<int:pk>/', ProductReviewDetailView.as_view(), name='product-review-detail'),
     path('reviews/product/<int:product_code>/', ProductReviewsByProductCodeView.as_view(), name='product-reviews-by-product-code'),
-    path('mp/test/', MercadoPagoTokenTestView.as_view(), name='testing_mp_token'),
-    path('mp/refresh/', MercadoPagRefresh.as_view(), name='testing_mp_token'),
-
+    path('test-email/', TestEmailView.as_view(), name='test_email'),
 ]
